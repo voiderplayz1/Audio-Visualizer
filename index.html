@@ -3,229 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Visualizer</title>
+    <title>Glowing Audio Visualizer</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            background-color: #0a0a0a; 
-            color: white; 
+            background-color: #050505; 
+            color: #fff; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
+            flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Sidebar Styling */
-        #sidebar {
-            width: 250px;
-            background-color: #1a1a1a;
+        /* Floating Glassmorphism Controls */
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 20px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            border-right: 2px solid #333;
             z-index: 10;
+            width: 260px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
-        h2 { font-size: 1.2rem; margin-bottom: 10px; text-align: center; }
-        
-        .btn {
-            background-color: #333;
+
+        h2 { font-size: 1.1rem; text-align: center; text-transform: uppercase; letter-spacing: 2px; color: #aaa; margin-bottom: 5px; }
+
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.85rem; color: #888; }
+
+        .btn, select, input[type="color"] {
+            background-color: #222;
             color: white;
-            border: none;
-            padding: 12px;
+            border: 1px solid #444;
+            padding: 10px;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            text-align: center;
-            transition: background 0.3s;
+            font-family: inherit;
+            width: 100%;
+            transition: all 0.2s;
         }
-        .btn:hover { background-color: #555; }
         
-        /* Hidden file input wrapped by a label button */
+        .btn:hover, select:hover { background-color: #333; border-color: #666; }
+        
+        /* Custom Color Picker Styling */
+        input[type="color"] { height: 40px; padding: 2px; }
         input[type="file"] { display: none; }
-        .upload-label { background-color: #e67e22; }
-        .upload-label:hover { background-color: #d35400; }
+        
+        .upload-label { 
+            background-color: transparent; 
+            border: 1px solid #fff; 
+            text-align: center; 
+            font-weight: bold;
+        }
+        .upload-label:hover { background-color: #fff; color: #000; }
 
-        /* Main Content Styling */
-        #main {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
+        /* Split Screen Layout */
+        #main-stage {
+            flex: 3; /* Takes up top 75% */
+            position: relative;
+            width: 100%;
+        }
+        #timeline-stage {
+            flex: 1; /* Takes up bottom 25% */
+            background-color: #0a0a0a;
+            border-top: 1px solid #333;
             position: relative;
         }
 
-        /* Visualizer Canvas */
-        canvas {
-            flex-grow: 1;
-            width: 100%;
-            display: block;
-        }
+        canvas { display: block; width: 100%; height: 100%; }
 
-        /* Bottom Player */
-        #player-container {
-            background-color: #1a1a1a;
-            padding: 15px;
-            border-top: 2px solid #333;
-        }
-        
-        /* The "thingy at the bottom" */
-        audio {
-            width: 100%;
-            outline: none;
-        }
+        /* Hidden Audio Element */
+        audio { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <h2>Visualizer Controls</h2>
+    <div id="controls">
+        <h2>Visualizer</h2>
         
-        <label for="audio-upload" class="btn upload-label">Upload Track</label>
+        <label for="audio-upload" class="btn upload-label">1. Upload Audio Track</label>
         <input type="file" id="audio-upload" accept=".mp3, .ogg, .wav, .flac" />
         
-        <button id="btn-color" class="btn">Change Color</button>
-        <button id="btn-preset" class="btn">Change Visualizer Mode</button>
-        <button id="btn-remove" class="btn">Remove Track</button>
+        <div class="control-group">
+            <label for="color-picker">2. Choose Glow Color</label>
+            <input type="color" id="color-picker" value="#ff9d00">
+        </div>
+
+        <div class="control-group">
+            <label for="mode-selector">3. Select Visual Mode</label>
+            <select id="mode-selector">
+                <option value="0">Chaotic Waveform</option>
+                <option value="1">Frequency Bars</option>
+                <option value="2">Circular Burst</option>
+                <option value="3">Symmetrical Wave</option>
+                <option value="4">Pulse Dots</option>
+            </select>
+        </div>
+
+        <button id="btn-remove" class="btn">Stop & Remove Track</button>
     </div>
 
-    <div id="main">
-        <canvas id="visualizer"></canvas>
-        <div id="player-container">
-            <audio id="audio-player" controls></audio>
-        </div>
+    <div id="main-stage">
+        <canvas id="main-canvas"></canvas>
     </div>
+
+    <div id="timeline-stage">
+        <canvas id="timeline-canvas"></canvas>
+    </div>
+
+    <audio id="audio-player" controls></audio>
 
     <script>
+        // DOM Elements
         const audioUpload = document.getElementById('audio-upload');
         const audioPlayer = document.getElementById('audio-player');
-        const canvas = document.getElementById('visualizer');
-        const ctx = canvas.getContext('2d');
-        
-        const btnColor = document.getElementById('btn-color');
-        const btnPreset = document.getElementById('btn-preset');
+        const colorPicker = document.getElementById('color-picker');
+        const modeSelector = document.getElementById('mode-selector');
         const btnRemove = document.getElementById('btn-remove');
+        
+        // Canvases
+        const mainCanvas = document.getElementById('main-canvas');
+        const mainCtx = mainCanvas.getContext('2d');
+        const timelineCanvas = document.getElementById('timeline-canvas');
+        const timelineCtx = timelineCanvas.getContext('2d');
 
         let audioCtx, analyser, source;
         let animationId;
         
-        // Settings
-        let visualizerMode = 0; // 0 = Waveform, 1 = Bars, 2 = Circular
-        let currentColorIndex = 0;
-        const colors = ['#e67e22', '#3498db', '#2ecc71', '#9b59b6', '#e74c3c', '#f1c40f'];
+        let visualizerMode = 0; 
+        let glowColor = colorPicker.value;
 
-        // Resize canvas to fit screen
-        function resizeCanvas() {
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
+        // Resize function to keep canvases sharp
+        function resizeCanvases() {
+            mainCanvas.width = mainCanvas.clientWidth;
+            mainCanvas.height = mainCanvas.clientHeight;
+            timelineCanvas.width = timelineCanvas.clientWidth;
+            timelineCanvas.height = timelineCanvas.clientHeight;
+            // Redraw timeline background on resize
+            timelineCtx.fillStyle = '#0a0a0a';
+            timelineCtx.fillRect(0, 0, timelineCanvas.width, timelineCanvas.height);
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        window.addEventListener('resize', resizeCanvases);
+        resizeCanvases();
 
-        // Handle File Upload
+        // Event Listeners for UI
+        colorPicker.addEventListener('input', (e) => glowColor = e.target.value);
+        modeSelector.addEventListener('change', (e) => visualizerMode = parseInt(e.target.value));
+
         audioUpload.addEventListener('change', function(e) {
             const file = this.files[0];
             if (!file) return;
 
-            // Initialize Audio Context on first user interaction
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 1024; // Smoothness of the data
                 source = audioCtx.createMediaElementSource(audioPlayer);
                 source.connect(analyser);
                 analyser.connect(audioCtx.destination);
             }
 
-            const objectUrl = URL.createObjectURL(file);
-            audioPlayer.src = objectUrl;
+            audioPlayer.src = URL.createObjectURL(file);
             audioPlayer.play();
             
+            // Clear timeline for new track
+            timelineCtx.fillStyle = '#0a0a0a';
+            timelineCtx.fillRect(0, 0, timelineCanvas.width, timelineCanvas.height);
+
             if (animationId) cancelAnimationFrame(animationId);
             drawVisualizer();
         });
 
-        // Handle Track Removal
         btnRemove.addEventListener('click', () => {
             audioPlayer.pause();
             audioPlayer.removeAttribute('src');
             audioPlayer.load();
-            audioUpload.value = ''; // Reset input
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear screen
+            audioUpload.value = ''; 
+            mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            timelineCtx.fillRect(0, 0, timelineCanvas.width, timelineCanvas.height);
             if (animationId) cancelAnimationFrame(animationId);
         });
 
-        // Handle Color Change
-        btnColor.addEventListener('click', () => {
-            currentColorIndex = (currentColorIndex + 1) % colors.length;
-        });
-
-        // Handle Preset Change
-        btnPreset.addEventListener('click', () => {
-            visualizerMode = (visualizerMode + 1) % 3;
-        });
-
-        // Drawing Loop
+        // Main Animation Loop
         function drawVisualizer() {
             animationId = requestAnimationFrame(drawVisualizer);
             
             const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
+            const dataArrayFreq = new Uint8Array(bufferLength);
+            const dataArrayTime = new Uint8Array(bufferLength);
             
-            // Clear previous frame with a slight fade for a glowing trail effect
-            ctx.fillStyle = 'rgba(10, 10, 10, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            analyser.getByteFrequencyData(dataArrayFreq);
+            analyser.getByteTimeDomainData(dataArrayTime);
+
+            // --- 1. DRAW MAIN VISUALIZER (TOP) ---
+            // Fade effect for glowing trails
+            mainCtx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+            mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
             
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = colors[currentColorIndex];
-            ctx.fillStyle = colors[currentColorIndex];
+            // Setup Glow
+            mainCtx.shadowBlur = 15;
+            mainCtx.shadowColor = glowColor;
+            mainCtx.strokeStyle = glowColor;
+            mainCtx.fillStyle = glowColor;
+            mainCtx.lineWidth = 2;
+
+            const w = mainCanvas.width;
+            const h = mainCanvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            mainCtx.beginPath();
 
             if (visualizerMode === 0) {
-                // PRESET 1: Waveform (Like the video's erratic lines)
-                analyser.getByteTimeDomainData(dataArray);
-                ctx.beginPath();
-                const sliceWidth = canvas.width * 1.0 / bufferLength;
+                // Mode 0: Chaotic Waveform
+                const sliceWidth = w * 1.0 / bufferLength;
                 let x = 0;
                 for (let i = 0; i < bufferLength; i++) {
-                    const v = dataArray[i] / 128.0;
-                    const y = v * canvas.height / 2;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
+                    const v = dataArrayTime[i] / 128.0;
+                    const y = v * cy;
+                    if (i === 0) mainCtx.moveTo(x, y);
+                    else mainCtx.lineTo(x, y);
                     x += sliceWidth;
                 }
-                ctx.lineTo(canvas.width, canvas.height / 2);
-                ctx.stroke();
+                mainCtx.stroke();
 
             } else if (visualizerMode === 1) {
-                // PRESET 2: Frequency Bars
-                analyser.getByteFrequencyData(dataArray);
-                const barWidth = (canvas.width / bufferLength) * 2.5;
-                let barHeight;
+                // Mode 1: Frequency Bars
+                const barWidth = (w / bufferLength) * 2.5;
                 let x = 0;
                 for (let i = 0; i < bufferLength; i++) {
-                    barHeight = dataArray[i] * 2;
-                    ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
-                    x += barWidth + 1;
+                    const barHeight = dataArrayFreq[i] * (h / 255) * 0.8;
+                    mainCtx.fillRect(x, h - barHeight, barWidth, barHeight);
+                    x += barWidth + 2;
                 }
-                
+
             } else if (visualizerMode === 2) {
-                // PRESET 3: Circular Frequency
-                analyser.getByteFrequencyData(dataArray);
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const radius = Math.min(centerX, centerY) / 2;
-                
-                for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = dataArray[i];
-                    const rads = Math.PI * 2 / bufferLength;
-                    const x = centerX + Math.cos(rads * i) * (radius + barHeight);
-                    const y = centerY + Math.sin(rads * i) * (radius + barHeight);
-                    const xEnd = centerX + Math.cos(rads * i) * radius;
-                    const yEnd = centerY + Math.sin(rads * i) * radius;
+                // Mode 2: Circular Burst
+                const radius = Math.min(cx, cy) * 0.3;
+                for (let i = 0; i < bufferLength; i += 2) {
+                    const barHeight = dataArrayFreq[i] * 0.8;
+                    const rads = Math.PI * 2 * (i / bufferLength);
+                    const xStart = cx + Math.cos(rads) * radius;
+                    const yStart = cy + Math.sin(rads) * radius;
+                    const xEnd = cx + Math.cos(rads) * (radius + barHeight);
+                    const yEnd = cy + Math.sin(rads) * (radius + barHeight);
                     
-                    ctx.beginPath();
-                    ctx.moveTo(xEnd, yEnd);
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
+                    mainCtx.moveTo(xStart, yStart);
+                    mainCtx.lineTo(xEnd, yEnd);
                 }
+                mainCtx.stroke();
+
+            } else if (visualizerMode === 3) {
+                // Mode 3: Symmetrical Wave
+                const sliceWidth = w / bufferLength;
+                let x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = (dataArrayTime[i] - 128) / 128.0;
+                    const offset = v * (h * 0.4);
+                    
+                    if (i === 0) mainCtx.moveTo(x, cy);
+                    else mainCtx.lineTo(x, cy + offset);
+                    
+                    // Draw mirror
+                    mainCtx.moveTo(x, cy);
+                    mainCtx.lineTo(x, cy - offset);
+                    
+                    x += sliceWidth;
+                }
+                mainCtx.stroke();
+
+            } else if (visualizerMode === 4) {
+                // Mode 4: Pulse Dots
+                const spacing = w / 64;
+                for (let i = 0; i < 64; i++) {
+                    const size = (dataArrayFreq[i * 4] / 255) * 20;
+                    const yOffset = ((dataArrayTime[i * 4] - 128) / 128) * (h/3);
+                    mainCtx.beginPath();
+                    mainCtx.arc(i * spacing + spacing/2, cy + yOffset, size, 0, Math.PI * 2);
+                    mainCtx.fill();
+                }
+            }
+
+            // Remove shadow so it doesn't mess with the bottom canvas
+            mainCtx.shadowBlur = 0; 
+
+            // --- 2. DRAW TIMELINE VISUALIZER (BOTTOM) ---
+            if (!audioPlayer.paused && audioPlayer.duration) {
+                // Calculate where we are in the song (0.0 to 1.0)
+                const progress = audioPlayer.currentTime / audioPlayer.duration;
+                const currentX = progress * timelineCanvas.width;
+                
+                // Get the average volume right now to draw the peak
+                let sum = 0;
+                for(let i = 0; i < bufferLength; i++) {
+                    sum += dataArrayFreq[i];
+                }
+                const averageVolume = sum / bufferLength;
+                
+                // Map volume to the height of the bottom canvas
+                const peakHeight = (averageVolume / 255) * timelineCanvas.height;
+                const centerY = timelineCanvas.height / 2;
+
+                // Draw the playhead line for this exact frame
+                timelineCtx.strokeStyle = glowColor;
+                timelineCtx.lineWidth = 1;
+                timelineCtx.beginPath();
+                timelineCtx.moveTo(currentX, centerY - (peakHeight / 2));
+                timelineCtx.lineTo(currentX, centerY + (peakHeight / 2));
+                timelineCtx.stroke();
+                
+                // Draw a bright tip at the playhead
+                timelineCtx.fillStyle = '#ffffff';
+                timelineCtx.fillRect(currentX, centerY - (peakHeight / 2) - 2, 2, 4);
+                timelineCtx.fillRect(currentX, centerY + (peakHeight / 2) - 2, 2, 4);
             }
         }
     </script>
