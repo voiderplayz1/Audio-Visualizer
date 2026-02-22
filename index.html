@@ -2,272 +2,224 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Studio Visualizer</title>
+    <title>Studio Visualizer - Golden Version</title>
     <style>
         :root { --accent: #F4EBE2; --bg: #050505; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            background: var(--bg); color: #fff; 
-            font-family: 'Inter', system-ui, sans-serif;
-            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
-        }
-
-        /* Pro Studio Sidebar */
+        body { background: var(--bg); color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; margin: 0; }
         #sidebar {
-            position: absolute; top: 20px; left: 20px; width: 320px; 
-            background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(25px);
-            padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
-            z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            max-height: 90vh; overflow-y: auto;
+            position: absolute; top: 20px; left: 20px; width: 300px; 
+            background: rgba(15, 15, 15, 0.95); padding: 20px; border-radius: 12px;
+            border: 1px solid #333; z-index: 100; max-height: 90vh; overflow-y: auto;
         }
-
-        h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; text-align: center; }
-
-        .group { margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 0.65rem; text-transform: uppercase; color: #777; letter-spacing: 1px; font-weight: 800; }
-        
-        .btn { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        .btn:hover { background: #252525; border-color: var(--accent); }
-        .btn-main { background: var(--accent); color: black; border: none; }
-
-        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 4px; }
-        select, input[type="color"] { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; width: 100%; }
-
-        #fx-panel { 
-            max-height: 0; overflow: hidden; transition: max-height 0.7s ease; 
-            border-top: 0px solid #333; margin-top: 10px;
-        }
-        #fx-panel.open { max-height: 1000px; border-top-width: 1px; padding-top: 20px; }
-
-        /* Stages */
-        #main-stage { flex: 3; position: relative; }
-        #bottom-panel { 
-            flex: 1; background: #080808; border-top: 1px solid #222; 
-            padding: 20px; display: flex; flex-direction: column; gap: 15px;
-        }
-
-        .controls-row { display: flex; align-items: center; gap: 20px; }
-        #play-pause { width: 55px; height: 55px; border-radius: 50%; border: none; background: var(--accent); cursor: pointer; font-size: 1.4rem; flex-shrink: 0; }
-        #scrubber { flex-grow: 1; }
-
+        .group { margin-bottom: 15px; }
+        label { display: block; font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); }
+        .btn { background: var(--accent); color: #000; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        #main-stage { flex: 1; position: relative; cursor: crosshair; }
+        #bottom-panel { height: 120px; background: #000; border-top: 1px solid #222; position: relative; }
         canvas { display: block; width: 100%; height: 100%; }
-        
-        /* Custom Scrollbar */
-        #sidebar::-webkit-scrollbar { width: 4px; }
-        #sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        #play-btn { position: absolute; left: 20px; top: 40px; width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent); cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <h2>STUDIO MK-ULTRA</h2>
-        
-        <label class="btn btn-main">UPLOAD AUDIO SOURCE<input type="file" id="audio-upload" hidden></label>
-
-        <div class="group" style="margin-top:20px;">
-            <label>Visual Algorithm</label>
-            <select id="mode-selector">
-                <option value="lissajous">Dynamic Lissajous (Video Style)</option>
-                <option value="bars">Linear Frequency Bars</option>
-                <option value="circular">Circular Burst (Uncompressed)</option>
-                <option value="wave">Oscilloscope Trace</option>
-            </select>
-        </div>
-
-        <div class="group">
-            <label>Main Glow Color</label>
-            <input type="color" id="color-picker" value="#F4EBE2">
-        </div>
-
-        <div class="group">
-            <label id="lbl-weight">Line Thickness: 3</label>
-            <input type="range" id="line-weight" min="1" max="15" step="0.5" value="3">
-        </div>
-
-        <div class="group">
-            <label id="lbl-glow">Glow Intensity: 1.0</label>
-            <input type="range" id="glow-dist" min="0.1" max="5.0" step="0.1" value="1.0">
-        </div>
-
-        <div class="group">
-            <label id="lbl-dist">Line Spacing (Bars/Circle): 2</label>
-            <input type="range" id="line-dist" min="0" max="20" step="1" value="2">
-        </div>
-
-        <button class="btn" id="toggle-fx">AUDIO ENGINEERING ▾</button>
-
-        <div id="fx-panel">
-            <div class="group"><label id="lbl-vol">Master Volume</label><input type="range" id="fx-vol" min="0" max="2" step="0.1" value="1"></div>
-            <div class="group"><label id="lbl-bass">Bass Drive</label><input type="range" id="fx-bass" min="0.1" max="5.0" step="0.1" value="1.0"></div>
-            <div class="group"><label id="lbl-crush">Bit Crusher</label><input type="range" id="fx-crush" min="0.1" max="5.0" step="0.1" value="1.0"></div>
-            <div class="group"><label id="lbl-pitch">Pitch Shifter</label><input type="range" id="fx-pitch" min="0.1" max="5.0" step="0.1" value="1.0"></div>
-            <div class="group"><label id="lbl-speed">Time Stretch (Speed)</label><input type="range" id="fx-speed" min="0.1" max="5.0" step="0.1" value="1.0"></div>
-            <div class="group"><label id="lbl-verb">Reverb / Room Size</label><input type="range" id="fx-reverb" min="0" max="1" step="0.1" value="0"></div>
-            <div class="group" style="flex-direction:row; justify-content:space-between;">
-                <label>Key-Sync AutoTune</label>
-                <input type="checkbox" id="fx-autotune">
-            </div>
-            <button class="btn btn-main" id="btn-wacky">WACKY!!1!</button>
-        </div>
-
-        <button class="btn" id="btn-reset" style="margin-top:15px; border-color:#ff4444; color:#ff4444;">CLEAR SESSION</button>
+<div id="sidebar">
+    <label>Audio Source</label>
+    <input type="file" id="upload" accept="audio/*">
+    <div class="group">
+        <label>Visual Mode</label>
+        <select id="mode" style="width:100%; padding:5px; background:#111; color:white;">
+            <option value="lissajous">Dynamic Lissajous (Golden)</option>
+            <option value="circular">Circular Burst (Uncompressed)</option>
+            <option value="bars">Frequency Bars</option>
+        </select>
     </div>
-
-    <div id="main-stage"><canvas id="main-canvas"></canvas></div>
-
-    <div id="bottom-panel">
-        <div class="controls-row">
-            <button id="play-pause">▶</button>
-            <input type="range" id="scrubber" value="0" min="0" step="0.01">
-        </div>
-        <canvas id="timeline-canvas"></canvas>
+    <div class="group">
+        <label id="lbl-weight">Line Thickness: 3</label>
+        <input type="range" id="weight" min="1" max="10" value="3">
     </div>
+    <div class="group">
+        <label id="lbl-dist">Line Distance: 2</label>
+        <input type="range" id="dist" min="0" max="20" value="2">
+    </div>
+    <div class="group">
+        <label id="lbl-glow">Glow Distance: 1.0</label>
+        <input type="range" id="glow" min="0.1" max="5.0" step="0.1" value="1.0">
+    </div>
+    <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+    <div class="group">
+        <label>Master Volume</label>
+        <input type="range" id="vol" min="0" max="2" step="0.1" value="1">
+    </div>
+    <div class="group">
+        <label>Pitch Shifter</label>
+        <input type="range" id="pitch" min="0.5" max="2.0" step="0.01" value="1.0">
+    </div>
+    <div class="group">
+        <label>Time Speed</label>
+        <input type="range" id="speed" min="0.5" max="2.0" step="0.01" value="1.0">
+    </div>
+    <div class="group">
+        <label>Reverb Size</label>
+        <input type="range" id="reverb" min="0" max="1" step="0.05" value="0">
+    </div>
+    <div class="group">
+        <label>Auto-Tune (Main Key Sync)</label>
+        <input type="checkbox" id="autotune">
+    </div>
+    <button class="btn" id="wacky">WACKY MODE!</button>
+</div>
 
-    <audio id="audio-player"></audio>
+<div id="main-stage"><canvas id="canvas"></canvas></div>
+<div id="bottom-panel">
+    <button id="play-btn">▶</button>
+    <canvas id="trace"></canvas>
+</div>
 
-    <script>
-        const audio = document.getElementById('audio-player');
-        const mainCanvas = document.getElementById('main-canvas');
-        const mCtx = mainCanvas.getContext('2d');
-        const timeCanvas = document.getElementById('timeline-canvas');
-        const tCtx = timeCanvas.getContext('2d');
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const traceCanvas = document.getElementById('trace');
+    const tCtx = traceCanvas.getContext('2d');
+    
+    let audioCtx, source, analyser, gainNode, reverbNode, pitchNode;
+    let audioBuffer = null;
+    let isPlaying = false;
+    let startTime = 0;
+    let lastLissajousUpdate = 0;
+    let lissA = 3, lissB = 2;
 
-        let audioCtx, analyser, source, bassNode, crushNode, reverbNode, gainNode, autotuneNode;
-        let visualMode = 'lissajous';
-        let color = '#F4EBE2';
-        let weight = 3, glow = 1, spacing = 2;
-        let lissajousSeed = 0;
+    // Default Settings
+    const color = "rgb(244, 235, 226)";
+    
+    async function initAudio(file) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await file.arrayBuffer();
+        audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        setupNodes();
+    }
 
-        // Shift Lissajous pattern every 5 seconds
-        setInterval(() => { lissajousSeed = Math.random() * 100; }, 5000);
+    function setupNodes() {
+        if (source) source.stop();
+        source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = true;
 
-        function init() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 2048;
-            
-            source = audioCtx.createMediaElementSource(audio);
-            gainNode = audioCtx.createGain();
-            bassNode = audioCtx.createBiquadFilter();
-            bassNode.type = "lowshelf";
-            crushNode = audioCtx.createWaveShaper();
-            
-            // Reverb Simulation
-            reverbNode = audioCtx.createConvolver(); 
-            let length = audioCtx.sampleRate * 2, impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
-            for(let i=0; i<length; i++) { impulse.getChannelData(0)[i] = (Math.random()*2-1) * Math.pow(1-i/length, 2); }
-            reverbNode.buffer = impulse;
-            
-            // Autotune Filter (High-Q Peaking filter that follows pitch)
-            autotuneNode = audioCtx.createBiquadFilter();
-            autotuneNode.type = "peaking";
-            autotuneNode.Q.value = 10;
-            autotuneNode.gain.value = 0;
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
 
-            source.connect(bassNode).connect(crushNode).connect(autotuneNode).connect(gainNode).connect(analyser).connect(audioCtx.destination);
-        }
-
-        // Logic for Bit Crusher
-        function setCrush(val) {
-            let k = val * 20, n = 44100, curve = new Float32Array(n);
-            for (let i=0; i<n; i++) { let x = i*2/n-1; curve[i] = (3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x)); }
-            crushNode.curve = curve;
-        }
-
-        // Sidebar Events
-        document.getElementById('audio-upload').onchange = (e) => {
-            init(); audio.src = URL.createObjectURL(e.target.files[0]);
-            audio.play(); document.getElementById('play-pause').innerText = "⏸";
-            render();
-        };
-
-        document.getElementById('toggle-fx').onclick = () => document.getElementById('fx-panel').classList.toggle('open');
-        document.getElementById('mode-selector').onchange = (e) => visualMode = e.target.value;
-        document.getElementById('color-picker').oninput = (e) => color = e.target.value;
-        document.getElementById('line-weight').oninput = (e) => { weight = e.target.value; document.getElementById('lbl-weight').innerText = `Line Thickness: ${weight}`; };
-        document.getElementById('glow-dist').oninput = (e) => { glow = e.target.value; document.getElementById('lbl-glow').innerText = `Glow Intensity: ${glow}`; };
-        document.getElementById('line-dist').oninput = (e) => { spacing = parseInt(e.target.value); document.getElementById('lbl-dist').innerText = `Line Spacing: ${spacing}`; };
+        gainNode = audioCtx.createGain();
         
-        // FX Audio Events
-        document.getElementById('fx-vol').oninput = (e) => gainNode.gain.value = e.target.value;
-        document.getElementById('fx-bass').oninput = (e) => bassNode.gain.value = (e.target.value - 1) * 25;
-        document.getElementById('fx-crush').oninput = (e) => setCrush(e.target.value - 1);
-        document.getElementById('fx-pitch').oninput = (e) => audio.preservesPitch = false || (audio.playbackRate = e.target.value);
-        document.getElementById('fx-speed').oninput = (e) => { audio.preservesPitch = true; audio.playbackRate = e.target.value; };
-        document.getElementById('fx-autotune').onchange = (e) => autotuneNode.gain.value = e.target.checked ? 15 : 0;
+        // REVERB SETUP
+        reverbNode = audioCtx.createConvolver();
+        const length = audioCtx.sampleRate * 2.5;
+        const impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
+        for (let i = 0; i < length; i++) {
+            const decay = Math.pow(1 - i / length, 2);
+            impulse.getChannelData(0)[i] = (Math.random() * 2 - 1) * decay;
+            impulse.getChannelData(1)[i] = (Math.random() * 2 - 1) * decay;
+        }
+        reverbNode.buffer = impulse;
 
-        document.getElementById('play-pause').onclick = () => { audio.paused ? audio.play() : audio.pause(); document.getElementById('play-pause').innerText = audio.paused ? "▶" : "⏸"; };
-        document.getElementById('scrubber').oninput = (e) => audio.currentTime = e.target.value;
-        audio.ontimeupdate = () => { if(!isNaN(audio.duration)) { scrubber.max = audio.duration; scrubber.value = audio.currentTime; } };
+        const reverbGain = audioCtx.createGain();
+        reverbGain.gain.value = document.getElementById('reverb').value;
 
-        function render() {
-            requestAnimationFrame(render);
-            const freq = new Uint8Array(analyser.frequencyBinCount);
-            const time = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(freq);
-            analyser.getByteTimeDomainData(time);
+        // PITCH
+        source.playbackRate.value = document.getElementById('pitch').value;
 
-            // Dynamic Autotune (Detecting dominant frequency)
-            if(document.getElementById('fx-autotune').checked) {
-                let maxIdx = freq.indexOf(Math.max(...freq));
-                autotuneNode.frequency.value = maxIdx * (audioCtx.sampleRate / analyser.fftSize);
+        // Routing
+        source.connect(analyser);
+        source.connect(reverbNode);
+        reverbNode.connect(reverbGain);
+        reverbGain.connect(gainNode);
+        analyser.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        source.start(0);
+        isPlaying = true;
+        animate();
+    }
+
+    document.getElementById('upload').onchange = (e) => initAudio(e.target.files[0]);
+    document.getElementById('play-btn').onclick = () => {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        isPlaying ? audioCtx.suspend() : audioCtx.resume();
+        isPlaying = !isPlaying;
+        document.getElementById('play-btn').innerText = isPlaying ? "⏸" : "▶";
+    };
+
+    // Live Sliders
+    document.getElementById('vol').oninput = (e) => gainNode.gain.value = e.target.value;
+    document.getElementById('pitch').oninput = (e) => {
+        if(source) source.playbackRate.value = e.target.value;
+    };
+    document.getElementById('wacky').onclick = () => {
+        document.getElementById('pitch').value = Math.random() * 2;
+        if(source) source.playbackRate.value = document.getElementById('pitch').value;
+        lissA = Math.random() * 10;
+        lissB = Math.random() * 10;
+    };
+
+    function animate() {
+        requestAnimationFrame(animate);
+        canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+        traceCanvas.width = traceCanvas.clientWidth; traceCanvas.height = 120;
+        
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(data);
+        const timeData = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteTimeDomainData(timeData);
+
+        // Shift Lissajous settings every 5s
+        if (Date.now() - lastLissajousUpdate > 5000) {
+            lissA = Math.floor(Math.random() * 5) + 1;
+            lissB = Math.floor(Math.random() * 5) + 1;
+            lastLissajousUpdate = Date.now();
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = document.getElementById('weight').value;
+        ctx.shadowBlur = 15 * document.getElementById('glow').value;
+        ctx.shadowColor = color;
+        
+        const mode = document.getElementById('mode').value;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        if (mode === 'lissajous') {
+            ctx.beginPath();
+            for (let i = 0; i < timeData.length; i++) {
+                const angle = (i / timeData.length) * Math.PI * 2;
+                const v = timeData[i] / 128.0;
+                const x = centerX + Math.sin(angle * lissA) * (canvas.width / 4) * v;
+                const y = centerY + Math.cos(angle * lissB) * (canvas.height / 4) * v;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
-
-            mainCanvas.width = mainCanvas.clientWidth; mainCanvas.height = mainCanvas.clientHeight;
-            mCtx.fillStyle = 'rgba(5,5,5,0.2)'; mCtx.fillRect(0,0,mainCanvas.width, mainCanvas.height);
-            
-            mCtx.strokeStyle = color; mCtx.lineWidth = weight;
-            mCtx.shadowBlur = 15 * glow; mCtx.shadowColor = color;
-            mCtx.beginPath();
-
-            const w = mainCanvas.width, h = mainCanvas.height;
-
-            if(visualMode === 'lissajous') {
-                for(let i=0; i<time.length; i++) {
-                    const x = (time[i]/128.0) * (w/3) + (w/3) + Math.sin(i + lissajousSeed)*10;
-                    const y = (time[(i+20)%time.length]/128.0) * (h/3) + (h/3) + Math.cos(i + lissajousSeed)*10;
-                    if(i===0) mCtx.moveTo(x,y); else mCtx.lineTo(x,y);
-                }
-            } else if(visualMode === 'bars') {
-                let x = 0, barW = (w / freq.length) * 2.5;
-                for(let i=0; i<freq.length; i++) {
-                    let barH = freq[i] * (h/255);
-                    mCtx.fillStyle = color;
-                    mCtx.fillRect(x, h - barH, barW, barH);
-                    x += barW + spacing;
-                }
-            } else if(visualMode === 'circular') {
-                const radius = Math.min(w,h) * 0.25;
-                for(let i=0; i<freq.length; i += (spacing + 1)) {
-                    const angle = (i / freq.length) * Math.PI * 2;
-                    const len = freq[i] * 0.8;
-                    mCtx.moveTo(w/2 + Math.cos(angle)*radius, h/2 + Math.sin(angle)*radius);
-                    mCtx.lineTo(w/2 + Math.cos(angle)*(radius+len), h/2 + Math.sin(angle)*(radius+len));
-                }
-            } else if(visualMode === 'wave') {
-                let x = 0, step = w / time.length;
-                for(let i=0; i<time.length; i++) {
-                    const y = (time[i]/128.0) * (h/2);
-                    if(i===0) mCtx.moveTo(x,y); else mCtx.lineTo(x,y);
-                    x += step;
-                }
-            }
-            mCtx.stroke();
-
-            // Timeline Trace
-            if(!audio.paused) {
-                timeCanvas.width = timeCanvas.clientWidth; timeCanvas.height = timeCanvas.clientHeight;
-                const prog = (audio.currentTime / audio.duration) * timeCanvas.width;
-                const peak = (freq[5] / 255) * timeCanvas.height;
-                tCtx.strokeStyle = color; tCtx.lineWidth = 1;
-                tCtx.beginPath();
-                tCtx.moveTo(prog, timeCanvas.height/2 - peak/2);
-                tCtx.lineTo(prog, timeCanvas.height/2 + peak/2);
-                tCtx.stroke();
+            ctx.stroke();
+        } 
+        else if (mode === 'circular') {
+            const radius = 100;
+            const dist = parseInt(document.getElementById('dist').value);
+            for (let i = 0; i < data.length; i += (1 + dist)) {
+                const angle = (i / data.length) * Math.PI * 2;
+                const len = data[i] * 0.8;
+                ctx.beginPath();
+                ctx.moveTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+                ctx.lineTo(centerX + Math.cos(angle) * (radius + len), centerY + Math.sin(angle) * (radius + len));
+                ctx.stroke();
             }
         }
-    </script>
+
+        // DRAW BOTTOM TRACE
+        const progress = (audioCtx.currentTime % audioBuffer.duration) / audioBuffer.duration;
+        const tx = progress * traceCanvas.width;
+        tCtx.strokeStyle = color;
+        tCtx.lineWidth = 2;
+        tCtx.beginPath();
+        tCtx.moveTo(tx, 60 - data[10]/4);
+        tCtx.lineTo(tx, 60 + data[10]/4);
+        tCtx.stroke();
+    }
+</script>
 </body>
 </html>
