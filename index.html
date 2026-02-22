@@ -3,157 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Studio Visualizer</title>
+    <title>Ultimate Studio Visualizer</title>
     <style>
-        :root { --accent: #ff9d00; --bg: #050505; }
+        :root { --accent: #F4EBE2; --bg: #050505; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            background-color: var(--bg); 
-            color: #fff; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            background: var(--bg); color: #fff; 
+            font-family: 'Inter', system-ui, sans-serif;
+            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
         }
 
-        /* Floating Studio Controls */
-        #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(15, 15, 15, 0.85);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 100;
-            width: 280px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+        /* Pro Studio Sidebar */
+        #sidebar {
+            position: absolute; top: 20px; left: 20px; width: 320px; 
+            background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(25px);
+            padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
+            z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            max-height: 90vh; overflow-y: auto;
         }
 
-        h2 { font-size: 1rem; text-align: center; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); margin-bottom: 5px; }
+        h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; text-align: center; }
 
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
-
-        .btn, select, input[type="color"] {
-            background-color: #1a1a1a;
-            color: white;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-            font-weight: 600;
-        }
-        .btn:hover { background-color: #252525; border-color: #555; }
+        .group { margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.65rem; text-transform: uppercase; color: #777; letter-spacing: 1px; font-weight: 800; }
         
-        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-        input[type="file"] { display: none; }
-        
-        .upload-label { background-color: var(--accent); color: #000; border: none; text-align: center; }
-        .upload-label:hover { filter: brightness(1.2); }
+        .btn { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        .btn:hover { background: #252525; border-color: var(--accent); }
+        .btn-main { background: var(--accent); color: black; border: none; }
 
-        /* Expanding EQ Panel */
-        #eq-panel {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 4px; }
+        select, input[type="color"] { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; width: 100%; }
+
+        #fx-panel { 
+            max-height: 0; overflow: hidden; transition: max-height 0.7s ease; 
+            border-top: 0px solid #333; margin-top: 10px;
         }
-        #eq-panel.open { max-height: 500px; padding: 15px 0; border-top: 1px solid #333; margin-top: 10px; }
+        #fx-panel.open { max-height: 1000px; border-top-width: 1px; padding-top: 20px; }
 
-        /* Layout */
-        #main-stage { flex: 3; position: relative; width: 100%; }
+        /* Stages */
+        #main-stage { flex: 3; position: relative; }
         #bottom-panel { 
-            flex: 1; 
-            background-color: #080808; 
-            border-top: 1px solid #222; 
-            display: flex; 
-            flex-direction: column;
-            padding: 15px 20px;
-            gap: 10px;
+            flex: 1; background: #080808; border-top: 1px solid #222; 
+            padding: 20px; display: flex; flex-direction: column; gap: 15px;
         }
 
-        #playback-row { display: flex; align-items: center; gap: 15px; }
-        #play-pause { 
-            background: var(--accent); border: none; width: 45px; height: 45px; 
-            border-radius: 50%; cursor: pointer; font-size: 1.2rem; flex-shrink: 0;
-        }
-        #scrubber { flex-grow: 1; height: 6px; }
+        .controls-row { display: flex; align-items: center; gap: 20px; }
+        #play-pause { width: 55px; height: 55px; border-radius: 50%; border: none; background: var(--accent); cursor: pointer; font-size: 1.4rem; flex-shrink: 0; }
+        #scrubber { flex-grow: 1; }
 
         canvas { display: block; width: 100%; height: 100%; }
+        
+        /* Custom Scrollbar */
+        #sidebar::-webkit-scrollbar { width: 4px; }
+        #sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="controls">
-        <h2>Studio FX</h2>
+    <div id="sidebar">
+        <h2>STUDIO MK-ULTRA</h2>
         
-        <label for="audio-upload" class="btn upload-label">Upload Audio</label>
-        <input type="file" id="audio-upload" accept=".mp3, .ogg, .wav, .flac" />
-        
-        <div class="control-group">
-            <label>Visual Mode</label>
+        <label class="btn btn-main">UPLOAD AUDIO SOURCE<input type="file" id="audio-upload" hidden></label>
+
+        <div class="group" style="margin-top:20px;">
+            <label>Visual Algorithm</label>
             <select id="mode-selector">
-                <option value="lissajous">Lissajous (XY Logo)</option>
-                <option value="0">Chaotic Waveform</option>
-                <option value="1">Frequency Bars</option>
-                <option value="2">Circular Burst</option>
-                <option value="3">Symmetrical Wave</option>
+                <option value="lissajous">Dynamic Lissajous (Video Style)</option>
+                <option value="bars">Linear Frequency Bars</option>
+                <option value="circular">Circular Burst (Uncompressed)</option>
+                <option value="wave">Oscilloscope Trace</option>
             </select>
         </div>
 
-        <div class="control-group">
-            <label>Glow Color</label>
-            <input type="color" id="color-picker" value="#ff9d00">
+        <div class="group">
+            <label>Main Glow Color</label>
+            <input type="color" id="color-picker" value="#F4EBE2">
         </div>
 
-        <div class="control-group">
-            <label>Line Thickness</label>
-            <input type="range" id="line-weight" min="1" max="15" value="3">
+        <div class="group">
+            <label id="lbl-weight">Line Thickness: 3</label>
+            <input type="range" id="line-weight" min="1" max="15" step="0.5" value="3">
         </div>
 
-        <button id="btn-toggle-eq" class="btn">Open Audio FX ▾</button>
-
-        <div id="eq-panel">
-            <div class="control-group">
-                <label id="label-bass">Bass Boost (1.0)</label>
-                <input type="range" id="fx-bass" min="0.1" max="5.0" step="0.1" value="1.0">
-            </div>
-            <div class="control-group">
-                <label id="label-crush">Bit Crush (1.0)</label>
-                <input type="range" id="fx-crush" min="0.1" max="5.0" step="0.1" value="1.0">
-            </div>
-            <div class="control-group">
-                <label id="label-pitch">Pitch / Speed (1.0)</label>
-                <input type="range" id="fx-pitch" min="0.1" max="5.0" step="0.1" value="1.0">
-            </div>
-            <div class="control-group" style="flex-direction: row; justify-content: space-between; align-items: center;">
-                <label>Auto-Tune</label>
-                <input type="checkbox" id="fx-autotune" style="width: 20px; height: 20px;">
-            </div>
-            <button id="btn-wacky" class="btn" style="background: #442200; border-color: #ff9d00;">Wacky!!1!</button>
+        <div class="group">
+            <label id="lbl-glow">Glow Intensity: 1.0</label>
+            <input type="range" id="glow-dist" min="0.1" max="5.0" step="0.1" value="1.0">
         </div>
 
-        <button id="btn-remove" class="btn" style="color: #ff4444; border-color: #441111;">Track Remover</button>
+        <div class="group">
+            <label id="lbl-dist">Line Spacing (Bars/Circle): 2</label>
+            <input type="range" id="line-dist" min="0" max="20" step="1" value="2">
+        </div>
+
+        <button class="btn" id="toggle-fx">AUDIO ENGINEERING ▾</button>
+
+        <div id="fx-panel">
+            <div class="group"><label id="lbl-vol">Master Volume</label><input type="range" id="fx-vol" min="0" max="2" step="0.1" value="1"></div>
+            <div class="group"><label id="lbl-bass">Bass Drive</label><input type="range" id="fx-bass" min="0.1" max="5.0" step="0.1" value="1.0"></div>
+            <div class="group"><label id="lbl-crush">Bit Crusher</label><input type="range" id="fx-crush" min="0.1" max="5.0" step="0.1" value="1.0"></div>
+            <div class="group"><label id="lbl-pitch">Pitch Shifter</label><input type="range" id="fx-pitch" min="0.1" max="5.0" step="0.1" value="1.0"></div>
+            <div class="group"><label id="lbl-speed">Time Stretch (Speed)</label><input type="range" id="fx-speed" min="0.1" max="5.0" step="0.1" value="1.0"></div>
+            <div class="group"><label id="lbl-verb">Reverb / Room Size</label><input type="range" id="fx-reverb" min="0" max="1" step="0.1" value="0"></div>
+            <div class="group" style="flex-direction:row; justify-content:space-between;">
+                <label>Key-Sync AutoTune</label>
+                <input type="checkbox" id="fx-autotune">
+            </div>
+            <button class="btn btn-main" id="btn-wacky">WACKY!!1!</button>
+        </div>
+
+        <button class="btn" id="btn-reset" style="margin-top:15px; border-color:#ff4444; color:#ff4444;">CLEAR SESSION</button>
     </div>
 
-    <div id="main-stage">
-        <canvas id="main-canvas"></canvas>
-    </div>
+    <div id="main-stage"><canvas id="main-canvas"></canvas></div>
 
     <div id="bottom-panel">
-        <div id="playback-row">
+        <div class="controls-row">
             <button id="play-pause">▶</button>
             <input type="range" id="scrubber" value="0" min="0" step="0.01">
         </div>
@@ -163,210 +127,145 @@
     <audio id="audio-player"></audio>
 
     <script>
-        const audioPlayer = document.getElementById('audio-player');
+        const audio = document.getElementById('audio-player');
         const mainCanvas = document.getElementById('main-canvas');
-        const mainCtx = mainCanvas.getContext('2d');
-        const timelineCanvas = document.getElementById('timeline-canvas');
-        const timelineCtx = timelineCanvas.getContext('2d');
-        
-        // UI Controls
-        const scrubber = document.getElementById('scrubber');
-        const playBtn = document.getElementById('play-pause');
-        const eqPanel = document.getElementById('eq-panel');
-        const btnToggleEq = document.getElementById('btn-toggle-eq');
+        const mCtx = mainCanvas.getContext('2d');
+        const timeCanvas = document.getElementById('timeline-canvas');
+        const tCtx = timeCanvas.getContext('2d');
 
-        let audioCtx, analyser, source, bassNode, crushNode;
-        let animationId;
-        let visualizerMode = 'lissajous';
-        let glowColor = '#ff9d00';
-        let lineWeight = 3;
+        let audioCtx, analyser, source, bassNode, crushNode, reverbNode, gainNode, autotuneNode;
+        let visualMode = 'lissajous';
+        let color = '#F4EBE2';
+        let weight = 3, glow = 1, spacing = 2;
+        let lissajousSeed = 0;
 
-        function resize() {
-            mainCanvas.width = mainCanvas.clientWidth;
-            mainCanvas.height = mainCanvas.clientHeight;
-            timelineCanvas.width = timelineCanvas.clientWidth;
-            timelineCanvas.height = timelineCanvas.clientHeight;
-        }
-        window.onresize = resize;
-        resize();
+        // Shift Lissajous pattern every 5 seconds
+        setInterval(() => { lissajousSeed = Math.random() * 100; }, 5000);
 
-        function initAudio() {
+        function init() {
             if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 2048;
             
-            source = audioCtx.createMediaElementSource(audioPlayer);
-
-            // FX Nodes
+            source = audioCtx.createMediaElementSource(audio);
+            gainNode = audioCtx.createGain();
             bassNode = audioCtx.createBiquadFilter();
             bassNode.type = "lowshelf";
-            bassNode.frequency.value = 200;
-
             crushNode = audioCtx.createWaveShaper();
-
-            source.connect(bassNode);
-            bassNode.connect(crushNode);
-            crushNode.connect(analyser);
-            analyser.connect(audioCtx.destination);
-        }
-
-        function makeDistortionCurve(amount) {
-            let k = amount * 10, n = 44100, curve = new Float32Array(n);
-            for (let i=0; i<n; i++) {
-                let x = i * 2 / n - 1;
-                curve[i] = (3 + k) * x * 20 * (Math.PI / 180) / (Math.PI + k * Math.abs(x));
-            }
-            return curve;
-        }
-
-        // Toggle EQ Panel
-        btnToggleEq.onclick = () => eqPanel.classList.toggle('open');
-
-        // FX Sliders
-        document.getElementById('fx-bass').oninput = (e) => {
-            const val = parseFloat(e.target.value);
-            document.getElementById('label-bass').innerText = `Bass Boost (${val.toFixed(1)})`;
-            if(bassNode) bassNode.gain.value = (val - 1) * 25;
-        };
-
-        document.getElementById('fx-crush').oninput = (e) => {
-            const val = parseFloat(e.target.value);
-            document.getElementById('label-crush').innerText = `Bit Crush (${val.toFixed(1)})`;
-            if(crushNode) crushNode.curve = makeDistortionCurve(val - 1);
-        };
-
-        document.getElementById('fx-pitch').oninput = (e) => {
-            const val = parseFloat(e.target.value);
-            document.getElementById('label-pitch').innerText = `Pitch / Speed (${val.toFixed(1)})`;
-            audioPlayer.playbackRate = val;
-        };
-
-        document.getElementById('btn-wacky').onclick = () => {
-            const r = (min, max) => Math.random() * (max - min) + min;
-            document.getElementById('fx-pitch').value = r(0.5, 3);
-            document.getElementById('fx-bass').value = r(0.1, 5);
-            document.getElementById('fx-crush').value = r(0.1, 5);
-            glowColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-            document.getElementById('color-picker').value = glowColor;
-            // Trigger updates
-            document.getElementById('fx-pitch').dispatchEvent(new Event('input'));
-            document.getElementById('fx-bass').dispatchEvent(new Event('input'));
-            document.getElementById('fx-crush').dispatchEvent(new Event('input'));
-        };
-
-        // File handling
-        document.getElementById('audio-upload').onchange = function(e) {
-            initAudio();
-            audioPlayer.src = URL.createObjectURL(e.target.files[0]);
-            audioPlayer.play();
-            playBtn.innerText = "⏸";
-            timelineCtx.clearRect(0, 0, timelineCanvas.width, timelineCanvas.height);
-            draw();
-        };
-
-        playBtn.onclick = () => {
-            audioPlayer.paused ? audioPlayer.play() : audioPlayer.pause();
-            playBtn.innerText = audioPlayer.paused ? "▶" : "⏸";
-        };
-
-        document.getElementById('btn-remove').onclick = () => {
-            audioPlayer.pause(); audioPlayer.src = "";
-            mainCtx.clearRect(0,0,mainCanvas.width, mainCanvas.height);
-            timelineCtx.clearRect(0,0,timelineCanvas.width, timelineCanvas.height);
-        };
-
-        document.getElementById('mode-selector').onchange = (e) => visualizerMode = e.target.value;
-        document.getElementById('color-picker').oninput = (e) => glowColor = e.target.value;
-        document.getElementById('line-weight').oninput = (e) => lineWeight = e.target.value;
-
-        // Scrubber Sync
-        audioPlayer.ontimeupdate = () => {
-            if(!isNaN(audioPlayer.duration)){
-                scrubber.max = audioPlayer.duration;
-                scrubber.value = audioPlayer.currentTime;
-            }
-        };
-        scrubber.oninput = () => audioPlayer.currentTime = scrubber.value;
-
-        function draw() {
-            animationId = requestAnimationFrame(draw);
-            const bufferLength = analyser.frequencyBinCount;
-            const dataFreq = new Uint8Array(bufferLength);
-            const dataTime = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataFreq);
-            analyser.getByteTimeDomainData(dataTime);
-
-            // 1. Main Stage Draw
-            mainCtx.fillStyle = 'rgba(5, 5, 5, 0.2)';
-            mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
             
-            mainCtx.shadowBlur = 15;
-            mainCtx.shadowColor = glowColor;
-            mainCtx.strokeStyle = glowColor;
-            mainCtx.lineWidth = lineWeight;
+            // Reverb Simulation
+            reverbNode = audioCtx.createConvolver(); 
+            let length = audioCtx.sampleRate * 2, impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
+            for(let i=0; i<length; i++) { impulse.getChannelData(0)[i] = (Math.random()*2-1) * Math.pow(1-i/length, 2); }
+            reverbNode.buffer = impulse;
+            
+            // Autotune Filter (High-Q Peaking filter that follows pitch)
+            autotuneNode = audioCtx.createBiquadFilter();
+            autotuneNode.type = "peaking";
+            autotuneNode.Q.value = 10;
+            autotuneNode.gain.value = 0;
+
+            source.connect(bassNode).connect(crushNode).connect(autotuneNode).connect(gainNode).connect(analyser).connect(audioCtx.destination);
+        }
+
+        // Logic for Bit Crusher
+        function setCrush(val) {
+            let k = val * 20, n = 44100, curve = new Float32Array(n);
+            for (let i=0; i<n; i++) { let x = i*2/n-1; curve[i] = (3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x)); }
+            crushNode.curve = curve;
+        }
+
+        // Sidebar Events
+        document.getElementById('audio-upload').onchange = (e) => {
+            init(); audio.src = URL.createObjectURL(e.target.files[0]);
+            audio.play(); document.getElementById('play-pause').innerText = "⏸";
+            render();
+        };
+
+        document.getElementById('toggle-fx').onclick = () => document.getElementById('fx-panel').classList.toggle('open');
+        document.getElementById('mode-selector').onchange = (e) => visualMode = e.target.value;
+        document.getElementById('color-picker').oninput = (e) => color = e.target.value;
+        document.getElementById('line-weight').oninput = (e) => { weight = e.target.value; document.getElementById('lbl-weight').innerText = `Line Thickness: ${weight}`; };
+        document.getElementById('glow-dist').oninput = (e) => { glow = e.target.value; document.getElementById('lbl-glow').innerText = `Glow Intensity: ${glow}`; };
+        document.getElementById('line-dist').oninput = (e) => { spacing = parseInt(e.target.value); document.getElementById('lbl-dist').innerText = `Line Spacing: ${spacing}`; };
+        
+        // FX Audio Events
+        document.getElementById('fx-vol').oninput = (e) => gainNode.gain.value = e.target.value;
+        document.getElementById('fx-bass').oninput = (e) => bassNode.gain.value = (e.target.value - 1) * 25;
+        document.getElementById('fx-crush').oninput = (e) => setCrush(e.target.value - 1);
+        document.getElementById('fx-pitch').oninput = (e) => audio.preservesPitch = false || (audio.playbackRate = e.target.value);
+        document.getElementById('fx-speed').oninput = (e) => { audio.preservesPitch = true; audio.playbackRate = e.target.value; };
+        document.getElementById('fx-autotune').onchange = (e) => autotuneNode.gain.value = e.target.checked ? 15 : 0;
+
+        document.getElementById('play-pause').onclick = () => { audio.paused ? audio.play() : audio.pause(); document.getElementById('play-pause').innerText = audio.paused ? "▶" : "⏸"; };
+        document.getElementById('scrubber').oninput = (e) => audio.currentTime = e.target.value;
+        audio.ontimeupdate = () => { if(!isNaN(audio.duration)) { scrubber.max = audio.duration; scrubber.value = audio.currentTime; } };
+
+        function render() {
+            requestAnimationFrame(render);
+            const freq = new Uint8Array(analyser.frequencyBinCount);
+            const time = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(freq);
+            analyser.getByteTimeDomainData(time);
+
+            // Dynamic Autotune (Detecting dominant frequency)
+            if(document.getElementById('fx-autotune').checked) {
+                let maxIdx = freq.indexOf(Math.max(...freq));
+                autotuneNode.frequency.value = maxIdx * (audioCtx.sampleRate / analyser.fftSize);
+            }
+
+            mainCanvas.width = mainCanvas.clientWidth; mainCanvas.height = mainCanvas.clientHeight;
+            mCtx.fillStyle = 'rgba(5,5,5,0.2)'; mCtx.fillRect(0,0,mainCanvas.width, mainCanvas.height);
+            
+            mCtx.strokeStyle = color; mCtx.lineWidth = weight;
+            mCtx.shadowBlur = 15 * glow; mCtx.shadowColor = color;
+            mCtx.beginPath();
 
             const w = mainCanvas.width, h = mainCanvas.height;
-            mainCtx.beginPath();
 
-            if (visualizerMode === 'lissajous') {
-                for(let i = 0; i < bufferLength; i++) {
-                    const x = (dataTime[i] / 128.0) * (w / 3) + (w / 3);
-                    const y = (dataTime[(i + 10) % bufferLength] / 128.0) * (h / 3) + (h / 3);
-                    if(i === 0) mainCtx.moveTo(x, y); else mainCtx.lineTo(x, y);
+            if(visualMode === 'lissajous') {
+                for(let i=0; i<time.length; i++) {
+                    const x = (time[i]/128.0) * (w/3) + (w/3) + Math.sin(i + lissajousSeed)*10;
+                    const y = (time[(i+20)%time.length]/128.0) * (h/3) + (h/3) + Math.cos(i + lissajousSeed)*10;
+                    if(i===0) mCtx.moveTo(x,y); else mCtx.lineTo(x,y);
                 }
-            } else if (visualizerMode === '0') {
-                let x = 0, slice = w / bufferLength;
-                for(let i = 0; i < bufferLength; i++) {
-                    const v = dataTime[i] / 128.0;
-                    const y = v * h / 2;
-                    if(i === 0) mainCtx.moveTo(x, y); else mainCtx.lineTo(x, y);
-                    x += slice;
+            } else if(visualMode === 'bars') {
+                let x = 0, barW = (w / freq.length) * 2.5;
+                for(let i=0; i<freq.length; i++) {
+                    let barH = freq[i] * (h/255);
+                    mCtx.fillStyle = color;
+                    mCtx.fillRect(x, h - barH, barW, barH);
+                    x += barW + spacing;
                 }
-            } else if (visualizerMode === '1') {
-                const barWidth = (w / bufferLength) * 2.5;
-                let x = 0;
-                for(let i = 0; i < bufferLength; i++) {
-                    const barHeight = dataFreq[i] * (h / 255) * 0.8;
-                    mainCtx.fillStyle = glowColor;
-                    mainCtx.fillRect(x, h - barHeight, barWidth, barHeight);
-                    x += barWidth + 2;
+            } else if(visualMode === 'circular') {
+                const radius = Math.min(w,h) * 0.25;
+                for(let i=0; i<freq.length; i += (spacing + 1)) {
+                    const angle = (i / freq.length) * Math.PI * 2;
+                    const len = freq[i] * 0.8;
+                    mCtx.moveTo(w/2 + Math.cos(angle)*radius, h/2 + Math.sin(angle)*radius);
+                    mCtx.lineTo(w/2 + Math.cos(angle)*(radius+len), h/2 + Math.sin(angle)*(radius+len));
                 }
-            } else if (visualizerMode === '2') {
-                const radius = Math.min(w, h) * 0.2;
-                for(let i = 0; i < bufferLength; i += 4) {
-                    const barHeight = dataFreq[i] * 0.6;
-                    const rads = Math.PI * 2 * (i / bufferLength);
-                    mainCtx.moveTo(w/2 + Math.cos(rads)*radius, h/2 + Math.sin(rads)*radius);
-                    mainCtx.lineTo(w/2 + Math.cos(rads)*(radius+barHeight), h/2 + Math.sin(rads)*(radius+barHeight));
-                }
-            } else if (visualizerMode === '3') {
-                let x = 0, slice = w / bufferLength;
-                for(let i = 0; i < bufferLength; i++) {
-                    const v = (dataTime[i] - 128) / 128.0;
-                    const offset = v * (h * 0.4);
-                    mainCtx.moveTo(x, h/2); mainCtx.lineTo(x, h/2 + offset);
-                    mainCtx.moveTo(x, h/2); mainCtx.lineTo(x, h/2 - offset);
-                    x += slice;
+            } else if(visualMode === 'wave') {
+                let x = 0, step = w / time.length;
+                for(let i=0; i<time.length; i++) {
+                    const y = (time[i]/128.0) * (h/2);
+                    if(i===0) mCtx.moveTo(x,y); else mCtx.lineTo(x,y);
+                    x += step;
                 }
             }
-            mainCtx.stroke();
-            mainCtx.shadowBlur = 0;
+            mCtx.stroke();
 
-            // 2. Timeline Draw (Building as it goes)
-            if (!audioPlayer.paused && audioPlayer.duration) {
-                const progress = audioPlayer.currentTime / audioPlayer.duration;
-                const currentX = progress * timelineCanvas.width;
-                let sum = 0;
-                for(let i = 0; i < 100; i++) sum += dataFreq[i];
-                const peakHeight = (sum / 100 / 255) * timelineCanvas.height;
-                
-                timelineCtx.strokeStyle = glowColor;
-                timelineCtx.lineWidth = 1;
-                timelineCtx.beginPath();
-                timelineCtx.moveTo(currentX, (timelineCanvas.height/2) - (peakHeight/2));
-                timelineCtx.lineTo(currentX, (timelineCanvas.height/2) + (peakHeight/2));
-                timelineCtx.stroke();
+            // Timeline Trace
+            if(!audio.paused) {
+                timeCanvas.width = timeCanvas.clientWidth; timeCanvas.height = timeCanvas.clientHeight;
+                const prog = (audio.currentTime / audio.duration) * timeCanvas.width;
+                const peak = (freq[5] / 255) * timeCanvas.height;
+                tCtx.strokeStyle = color; tCtx.lineWidth = 1;
+                tCtx.beginPath();
+                tCtx.moveTo(prog, timeCanvas.height/2 - peak/2);
+                tCtx.lineTo(prog, timeCanvas.height/2 + peak/2);
+                tCtx.stroke();
             }
         }
     </script>
