@@ -210,24 +210,24 @@
         <h2 style="margin:0;flex:1">Studio FX</h2>
     </div>
 
-    <label for="audio-upload" class="btn upload-label">⬆ Upload audio file</label>
+    <label for="audio-upload" class="btn upload-label">⬆ Upload Audio File</label>
     <input type="file" id="audio-upload" accept=".mp3,.ogg,.wav,.flac" />
 
     <button id="btn-record" class="btn">
-        <span class="rec-dot"></span>Record audio
+        <span class="rec-dot"></span>Record Video / Audio
     </button>
 
     <button id="btn-capture" class="btn">
-        <span class="capture-dot"></span>Capture app / tab audio
+        <span class="capture-dot"></span>Capture app / Tab audio
     </button>
-    <p class="tip">Share a browser tab or window, tick "Share audio" in the picker, then hit OK.</p>
+    <p class="tip">Share a browser tab or window, click "Share audio" in the picker, then click a window/tab and share.</p>
 
     <div class="section-divider"></div>
 
     <div class="control-group">
-        <label>Visual mode</label>
+        <label>Visual Modes</label>
         <select id="mode-selector">
-            <option value="lissajous">Lissajous (XY Logo)</option>
+            <option value="lissajous">Lissajous (XY)</option>
             <option value="0">Chaotic Waveform</option>
             <option value="1">Frequency Circles</option>
             <option value="2">Circular Burst</option>
@@ -236,28 +236,28 @@
     </div>
 
     <div class="control-group">
-        <label>Glow color</label>
+        <label>Glow Color</label>
         <input type="color" id="color-picker" value="#F4EBE2">
     </div>
 
     <div class="control-group">
-        <label><span>Line thickness</span><span id="val-thickness" class="val-display">1.00</span></label>
+        <label><span>Line Thickness</span><span id="val-thickness" class="val-display">1.00</span></label>
         <input type="range" id="fx-thickness" min="0.1" max="5.0" step="0.01" value="1.0">
     </div>
     <div class="control-group">
-        <label><span>Glow distance</span><span id="val-glow" class="val-display">1.00</span></label>
+        <label><span>Glow Distance</span><span id="val-glow" class="val-display">1.00</span></label>
         <input type="range" id="fx-glow" min="0.1" max="5.0" step="0.01" value="1.0">
     </div>
 
     <!-- Lissajous density — hidden for other modes -->
     <div class="control-group liss-only" id="liss-density-group">
-        <label><span>Liss density</span><span id="val-liss-density" class="val-display">15</span></label>
+        <label><span>Liss Density</span><span id="val-liss-density" class="val-display">15</span></label>
         <input type="range" id="fx-liss-density" min="1" max="512" step="1" value="15">
     </div>
 
     <!-- Circular Burst only -->
     <div class="control-group disabled" id="sep-group">
-        <label><span>Line count</span><span id="val-separation" class="val-display">15</span></label>
+        <label><span>Line Count</span><span id="val-separation" class="val-display">15</span></label>
         <input type="range" id="fx-separation" min="10" max="2500" step="1" value="15">
     </div>
 
@@ -271,19 +271,19 @@
             <input type="range" id="fx-volume" min="0.1" max="5.0" step="0.01" value="1.0">
         </div>
         <div class="control-group">
-            <label><span>Bass drive</span><span id="val-bass" class="val-display">1.00</span></label>
+            <label><span>Bass Drive</span><span id="val-bass" class="val-display">1.00</span></label>
             <input type="range" id="fx-bass" min="0.1" max="5.0" step="0.01" value="1.0">
         </div>
         <div class="control-group">
-            <label><span>Reverb</span><span id="val-reverb" class="val-display">0.10</span></label>
+            <label><span>Reverb Control</span><span id="val-reverb" class="val-display">0.10</span></label>
             <input type="range" id="fx-reverb" min="0.1" max="5.0" step="0.01" value="0.1">
         </div>
         <div class="control-group">
-            <label><span>Bit crush</span><span id="val-crush" class="val-display">1.00</span></label>
+            <label><span>Bit Crusher</span><span id="val-crush" class="val-display">1.00</span></label>
             <input type="range" id="fx-crush" min="0.1" max="5.0" step="0.1" value="1.0">
         </div>
         <div class="control-group">
-            <label><span>Speed</span><span id="val-speed" class="val-display">1.00</span></label>
+            <label><span>Speed Control</span><span id="val-speed" class="val-display">1.00</span></label>
             <input type="range" id="fx-speed" min="0.1" max="5.0" step="0.01" value="1.0">
         </div>
         <button id="btn-reset-fx" class="btn btn-reset">↺ Reset all audio FX</button>
@@ -476,26 +476,36 @@ function startRecording() {
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Tap the post-FX signal into a stream destination
-    const dest     = audioCtx.createMediaStreamDestination();
-    analyser.connect(dest);
+    // ── Video: grab the canvas at 60fps ──
+    const canvasStream = mainCanvas.captureStream(60);
 
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : 'audio/webm';
+    // ── Audio: tap post-FX signal into a MediaStream ──
+    const audioDest  = audioCtx.createMediaStreamDestination();
+    analyser.connect(audioDest);
 
-    mediaRecorder  = new MediaRecorder(dest.stream, { mimeType });
-    recordChunks   = [];
+    // ── Combine: inject the audio track into the canvas stream ──
+    const audioTrack = audioDest.stream.getAudioTracks()[0];
+    if (audioTrack) canvasStream.addTrack(audioTrack);
+
+    // Pick best supported codec (VP9+Opus gives best quality/size)
+    const mimeType = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+    ].find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
+
+    mediaRecorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 8_000_000 });
+    recordChunks  = [];
 
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordChunks.push(e.data); };
 
     mediaRecorder.onstop = () => {
-        analyser.disconnect(dest);
+        analyser.disconnect(audioDest);
         const blob = new Blob(recordChunks, { type: mimeType });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
         a.href     = url;
-        a.download = `recording-${Date.now()}.webm`;
+        a.download = `visualizer-${Date.now()}.webm`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -503,14 +513,14 @@ function startRecording() {
     mediaRecorder.start();
     isRecording = true;
     btnRecord.classList.add('recording');
-    btnRecord.innerHTML = '<span class="rec-dot"></span>Stop & save';
+    btnRecord.innerHTML = '<span class="rec-dot"></span>Stop & save video';
 }
 
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     isRecording = false;
     btnRecord.classList.remove('recording');
-    btnRecord.innerHTML = '<span class="rec-dot"></span>Record audio';
+    btnRecord.innerHTML = '<span class="rec-dot"></span>Record video';
 }
 
 // ── Capture app / tab audio ──
