@@ -252,6 +252,29 @@ canvas { display: block; }
     50%      { box-shadow: 0 0 0 4px rgba(255,80,80,0.12); }
 }
 
+.btn-mic {
+    border-color: rgba(100,255,160,0.2);
+    color: rgba(150,255,190,0.7);
+    background: rgba(60,255,130,0.04);
+}
+.btn-mic:hover {
+    border-color: rgba(100,255,160,0.42);
+    color: rgba(180,255,210,1);
+    background: rgba(60,255,130,0.1);
+    box-shadow: 0 0 30px rgba(60,255,130,0.06);
+}
+.btn-mic.active {
+    border-color: rgba(100,255,160,0.55);
+    color: rgba(180,255,210,1);
+    background: rgba(60,255,130,0.13);
+    animation: pulse-mic 2s ease-in-out infinite;
+}
+@keyframes pulse-mic {
+    0%,100% { box-shadow: 0 0 0 0 rgba(60,255,130,0); }
+    50%      { box-shadow: 0 0 0 5px rgba(60,255,130,0.1); }
+}
+.btn-mic.active .dot { animation: blink 1.2s step-start infinite; }
+
 .btn-reset {
     border-color: rgba(255,80,60,0.2);
     color: rgba(255,150,130,0.7);
@@ -495,6 +518,19 @@ input[type="file"] { display: none; }
         <button id="btn-record" class="btn btn-record"><span class="dot"></span>Record video</button>
         <button id="btn-capture" class="btn btn-capture"><span class="dot"></span>Capture app / tab</button>
         <p class="tip">Share a tab or window, tick "Share audio" in the picker.</p>
+    </div>
+
+    <div class="panel-section">
+        <span class="section-label">Microphone</span>
+        <button id="btn-mic" class="btn btn-mic"><span class="dot"></span>Enable microphone</button>
+        <div id="mic-device-row" class="ctrl-row" style="display:none;">
+            <span class="ctrl-label">Device</span>
+            <select id="mic-device-select"></select>
+        </div>
+        <div id="mic-vol-row" class="ctrl-row" style="display:none;">
+            <label class="ctrl-label"><span>Mic gain</span><span class="ctrl-val" id="val-mic-gain">1.00</span></label>
+            <input type="range" id="fx-mic-gain" min="0.0" max="4.0" step="0.01" value="1.0">
+        </div>
     </div>
 
     <div class="panel-section">
@@ -753,27 +789,11 @@ btnCapture.addEventListener('click', async () => {
         }
         if (!audioPlayer.paused) { audioPlayer.pause(); playBtn.textContent='▶'; }
         initAudioGraph(); if(audioCtx.state==='suspended') await audioCtx.resume();
-
-        // Connect app/tab audio
         captureStream=stream; captureSource=audioCtx.createMediaStreamSource(captureStream);
         connectToGraph(captureSource); inputMode='capture'; monitorGain.gain.value=0;
-
-        // Also try to grab the mic — non-fatal if denied
-        try {
-            micStream = await navigator.mediaDevices.getUserMedia({
-                audio:{echoCancellation:true, noiseSuppression:true, sampleRate:44100}
-            });
-            micSource = audioCtx.createMediaStreamSource(micStream);
-            connectToGraph(micSource);
-            sourceBadge.textContent='● Live + Mic';
-        } catch(micErr) {
-            console.warn('Mic unavailable:', micErr.message);
-            sourceBadge.textContent='● Live';
-        }
-
         btnCapture.classList.add('active'); btnCapture.innerHTML='<span class="dot"></span>Stop capture';
         trackName.textContent = audioTracks[0].label||'Live input';
-        sourceBadge.classList.add('visible');
+        updateSourceBadge();
         timeDisplay.textContent='Live';
         audioTracks[0].addEventListener('ended',stopCapture);
         if (!animationId) draw();
@@ -781,14 +801,99 @@ btnCapture.addEventListener('click', async () => {
 });
 function stopCapture() {
     captureStream?.getTracks().forEach(t=>t.stop()); captureSource?.disconnect();
-    micStream?.getTracks().forEach(t=>t.stop()); micSource?.disconnect();
-    captureStream=captureSource=micStream=micSource=null;
-    inputMode='file'; monitorGain.gain.value=1;
+    captureStream=captureSource=null; inputMode='file'; monitorGain.gain.value=1;
     btnCapture.classList.remove('active'); btnCapture.innerHTML='<span class="dot"></span>Capture app / tab';
-    sourceBadge.classList.remove('visible');
+    updateSourceBadge();
     trackName.textContent=audioPlayer.src?(audioPlayer.src.split('/').pop()||'File'):'No track loaded';
     timeDisplay.textContent=audioPlayer.src?`${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`:'0:00 / 0:00';
 }
+
+// ── mic (independent) ──
+const btnMic         = document.getElementById('btn-mic');
+const micDeviceRow   = document.getElementById('mic-device-row');
+const micVolRow      = document.getElementById('mic-vol-row');
+const micDeviceSel   = document.getElementById('mic-device-select');
+let micGainNode = null;
+
+function updateSourceBadge() {
+    const hasCapture = !!captureStream;
+    const hasMic     = !!micStream;
+    if (hasCapture && hasMic)      { sourceBadge.textContent='● Live + Mic'; sourceBadge.classList.add('visible'); }
+    else if (hasCapture)           { sourceBadge.textContent='● Live';       sourceBadge.classList.add('visible'); }
+    else if (hasMic)               { sourceBadge.textContent='● Mic';        sourceBadge.classList.add('visible'); }
+    else                           { sourceBadge.classList.remove('visible'); }
+}
+
+async function populateMicDevices() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const mics = devices.filter(d => d.kind === 'audioinput');
+        micDeviceSel.innerHTML = '';
+        mics.forEach((d, i) => {
+            const opt = document.createElement('option');
+            opt.value = d.deviceId;
+            opt.textContent = d.label || `Microphone ${i+1}`;
+            micDeviceSel.appendChild(opt);
+        });
+        micDeviceRow.style.display = mics.length > 1 ? 'flex' : 'none';
+    } catch(e) { micDeviceRow.style.display = 'none'; }
+}
+
+async function startMic(deviceId) {
+    const constraints = { audio: { deviceId: deviceId ? {exact:deviceId} : undefined,
+        echoCancellation: true, noiseSuppression: true } };
+    micStream = await navigator.mediaDevices.getUserMedia(constraints);
+    initAudioGraph(); if(audioCtx.state==='suspended') await audioCtx.resume();
+    micGainNode = audioCtx.createGain();
+    micGainNode.gain.value = parseFloat(document.getElementById('fx-mic-gain').value);
+    micSource = audioCtx.createMediaStreamSource(micStream);
+    micSource.connect(micGainNode); micGainNode.connect(preAnalyser); micGainNode.connect(volumeNode);
+    if (!animationId) draw();
+}
+
+function stopMic() {
+    micStream?.getTracks().forEach(t=>t.stop());
+    micSource?.disconnect(); micGainNode?.disconnect();
+    micStream=micSource=micGainNode=null;
+}
+
+btnMic.addEventListener('click', async () => {
+    if (micStream) {
+        stopMic();
+        btnMic.classList.remove('active');
+        btnMic.innerHTML='<span class="dot"></span>Enable microphone';
+        micVolRow.style.display='none';
+        micDeviceRow.style.display='none';
+        updateSourceBadge(); return;
+    }
+    try {
+        // First get permission so enumerateDevices returns labels
+        await navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop()));
+        await populateMicDevices();
+        await startMic(micDeviceSel.value || undefined);
+        btnMic.classList.add('active');
+        btnMic.innerHTML='<span class="dot"></span>Stop microphone';
+        micVolRow.style.display='flex';
+        updateSourceBadge();
+    } catch(err) {
+        alert('Microphone access denied or unavailable.');
+    }
+});
+
+// Switch mic device while active
+micDeviceSel.addEventListener('change', async () => {
+    if (!micStream) return;
+    stopMic();
+    await startMic(micDeviceSel.value);
+    updateSourceBadge();
+});
+
+// Mic gain slider
+document.getElementById('fx-mic-gain').oninput = e => {
+    const v = parseFloat(e.target.value);
+    document.getElementById('val-mic-gain').innerText = v.toFixed(2);
+    if (micGainNode) micGainNode.gain.value = v;
+};
 
 // ── sliders ──
 function bindSlider(id, cb) {
