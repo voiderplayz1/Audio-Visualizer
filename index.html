@@ -638,6 +638,7 @@ const sourceBadge      = document.getElementById('source-badge');
 // ── audio nodes ──
 let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
+let micStream = null, micSource = null;
 let bassNode, crushNode, convolverNode, dryGain, wetGain, volumeNode, monitorGain;
 
 // ── recorder ──
@@ -752,11 +753,27 @@ btnCapture.addEventListener('click', async () => {
         }
         if (!audioPlayer.paused) { audioPlayer.pause(); playBtn.textContent='▶'; }
         initAudioGraph(); if(audioCtx.state==='suspended') await audioCtx.resume();
+
+        // Connect app/tab audio
         captureStream=stream; captureSource=audioCtx.createMediaStreamSource(captureStream);
         connectToGraph(captureSource); inputMode='capture'; monitorGain.gain.value=0;
+
+        // Also try to grab the mic — non-fatal if denied
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+                audio:{echoCancellation:true, noiseSuppression:true, sampleRate:44100}
+            });
+            micSource = audioCtx.createMediaStreamSource(micStream);
+            connectToGraph(micSource);
+            sourceBadge.textContent='● Live + Mic';
+        } catch(micErr) {
+            console.warn('Mic unavailable:', micErr.message);
+            sourceBadge.textContent='● Live';
+        }
+
         btnCapture.classList.add('active'); btnCapture.innerHTML='<span class="dot"></span>Stop capture';
         trackName.textContent = audioTracks[0].label||'Live input';
-        sourceBadge.textContent='● Live'; sourceBadge.classList.add('visible');
+        sourceBadge.classList.add('visible');
         timeDisplay.textContent='Live';
         audioTracks[0].addEventListener('ended',stopCapture);
         if (!animationId) draw();
@@ -764,7 +781,9 @@ btnCapture.addEventListener('click', async () => {
 });
 function stopCapture() {
     captureStream?.getTracks().forEach(t=>t.stop()); captureSource?.disconnect();
-    captureStream=captureSource=null; inputMode='file'; monitorGain.gain.value=1;
+    micStream?.getTracks().forEach(t=>t.stop()); micSource?.disconnect();
+    captureStream=captureSource=micStream=micSource=null;
+    inputMode='file'; monitorGain.gain.value=1;
     btnCapture.classList.remove('active'); btnCapture.innerHTML='<span class="dot"></span>Capture app / tab';
     sourceBadge.classList.remove('visible');
     trackName.textContent=audioPlayer.src?(audioPlayer.src.split('/').pop()||'File'):'No track loaded';
