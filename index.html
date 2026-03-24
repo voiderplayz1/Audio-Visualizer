@@ -555,7 +555,7 @@ input[type="file"] { display: none; }
 
         <div class="color-row">
             <span class="ctrl-label">Particle color</span>
-            <input type="color" id="particle-color-picker" value="#ffb3ff">
+            <input type="color" id="particle-color-picker" value="#ffffff">
         </div>
 
         <div class="color-row">
@@ -701,7 +701,7 @@ const state = {
     glow: 1,
     lineCount: 15,
     lissOffset: 15,
-    particleColor: '#ffb3ff',
+    particleColor: '#ffffff',
     particlesEnabled: false
 };
 
@@ -714,6 +714,7 @@ const FX_DEFAULTS = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 // Smoothed visual scale values to prevent size jumping when sliders change
 let smoothVolScale = 1;
 let smoothBassWarp = 1;
+let smoothBass = 1;
 
 // ── parse hex color to r,g,b ──
 function hexToRgb(hex) {
@@ -1146,9 +1147,11 @@ function draw(){
     // Smoothly lerp visual scale values to prevent jarring size jumps when sliders move
     smoothVolScale += (fxParams.volume - smoothVolScale) * 0.07;
     smoothBassWarp += ((1 + (fxParams.bass - 1) * 0.6) - smoothBassWarp) * 0.07;
+    smoothBass     += (fxParams.bass - smoothBass) * 0.07;
 
     const volScale = smoothVolScale;
     const bassWarp = smoothBassWarp;
+    const sBass    = smoothBass;
     const reverbGlow = 1 + (fxParams.reverb - 0.1) * 0.4;
     const crushJitter = Math.max(0, (fxParams.crush - 1) * 2);
     const speedOsc = drawPhase;
@@ -1238,7 +1241,7 @@ function draw(){
         const baseR=(w/bufLen)*3*state.thickness; let x=0;
         for(let i=0;i<bufLen;i+=2){
             const v=vFreq[i]/255;
-            const bassBoost = i < bufLen*0.25 ? 1 + (fxParams.bass-1)*1.2 : 1;
+            const bassBoost = i < bufLen*0.25 ? 1 + (sBass-1)*1.2 : 1;
             const r=(baseR + v*40*state.thickness) * volScale * bassBoost;
             const yDrift = Math.sin(speedOsc*0.4 + i*0.02) * 20 * fxParams.speed;
             const y=h - v*h*0.7 - 50 + yDrift;
@@ -1250,7 +1253,7 @@ function draw(){
 
     } else if(state.mode==='2'){
         const baseRadius=Math.min(w,h)*0.25*volScale;
-        const bassBreath = 1 + (fxParams.bass-1) * 0.35 * Math.sin(speedOsc * 2);
+        const bassBreath = 1 + (sBass-1) * 0.35 * Math.sin(speedOsc * 2);
         const radius = baseRadius * bassBreath;
         const step=Math.max(1,Math.round(bufLen/state.lineCount));
         const cx=w/2, cy=h/2;
@@ -1283,35 +1286,86 @@ function draw(){
         mainCtx.stroke();
     } else if(state.mode==='4'){
         const cx = w/2, cy = h/2;
-        const baseRadius = Math.min(w, h) * 0.18 * volScale;
 
-        // Wavy reactive ring
-        mainCtx.shadowBlur = 15 * state.glow;
-        mainCtx.shadowColor = '#ffffff';
-        mainCtx.strokeStyle = '#ffffff';
-        mainCtx.lineWidth = 4 * state.thickness;
-        mainCtx.lineJoin = 'miter';
+        // Beat energy: average of low-mid frequencies for pulse
+        let beatEnergy = 0;
+        const beatBins = Math.floor(bufLen * 0.15);
+        for(let i = 0; i < beatBins; i++) beatEnergy += vFreq[i] / 255;
+        beatEnergy = (beatEnergy / beatBins) * volScale;
+
+        // Planet radius pulses with beat
+        const basePlanetR = Math.min(w, h) * 0.19;
+        const planetR = basePlanetR * (0.88 + beatEnergy * 0.28) * volScale;
+
+        // Ring dimensions — tilted ellipse like Saturn
+        const ringA = planetR * 2.05;   // horizontal semi-axis
+        const ringB = planetR * 0.42;   // vertical semi-axis (perspective tilt)
+        const tiltAngle = -0.22;        // slight CCW tilt
+
+        // ── Back half of ring (behind planet) ──
+        mainCtx.save();
+        mainCtx.translate(cx, cy);
+        mainCtx.rotate(tiltAngle);
         mainCtx.beginPath();
-        for(let i=0; i < bufLen; i++){
-            const nx = (vTime[i] - 128) / 128;
-            const waveIntensity = bassY(nx) * 50 * volScale;
-            const r = baseRadius + 20 + waveIntensity;
-            const rads = Math.PI * 2 * (i / bufLen);
-            const x = cx + Math.cos(rads) * r;
-            const y = cy + Math.sin(rads) * r;
-            i === 0 ? mainCtx.moveTo(jitter(x), jitter(y)) : mainCtx.lineTo(jitter(x), jitter(y));
+        mainCtx.ellipse(0, 0, ringA, ringB, 0, 0, Math.PI); // bottom arc = back
+        // thick ring via multiple strokes
+        const ringColors = [
+            { w: planetR * 0.62, c: 'rgba(30,30,30,0.95)' },
+            { w: planetR * 0.44, c: 'rgba(90,90,90,0.85)' },
+            { w: planetR * 0.28, c: 'rgba(180,180,180,0.9)' },
+            { w: planetR * 0.13, c: 'rgba(255,255,255,1.0)' },
+        ];
+        for(const layer of ringColors) {
+            mainCtx.lineWidth = layer.w;
+            mainCtx.strokeStyle = layer.c;
+            mainCtx.shadowBlur = layer.w === planetR * 0.13 ? 18 * state.glow : 0;
+            mainCtx.shadowColor = '#ffffff';
+            mainCtx.stroke();
         }
-        mainCtx.closePath();
-        mainCtx.stroke();
+        mainCtx.restore();
 
-        // Solid central anchor circle
-        mainCtx.shadowBlur = 30 * state.glow;
+        // ── Planet ──
+        mainCtx.save();
+        mainCtx.shadowBlur = 35 * state.glow * (0.8 + beatEnergy * 0.5);
         mainCtx.shadowColor = state.color;
-        mainCtx.fillStyle = state.color;
+        // Radial gradient: bright highlight top-left, solid color body
+        const pg = mainCtx.createRadialGradient(
+            cx - planetR * 0.28, cy - planetR * 0.28, planetR * 0.04,
+            cx, cy, planetR
+        );
+        pg.addColorStop(0,   '#ffffff');
+        pg.addColorStop(0.35, state.color);
+        pg.addColorStop(1,   state.color + 'cc');
+        mainCtx.fillStyle = pg;
         mainCtx.beginPath();
-        const stableRadius = baseRadius * (1 + (fxParams.bass - 1) * 0.05);
-        mainCtx.arc(cx, cy, stableRadius, 0, Math.PI * 2);
+        mainCtx.arc(cx, cy, planetR, 0, Math.PI * 2);
         mainCtx.fill();
+        // Dark limb shadow on opposite side
+        const sg = mainCtx.createRadialGradient(cx + planetR*0.5, cy + planetR*0.5, 0, cx, cy, planetR);
+        sg.addColorStop(0,   'rgba(0,0,0,0)');
+        sg.addColorStop(0.55,'rgba(0,0,0,0)');
+        sg.addColorStop(1,   'rgba(0,0,0,0.6)');
+        mainCtx.shadowBlur = 0;
+        mainCtx.fillStyle = sg;
+        mainCtx.beginPath();
+        mainCtx.arc(cx, cy, planetR, 0, Math.PI * 2);
+        mainCtx.fill();
+        mainCtx.restore();
+
+        // ── Front half of ring (in front of planet) ──
+        mainCtx.save();
+        mainCtx.translate(cx, cy);
+        mainCtx.rotate(tiltAngle);
+        mainCtx.beginPath();
+        mainCtx.ellipse(0, 0, ringA, ringB, 0, Math.PI, Math.PI * 2); // top arc = front
+        for(const layer of ringColors) {
+            mainCtx.lineWidth = layer.w;
+            mainCtx.strokeStyle = layer.c;
+            mainCtx.shadowBlur = layer.w === planetR * 0.13 ? 18 * state.glow : 0;
+            mainCtx.shadowColor = '#ffffff';
+            mainCtx.stroke();
+        }
+        mainCtx.restore();
     }
 
     mainCtx.shadowBlur=0;
