@@ -544,7 +544,6 @@ input[type="file"] { display: none; }
                 <option value="1">Frequency Circles</option>
                 <option value="2">Circular Burst</option>
                 <option value="3">Symmetrical Wave</option>
-                <option value="4">2018-like</option>
             </select>
         </div>
 
@@ -554,18 +553,8 @@ input[type="file"] { display: none; }
         </div>
 
         <div class="color-row">
-            <span class="ctrl-label">Particle color</span>
-            <input type="color" id="particle-color-picker" value="#ffffff">
-        </div>
-
-        <div class="color-row">
             <span class="ctrl-label">Background color</span>
             <input type="color" id="bg-color-picker" value="#050505">
-        </div>
-
-        <div class="ctrl-row" style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 5px; margin-bottom: 5px;">
-            <span class="ctrl-label" style="margin: 0;">Background particles</span>
-            <input type="checkbox" id="fx-particles" style="width: auto; cursor: pointer;">
         </div>
 
         <div class="ctrl-row">
@@ -700,21 +689,12 @@ const state = {
     thickness: 1,
     glow: 1,
     lineCount: 15,
-    lissOffset: 15,
-    particleColor: '#ffffff',
-    particlesEnabled: false
+    lissOffset: 15
 };
-
-let particles = [];
 
 // Audio FX params — these drive both the audio graph AND the visuals
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 const FX_DEFAULTS = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
-
-// Smoothed visual scale values to prevent size jumping when sliders change
-let smoothVolScale = 1;
-let smoothBassWarp = 1;
-let smoothBass = 1;
 
 // ── parse hex color to r,g,b ──
 function hexToRgb(hex) {
@@ -948,10 +928,6 @@ document.getElementById('color-picker').oninput = e => {
     document.documentElement.style.setProperty('--accent',state.color);
 };
 
-// Particle settings listeners
-document.getElementById('particle-color-picker').oninput = e => state.particleColor = e.target.value;
-document.getElementById('fx-particles').onchange = e => state.particlesEnabled = e.target.checked;
-
 // ── background color picker ──
 document.getElementById('bg-color-picker').oninput = e => {
     state.bgColor = e.target.value;
@@ -1144,14 +1120,8 @@ function draw(){
     mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
     mainCtx.fillRect(0,0,w,h);
 
-    // Smoothly lerp visual scale values to prevent jarring size jumps when sliders move
-    smoothVolScale += (fxParams.volume - smoothVolScale) * 0.07;
-    smoothBassWarp += ((1 + (fxParams.bass - 1) * 0.6) - smoothBassWarp) * 0.07;
-    smoothBass     += (fxParams.bass - smoothBass) * 0.07;
-
-    const volScale = smoothVolScale;
-    const bassWarp = smoothBassWarp;
-    const sBass    = smoothBass;
+    const volScale = fxParams.volume;
+    const bassWarp = 1 + (fxParams.bass - 1) * 0.6;
     const reverbGlow = 1 + (fxParams.reverb - 0.1) * 0.4;
     const crushJitter = Math.max(0, (fxParams.crush - 1) * 2);
     const speedOsc = drawPhase;
@@ -1173,43 +1143,6 @@ function draw(){
             ? normalizedV * bassWarp * (1 + Math.abs(normalizedV) * 0.5)
             : normalizedV * bassWarp;
     }
-
-    // --- PARTICLE SYSTEM ---
-    if (state.particlesEnabled) {
-        if (Math.random() < 0.15 * fxParams.speed) {
-            particles.push({
-                x: w/2, y: h/2,
-                angle: Math.random() * Math.PI * 2,
-                speed: Math.random() * 2 + 0.5,
-                curve: (Math.random() - 0.5) * 0.04,
-                size: Math.random() * 2 + 1,
-                life: 0
-            });
-        }
-        mainCtx.shadowBlur = 8 * state.glow;
-        mainCtx.shadowColor = state.particleColor;
-        for (let i = particles.length - 1; i >= 0; i--) {
-            let p = particles[i];
-            p.angle += p.curve * fxParams.speed;
-            p.x += Math.cos(p.angle) * p.speed * fxParams.speed;
-            p.y += Math.sin(p.angle) * p.speed * fxParams.speed;
-            p.life += 0.005 * fxParams.speed;
-            let alpha = Math.max(0, 1 - (p.life / 2));
-            if (alpha <= 0 || p.x < 0 || p.x > w || p.y < 0 || p.y > h) {
-                particles.splice(i, 1); continue;
-            }
-            mainCtx.globalAlpha = alpha;
-            mainCtx.fillStyle = state.particleColor;
-            mainCtx.beginPath();
-            mainCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            mainCtx.fill();
-        }
-        mainCtx.globalAlpha = 1;
-        mainCtx.shadowBlur = (10 + reverbGlow * 8) * state.glow;
-        mainCtx.shadowColor = state.color;
-        mainCtx.fillStyle = state.color;
-    }
-    // --- END PARTICLE SYSTEM ---
 
     if(state.mode==='lissajous'){
         const lissLen=Math.min(vRaw.length,1024), offset=Math.min(state.lissOffset,lissLen-1);
@@ -1241,7 +1174,7 @@ function draw(){
         const baseR=(w/bufLen)*3*state.thickness; let x=0;
         for(let i=0;i<bufLen;i+=2){
             const v=vFreq[i]/255;
-            const bassBoost = i < bufLen*0.25 ? 1 + (sBass-1)*1.2 : 1;
+            const bassBoost = i < bufLen*0.25 ? 1 + (fxParams.bass-1)*1.2 : 1;
             const r=(baseR + v*40*state.thickness) * volScale * bassBoost;
             const yDrift = Math.sin(speedOsc*0.4 + i*0.02) * 20 * fxParams.speed;
             const y=h - v*h*0.7 - 50 + yDrift;
@@ -1253,7 +1186,7 @@ function draw(){
 
     } else if(state.mode==='2'){
         const baseRadius=Math.min(w,h)*0.25*volScale;
-        const bassBreath = 1 + (sBass-1) * 0.35 * Math.sin(speedOsc * 2);
+        const bassBreath = 1 + (fxParams.bass-1) * 0.35 * Math.sin(speedOsc * 2);
         const radius = baseRadius * bassBreath;
         const step=Math.max(1,Math.round(bufLen/state.lineCount));
         const cx=w/2, cy=h/2;
@@ -1284,88 +1217,6 @@ function draw(){
             x+=slice;
         }
         mainCtx.stroke();
-    } else if(state.mode==='4'){
-        const cx = w/2, cy = h/2;
-
-        // Beat energy: average of low-mid frequencies for pulse
-        let beatEnergy = 0;
-        const beatBins = Math.floor(bufLen * 0.15);
-        for(let i = 0; i < beatBins; i++) beatEnergy += vFreq[i] / 255;
-        beatEnergy = (beatEnergy / beatBins) * volScale;
-
-        // Planet radius pulses with beat
-        const basePlanetR = Math.min(w, h) * 0.19;
-        const planetR = basePlanetR * (0.88 + beatEnergy * 0.28) * volScale;
-
-        // Ring dimensions — tilted ellipse like Saturn
-        const ringA = planetR * 2.05;   // horizontal semi-axis
-        const ringB = planetR * 0.42;   // vertical semi-axis (perspective tilt)
-        const tiltAngle = -0.22;        // slight CCW tilt
-
-        // ── Back half of ring (behind planet) ──
-        mainCtx.save();
-        mainCtx.translate(cx, cy);
-        mainCtx.rotate(tiltAngle);
-        mainCtx.beginPath();
-        mainCtx.ellipse(0, 0, ringA, ringB, 0, 0, Math.PI); // bottom arc = back
-        // thick ring via multiple strokes
-        const ringColors = [
-            { w: planetR * 0.62, c: 'rgba(30,30,30,0.95)' },
-            { w: planetR * 0.44, c: 'rgba(90,90,90,0.85)' },
-            { w: planetR * 0.28, c: 'rgba(180,180,180,0.9)' },
-            { w: planetR * 0.13, c: 'rgba(255,255,255,1.0)' },
-        ];
-        for(const layer of ringColors) {
-            mainCtx.lineWidth = layer.w;
-            mainCtx.strokeStyle = layer.c;
-            mainCtx.shadowBlur = layer.w === planetR * 0.13 ? 18 * state.glow : 0;
-            mainCtx.shadowColor = '#ffffff';
-            mainCtx.stroke();
-        }
-        mainCtx.restore();
-
-        // ── Planet ──
-        mainCtx.save();
-        mainCtx.shadowBlur = 35 * state.glow * (0.8 + beatEnergy * 0.5);
-        mainCtx.shadowColor = state.color;
-        // Radial gradient: bright highlight top-left, solid color body
-        const pg = mainCtx.createRadialGradient(
-            cx - planetR * 0.28, cy - planetR * 0.28, planetR * 0.04,
-            cx, cy, planetR
-        );
-        pg.addColorStop(0,   '#ffffff');
-        pg.addColorStop(0.35, state.color);
-        pg.addColorStop(1,   state.color + 'cc');
-        mainCtx.fillStyle = pg;
-        mainCtx.beginPath();
-        mainCtx.arc(cx, cy, planetR, 0, Math.PI * 2);
-        mainCtx.fill();
-        // Dark limb shadow on opposite side
-        const sg = mainCtx.createRadialGradient(cx + planetR*0.5, cy + planetR*0.5, 0, cx, cy, planetR);
-        sg.addColorStop(0,   'rgba(0,0,0,0)');
-        sg.addColorStop(0.55,'rgba(0,0,0,0)');
-        sg.addColorStop(1,   'rgba(0,0,0,0.6)');
-        mainCtx.shadowBlur = 0;
-        mainCtx.fillStyle = sg;
-        mainCtx.beginPath();
-        mainCtx.arc(cx, cy, planetR, 0, Math.PI * 2);
-        mainCtx.fill();
-        mainCtx.restore();
-
-        // ── Front half of ring (in front of planet) ──
-        mainCtx.save();
-        mainCtx.translate(cx, cy);
-        mainCtx.rotate(tiltAngle);
-        mainCtx.beginPath();
-        mainCtx.ellipse(0, 0, ringA, ringB, 0, Math.PI, Math.PI * 2); // top arc = front
-        for(const layer of ringColors) {
-            mainCtx.lineWidth = layer.w;
-            mainCtx.strokeStyle = layer.c;
-            mainCtx.shadowBlur = layer.w === planetR * 0.13 ? 18 * state.glow : 0;
-            mainCtx.shadowColor = '#ffffff';
-            mainCtx.stroke();
-        }
-        mainCtx.restore();
     }
 
     mainCtx.shadowBlur=0;
