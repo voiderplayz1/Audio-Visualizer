@@ -89,11 +89,30 @@ body {
     line-height: 1.8;
     color: rgba(255,255,255,0.78);
     font-style: italic;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
 }
 #torus-warning-box p strong {
     color: #fff;
     font-style: normal;
+}
+.warn-dont-show-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    justify-content: center;
+    margin-bottom: 22px;
+    cursor: pointer;
+    font-size: 0.83rem;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.42);
+    font-style: italic;
+    font-family: var(--font);
+    user-select: none;
+}
+.warn-dont-show-row input[type="checkbox"] {
+    accent-color: #ffffff;
+    width: 13px; height: 13px;
+    cursor: pointer;
 }
 .warn-btn-row { display: flex; gap: 12px; justify-content: center; }
 .warn-btn {
@@ -198,6 +217,9 @@ canvas { display: block; }
 .btn-mic.active .dot { animation: blink 1.2s step-start infinite; }
 .btn-reset { border-color: rgba(255,80,60,0.2); color: rgba(255,150,130,0.7); background: rgba(255,60,40,0.04); font-size: 0.855rem; }
 .btn-reset:hover { border-color: rgba(255,80,60,0.42); color: rgba(255,170,150,1); background: rgba(255,60,40,0.1); }
+/* Toggle buttons: active = enabled state with faint tint */
+.btn-toggle-on  { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.06); }
+.btn-toggle-off { border-color: rgba(255,255,255,0.1);  color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.02); }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 .btn-record.recording .dot { animation: blink 1s step-start infinite; }
 .btn-capture.active .dot { animation: blink 1.3s step-start infinite; }
@@ -273,6 +295,10 @@ input[type="file"] { display: none; }
     <div id="torus-warning-box">
         <div class="warn-hey">HEY!</div>
         <p>I advise <strong>HEAVILY</strong> in case you don't have a strong PC to <strong>NOT USE THIS!</strong> It is <strong>VERY GRAPHIC INTENSIVE.</strong></p>
+        <label class="warn-dont-show-row">
+            <input type="checkbox" id="warn-dont-show">
+            Don't show this again
+        </label>
         <div class="warn-btn-row">
             <button class="warn-btn warn-btn-cancel" id="warn-cancel">Go back</button>
             <button class="warn-btn warn-btn-proceed" id="warn-proceed">I understand, proceed</button>
@@ -366,11 +392,20 @@ input[type="file"] { display: none; }
             <label class="ctrl-label"><span>Line count</span><span class="ctrl-val" id="val-separation">15</span></label>
             <input type="range" id="fx-separation" min="10" max="2500" step="1" value="15">
         </div>
-        <!-- Torus ring spacing (only relevant for torus mode) -->
+        <!-- Torus ring spacing -->
         <div class="ctrl-row torus-only hidden-ctrl" id="torus-spacing-group">
             <label class="ctrl-label"><span>Ring spacing</span><span class="ctrl-val" id="val-torus-spacing">0.50</span></label>
-            <input type="range" id="fx-torus-spacing" min="0.10" max="2.5" step="0.01" value="0.5">
+            <input type="range" id="fx-torus-spacing" min="-1.0" max="2.5" step="0.01" value="0.5">
         </div>
+        <!-- Torus color speed -->
+        <div class="ctrl-row torus-only hidden-ctrl" id="torus-color-speed-group">
+            <label class="ctrl-label"><span>Torus color speed</span><span class="ctrl-val" id="val-torus-color-speed">1.00</span></label>
+            <input type="range" id="fx-torus-color-speed" min="0.10" max="5.0" step="0.01" value="1.0">
+        </div>
+        <!-- Torus color toggle -->
+        <button id="btn-torus-color-toggle" class="btn btn-square btn-toggle-on torus-only hidden-ctrl">Toggle: Torus Color Change ✓</button>
+        <!-- Rotation toggle (global) -->
+        <button id="btn-rotation-toggle" class="btn btn-square btn-toggle-on">Toggle: Rotation ✓</button>
     </div>
 
     <div class="panel-section">
@@ -459,6 +494,9 @@ const gpuBadge         = document.getElementById('gpu-badge');
 const torusWarning     = document.getElementById('torus-warning');
 const warnProceed      = document.getElementById('warn-proceed');
 const warnCancel       = document.getElementById('warn-cancel');
+const torusColorSpeedGroup = document.getElementById('torus-color-speed-group');
+const btnTorusColorToggle  = document.getElementById('btn-torus-color-toggle');
+const btnRotationToggle    = document.getElementById('btn-rotation-toggle');
 
 let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
@@ -489,7 +527,10 @@ const state = {
     lineCount: 15,
     lissOffset: 15,
     lissSpread: 0.28,
-    torusSpacing: 0.5
+    torusSpacing: 0.5,
+    torusColorEnabled: true,
+    torusColorSpeed: 1,
+    rotationEnabled: true,
 };
 
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
@@ -550,8 +591,6 @@ async function initWebGPU() {
 // Lazy pipeline creation for WebGPU modes
 function ensureGPUPipeline(mode) {
     if (!gpuReady || gpuPipeline) return;
-    // Minimal GPU pipeline: vertex full-screen quad + fragment shader for each mode
-    // We encode freq/time data into a storage buffer and render in the shader
     const BUF_SIZE = 1024;
 
     const shaderSrc = `
@@ -568,6 +607,10 @@ struct Uniforms {
     width: f32,
     height: f32,
     crush: f32,
+    colorSpeed: f32,
+    colorR: f32,
+    colorG: f32,
+    colorB: f32,
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var<storage, read> freq: array<f32, 1024>;
@@ -606,28 +649,15 @@ fn getFreq(i: i32) -> f32 {
     return freq[idx];
 }
 
-fn project3d(x: f32, y: f32, z: f32) -> vec2f {
-    let fov: f32 = 4.5;
-    let p = fov / (fov + z);
-    return vec2f(x * p, y * p);
-}
-
-fn rotate3dX(ry: f32, rz: f32, angle: f32) -> vec2f {
-    let c = cos(angle); let s = sin(angle);
-    return vec2f(ry * c - rz * s, ry * s + rz * c);
-}
-
 @fragment fn fs(in: VOut) -> @location(0) vec4f {
     let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
     let px = uv.x * u.width;
     let py = uv.y * u.height;
 
-    // ── TORUS MODE ──
     let cx = u.width * 0.5;
     let cy = u.height * 0.52;
     let baseR = min(u.width, u.height) * 0.20;
 
-    // 4 bands
     let bandStarts = array<f32, 4>(0.0, 0.05, 0.15, 0.45);
     let bandEnds   = array<f32, 4>(0.05, 0.15, 0.45, 1.0);
     let bandMuls   = array<f32, 4>(0.50, 0.73, 1.0, 1.30);
@@ -658,28 +688,31 @@ fn rotate3dX(ry: f32, rz: f32, angle: f32) -> vec2f {
             let binI = i32(bStart * f32(binCount)) + i32((f32(seg) / f32(segments)) * (bEnd - bStart) * f32(binCount));
             let fv = getFreq(clamp(binI, 0, 1023));
 
-            let r = ringR + fv * 58.0 * u.thickness * ss;
+            // Spikes upward (vertical Y), not radially outward
+            let r = ringR;
             let rx = r * cosT;
-            let ry_raw = -fv * 15.0 * u.thickness * ss;
+            let ry_raw = -fv * 80.0 * u.thickness * ss;
             let rz = r * sinT;
-            let ry_ = rotate3dX(ry_raw, rz, u.camRotX);
+
+            let ry_ = vec2f(ry_raw * cosTX - rz * sinTX, ry_raw * sinTX + rz * cosTX);
             let ry = ry_.x;
             let rz2 = ry_.y;
 
             let fovV: f32 = 4.5;
-            let persp = fovV / (fovV + rz2 / ringR);
+            let persp = fovV / (fovV + rz2 / max(ringR, 0.001));
             let spx = cx + rx * persp;
             let spy = cy + ry * persp;
 
             let dist = distance(vec2f(px, py), vec2f(spx, spy));
             let lineW = max(0.4, 1.7 * u.thickness * persp);
             if (dist < lineW + 2.0) {
-                let hue = f32(bi) * 70.0 + u.time * 20.0;
+                let hue = f32(bi) * 70.0 + u.time * 20.0 * u.colorSpeed;
                 let rgb = hsl2rgb(hue % 360.0, 1.0, 0.63);
+                let glowColor = select(vec3f(u.colorR, u.colorG, u.colorB), rgb, u.colorSpeed > 0.0);
                 let sharpness = 1.0 - smoothstep(lineW * 0.3, lineW + 2.0, dist);
                 if (sharpness > bestAlpha) {
                     bestAlpha = sharpness;
-                    bestColor = rgb;
+                    bestColor = glowColor;
                 }
             }
         }
@@ -702,10 +735,11 @@ fn rotate3dX(ry: f32, rz: f32, angle: f32) -> vec2f {
         let d = distance(vec2f(px, py), closest);
         let lw = 2.5 * u.thickness;
         if (d < lw + 2.0) {
-            let sideHue = (f32(ti) * 120.0 + u.time * 40.0) % 360.0;
+            let sideHue = (f32(ti) * 120.0 + u.time * 40.0 * u.colorSpeed) % 360.0;
             let rgb = hsl2rgb(sideHue, 1.0, 0.68);
+            let triColor = select(vec3f(u.colorR, u.colorG, u.colorB), rgb, u.colorSpeed > 0.0);
             let s = 1.0 - smoothstep(lw * 0.3, lw + 2.0, d);
-            if (s > bestAlpha) { bestAlpha = s; bestColor = rgb; }
+            if (s > bestAlpha) { bestAlpha = s; bestColor = triColor; }
         }
     }
 
@@ -740,7 +774,7 @@ fn rotate3dX(ry: f32, rz: f32, angle: f32) -> vec2f {
             primitive: { topology: 'triangle-list' }
         });
 
-        // Uniform buffer: 12 f32 = 48 bytes, pad to 64
+        // Uniform buffer: 16 f32 = 64 bytes
         gpuUniformBuf = gpuDevice.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         gpuFreqBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
         gpuTimeBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
@@ -877,7 +911,6 @@ function hexToRgb(hex) {
 function resize() {
     mainCanvas.width = window.innerWidth;
     mainCanvas.height = window.innerHeight;
-    // Reconfigure WebGPU context on resize
     if (gpuReady && gpuContext) {
         try { gpuContext.configure({ device: gpuDevice, format: gpuFormat, alphaMode: 'premultiplied' }); } catch(e){}
     }
@@ -886,8 +919,6 @@ function resize() {
 window.addEventListener('resize', resize); resize();
 
 // ── Torus Warning ──
-let pendingTorusMode = false;
-
 function showTorusWarning() {
     torusWarning.classList.add('active');
 }
@@ -895,27 +926,30 @@ function hideTorusWarning() {
     torusWarning.classList.remove('active');
 }
 
-warnProceed.addEventListener('click', () => {
-    hideTorusWarning();
-    // Force glow to 0 when entering torus
-    const glowSlider = document.getElementById('fx-glow');
-    glowSlider.value = 0;
-    document.getElementById('val-glow').innerText = '0.00';
-    state.glow = 0;
-
+function activateTorusMode() {
     state.mode = 'torus';
     sepGroup.classList.toggle('ctrl-disabled', true);
     lissDensityGroup.classList.add('hidden-ctrl');
     torusSpacingGroup.classList.remove('hidden-ctrl');
+    torusColorSpeedGroup.classList.remove('hidden-ctrl');
+    btnTorusColorToggle.classList.remove('hidden-ctrl');
     torusHistory.length = 0;
     torusHint.classList.add('visible');
     setTimeout(()=>torusHint.classList.remove('visible'), 3500);
     if (!animationId) draw();
+}
+
+warnProceed.addEventListener('click', () => {
+    hideTorusWarning();
+    // Save "don't show" preference
+    if (document.getElementById('warn-dont-show').checked) {
+        try { localStorage.setItem('torus-skip-warning', '1'); } catch(e) {}
+    }
+    activateTorusMode();
 });
 
 warnCancel.addEventListener('click', () => {
     hideTorusWarning();
-    // Revert selector back to previous mode
     document.getElementById('mode-selector').value = state.mode;
 });
 
@@ -1115,8 +1149,14 @@ document.getElementById('mode-selector').onchange = e => {
     const newMode = e.target.value;
 
     if (newMode === 'torus') {
-        // Show warning — actual mode switch happens in warnProceed handler
-        showTorusWarning();
+        // Check localStorage for "don't show again"
+        let skip = false;
+        try { skip = localStorage.getItem('torus-skip-warning') === '1'; } catch(ex) {}
+        if (skip) {
+            activateTorusMode();
+        } else {
+            showTorusWarning();
+        }
         return;
     }
 
@@ -1124,6 +1164,8 @@ document.getElementById('mode-selector').onchange = e => {
     sepGroup.classList.toggle('ctrl-disabled', newMode !== '2');
     lissDensityGroup.classList.toggle('hidden-ctrl', newMode !== 'lissajous');
     torusSpacingGroup.classList.add('hidden-ctrl');
+    torusColorSpeedGroup.classList.add('hidden-ctrl');
+    btnTorusColorToggle.classList.add('hidden-ctrl');
     if (newMode !== 'torus') torusHistory.length = 0;
     gpuBadge.classList.remove('visible');
 };
@@ -1155,6 +1197,26 @@ bindSlider('separation', v => {
 
 bindSlider('torus-spacing', v => {
     state.torusSpacing = v;
+});
+
+bindSlider('torus-color-speed', v => {
+    state.torusColorSpeed = v;
+});
+
+// ── Toggle: Torus Color Change ──
+btnTorusColorToggle.addEventListener('click', () => {
+    state.torusColorEnabled = !state.torusColorEnabled;
+    btnTorusColorToggle.textContent = 'Toggle: Torus Color Change ' + (state.torusColorEnabled ? '✓' : '✗');
+    btnTorusColorToggle.className = 'btn btn-square torus-only ' +
+        (state.torusColorEnabled ? 'btn-toggle-on' : 'btn-toggle-off');
+});
+
+// ── Toggle: Rotation ──
+btnRotationToggle.addEventListener('click', () => {
+    state.rotationEnabled = !state.rotationEnabled;
+    btnRotationToggle.textContent = 'Toggle: Rotation ' + (state.rotationEnabled ? '✓' : '✗');
+    btnRotationToggle.className = 'btn btn-square ' +
+        (state.rotationEnabled ? 'btn-toggle-on' : 'btn-toggle-off');
 });
 
 bindSlider('volume', v => { fxParams.volume=v; if(volumeNode) volumeNode.gain.value=v; });
@@ -1291,7 +1353,6 @@ function enterApp(){
     document.documentElement.requestFullscreen().catch(()=>{});
     welcome.classList.add('fade-out');
     welcome.addEventListener('transitionend',()=>{ welcome.style.display='none'; cancelAnimationFrame(welcomeAnimId); },{once:true});
-    // Try to init WebGPU in background
     initWebGPU();
     if(!animationId) draw();
 }
@@ -1324,7 +1385,6 @@ function getBassEnergy(freqData) {
     return sum / end / 255;
 }
 
-// Convert freq data to normalized f32 for GPU
 function toF32(u8arr) {
     const out = new Float32Array(1024);
     const len = Math.min(u8arr.length, 1024);
@@ -1337,7 +1397,6 @@ function drawTorusGPU(vFreq, vTime, w, h) {
     if (!gpuPipeline) return false;
 
     const bg = hexToRgb(state.bgColor);
-    // Clear canvas 2D first with bg color + trail
     const trailAlpha = 0.12;
     mainCtx.fillStyle = `rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
     mainCtx.fillRect(0, 0, w, h);
@@ -1347,6 +1406,7 @@ function drawTorusGPU(vFreq, vTime, w, h) {
     const timeF32 = toF32(vTime);
     gpuDevice.queue.writeBuffer(gpuTimeBuf, 0, timeF32);
 
+    const col = hexToRgb(state.color);
     const uniforms = new Float32Array(16);
     uniforms[0]  = drawPhase;
     uniforms[1]  = fxParams.bass;
@@ -1360,6 +1420,11 @@ function drawTorusGPU(vFreq, vTime, w, h) {
     uniforms[9]  = w;
     uniforms[10] = h;
     uniforms[11] = fxParams.crush;
+    // New: colorSpeed (0 = use glow color, >0 = rainbow at this speed)
+    uniforms[12] = state.torusColorEnabled ? state.torusColorSpeed : 0;
+    uniforms[13] = col.r / 255;
+    uniforms[14] = col.g / 255;
+    uniforms[15] = col.b / 255;
     gpuDevice.queue.writeBuffer(gpuUniformBuf, 0, uniforms);
 
     try {
@@ -1444,7 +1509,8 @@ function draw(){
     updateFps();
     if(!analyser) return;
 
-    drawPhase += 0.012 * fxParams.speed;
+    // Only advance phase if rotation is enabled
+    if (state.rotationEnabled) drawPhase += 0.012 * fxParams.speed;
 
     const bufLen=analyser.frequencyBinCount;
     const dataFreq=new Uint8Array(bufLen), dataTime=new Uint8Array(bufLen);
@@ -1466,7 +1532,6 @@ function draw(){
             if (ok) { gpuBadge.classList.add('visible'); return; }
         }
         gpuBadge.classList.remove('visible');
-        // CPU fallback below
     }
 
     // ── Particle Sphere: try WebGPU first ──
@@ -1746,6 +1811,7 @@ function draw(){
 
         const cosTX = Math.cos(torusCamRotX);
         const sinTX = Math.sin(torusCamRotX);
+        // rotOffset only advances if rotation is on (drawPhase frozen otherwise)
         const rotOffset = drawPhase * 0.09 * fxParams.speed + torusCamRotY;
 
         const BANDS = [
@@ -1756,6 +1822,7 @@ function draw(){
         ];
 
         const segments = 88;
+        const col2 = hexToRgb(state.color);
 
         for(let hi = torusHistory.length - 1; hi >= 0; hi--){
             const frame = torusHistory[hi];
@@ -1767,12 +1834,19 @@ function draw(){
                 const band   = BANDS[bi];
                 const ringR  = baseRingR * band.radiusMul;
 
-                const hue = ((bi * 70) + hi * (300 / TORUS_HIST_MAX) + drawPhase * 20) % 360;
+                const hue = ((bi * 70) + hi * (300 / TORUS_HIST_MAX) + drawPhase * 20 * state.torusColorSpeed) % 360;
                 const lw  = Math.max(0.3, (1.7 * state.thickness) * (1 - histT * 0.5));
 
-                mainCtx.strokeStyle = `hsla(${hue}, 100%, 63%, ${alpha})`;
-                mainCtx.shadowColor = `hsl(${hue}, 100%, 63%)`;
-                mainCtx.shadowBlur  = 0; // forced 0 for torus
+                // Color: rainbow or glow color
+                if (state.torusColorEnabled) {
+                    mainCtx.strokeStyle = `hsla(${hue}, 100%, 63%, ${alpha})`;
+                    mainCtx.shadowColor = `hsl(${hue}, 100%, 63%)`;
+                } else {
+                    mainCtx.strokeStyle = `rgba(${col2.r},${col2.g},${col2.b},${alpha})`;
+                    mainCtx.shadowColor = state.color;
+                }
+                // Glow is now user-controllable
+                mainCtx.shadowBlur  = state.glow * 8 * (1 - histT * 0.7);
                 mainCtx.lineWidth   = lw;
                 mainCtx.lineCap     = 'round';
 
@@ -1790,17 +1864,19 @@ function draw(){
                     const freq = frame[binI] / 255;
 
                     const ageScale = 1 - histT * 0.38;
-                    const r = ringR + freq * 58 * state.thickness * band.spikeScale * ageScale;
 
+                    // ── Spikes go UPWARD (vertical Y-axis) instead of radially ──
+                    const r = ringR; // ring radius stays fixed — no radial expansion
                     const rx     = r * cosTheta;
-                    const ry_raw = -freq * 15 * state.thickness * band.spikeScale * ageScale;
+                    const ry_raw = -freq * 80 * state.thickness * band.spikeScale * ageScale;
                     const rz     = r * sinTheta;
 
                     const ry  = ry_raw * cosTX - rz * sinTX;
                     const rz2 = ry_raw * sinTX + rz * cosTX;
 
                     const fov   = 4.5;
-                    const persp = fov / (fov + rz2 / ringR);
+                    const safeR = Math.abs(ringR) < 0.001 ? 0.001 : ringR;
+                    const persp = fov / (fov + rz2 / safeR);
 
                     const px = cx + rx * persp;
                     const py = cy + ry * persp;
@@ -1812,7 +1888,7 @@ function draw(){
         }
 
         // Rainbow triangle
-        triangleHue = (triangleHue + 8) % 360;
+        if (state.rotationEnabled) triangleHue = (triangleHue + 8 * state.torusColorSpeed) % 360;
         const triSize = baseRingR * 0.20;
         const triSpin = drawPhase * 0.6;
 
@@ -1828,9 +1904,10 @@ function draw(){
         for(let ti = 0; ti < 3; ti++){
             const sideHue = (triangleHue + ti * 120) % 360;
             const a = triPts[ti], b = triPts[(ti + 1) % 3];
-            mainCtx.strokeStyle = `hsl(${sideHue}, 100%, 68%)`;
-            mainCtx.shadowColor = `hsl(${sideHue}, 100%, 68%)`;
-            mainCtx.shadowBlur  = 0; // forced 0 for torus
+            const triColor = state.torusColorEnabled ? `hsl(${sideHue}, 100%, 68%)` : state.color;
+            mainCtx.strokeStyle = triColor;
+            mainCtx.shadowColor = triColor;
+            mainCtx.shadowBlur  = state.glow * 12;
             mainCtx.beginPath();
             mainCtx.moveTo(a.x, a.y);
             mainCtx.lineTo(b.x, b.y);
