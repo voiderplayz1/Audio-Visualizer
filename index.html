@@ -201,8 +201,9 @@ input[type="file"] { display: none; }
                 <option value="1">Frequency Circles</option>
                 <option value="2">Circular Burst</option>
                 <option value="3">Symmetrical Wave</option>
-                <option value="ncs">NCS 2018</option>
+                <option value="ncs">Particle Sphere</option>
                 <option value="rainlines">Rain Lines</option>
+                <option value="torus">Spectrum Torus</option>
             </select>
         </div>
         <div class="color-row">
@@ -326,13 +327,13 @@ const state = {
     glow: 1,
     lineCount: 15,
     lissOffset: 15,
-    lissSpread: 0.28   // starts low, gets bigger as density increases
+    lissSpread: 0.28
 };
 
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 const FX_DEFAULTS = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 
-// ── Rain Lines particles state ──
+// ── Rain Lines particles ──
 const rainParticles = [];
 const RAIN_COUNT = 120;
 function initRainParticles(w, h) {
@@ -347,6 +348,10 @@ function initRainParticles(w, h) {
         });
     }
 }
+
+// ── Spectrum Torus history buffer ──
+const torusHistory = [];
+const TORUS_HIST_MAX = 55;
 
 function hexToRgb(hex) {
     const r = parseInt(hex.slice(1,3),16);
@@ -558,6 +563,8 @@ document.getElementById('mode-selector').onchange = e => {
     state.mode=e.target.value;
     sepGroup.classList.toggle('ctrl-disabled', state.mode!=='2');
     lissDensityGroup.classList.toggle('hidden-ctrl', state.mode!=='lissajous');
+    // Clear torus history on mode change to avoid artifacts
+    if(state.mode!=='torus') torusHistory.length=0;
 };
 
 document.getElementById('color-picker').oninput = e => {
@@ -573,11 +580,9 @@ document.getElementById('bg-color-picker').oninput = e => {
 bindSlider('thickness', v=>state.thickness=v);
 bindSlider('glow',      v=>state.glow=v);
 
-// ── Lissajous density: controls BOTH the phase offset AND the spread/zoom ──
 bindSlider('liss-density', v => {
     const vi = Math.round(v);
     state.lissOffset = vi;
-    // Density 1 → spread 0.25 (tight), density 512 → spread 2.0 (wide)
     state.lissSpread = 0.25 + (vi / 512) * 1.75;
     document.getElementById('val-liss-density').innerText = vi;
 });
@@ -749,12 +754,9 @@ function draw(){
     mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
     mainCtx.fillRect(0,0,w,h);
 
-    // Reverb affects glow only, not sizes
     const reverbGlow  = 1 + (fxParams.reverb - 0.1) * 0.4;
     const crushJitter = Math.max(0, (fxParams.crush - 1) * 2);
     const speedOsc    = drawPhase;
-
-    // Volume & bass only used for waveform/lissajous modes
     const volScaleWave = fxParams.volume;
     const bassWarp     = 1 + (fxParams.bass - 1) * 0.6;
 
@@ -777,7 +779,6 @@ function draw(){
     // ── Lissajous / XY ──
     if(state.mode==='lissajous'){
         const lissLen=Math.min(vRaw.length,1024), offset=Math.min(state.lissOffset,lissLen-1);
-        // spread: density slider zooms out the plot area + changes the offset pattern
         const scl = volScaleWave * 0.5 * state.lissSpread;
         const cosR = Math.cos(speedOsc * 0.05), sinR = Math.sin(speedOsc * 0.05);
         for(let i=0;i<lissLen;i++){
@@ -802,12 +803,12 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Frequency Circles — volume/bass do NOT affect circle size ──
+    // ── Frequency Circles ──
     } else if(state.mode==='1'){
         const baseR=(w/bufLen)*3*state.thickness; let x=0;
         for(let i=0;i<bufLen;i+=2){
             const v=vFreq[i]/255;
-            const r = baseR + v*40*state.thickness;   // pure audio data only, no fxParams.volume
+            const r = baseR + v*40*state.thickness;
             const yDrift=Math.sin(speedOsc*0.4+i*0.02)*20*fxParams.speed;
             const y=h-v*h*0.7-50+yDrift;
             mainCtx.beginPath();
@@ -816,13 +817,13 @@ function draw(){
             x+=baseR*2+5; if(x>w) break;
         }
 
-    // ── Circular Burst — volume/bass do NOT affect bar/radius size ──
+    // ── Circular Burst ──
     } else if(state.mode==='2'){
-        const radius = Math.min(w,h)*0.25;   // fixed, no volScale
+        const radius = Math.min(w,h)*0.25;
         const step=Math.max(1,Math.round(bufLen/state.lineCount));
         const cx=w/2, cy=h/2;
         for(let i=0;i<bufLen;i+=step){
-            const barH=vFreq[i]*0.8*state.thickness;   // no volScale on bar height
+            const barH=vFreq[i]*0.8*state.thickness;
             const rads=Math.PI*2*(i/bufLen)+speedOsc*0.08;
             const cosA=Math.cos(rads), sinA=Math.sin(rads);
             const x1=cx+cosA*radius, y1=cy+sinA*radius;
@@ -848,10 +849,117 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── NCS 2018 ──
-    // Classic mirrored spectrum bars, center-rising, heavy bloom
+    // ── Particle Sphere (NCS 2018 redesign) ──
     } else if(state.mode==='ncs'){
         const col = hexToRgb(state.color);
+        const cx = w/2, cy = h/2;
+        const bassE = getBassEnergy(vFreq);
+        const avgV  = getAvgVolume(vFreq);
+
+        // Sphere breathes with bass
+        const baseR = Math.min(w,h) * 0.36;
+        const R = baseR * (1 + bassE * 0.13 * fxParams.bass);
+        const rotAngle = drawPhase * 0.28;
+
+        // Tilt for 3D feel
+        const tiltAngle = 0.32;
+        const cosTilt = Math.cos(tiltAngle);
+        const sinTilt = Math.sin(tiltAngle);
+
+        const latLines = 26;
+        const lonLines = 52;
+
+        // Draw particle grid on sphere surface
+        for(let lat = 0; lat <= latLines; lat++){
+            const phi = (lat / latLines) * Math.PI;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            for(let lon = 0; lon <= lonLines; lon++){
+                const theta = (lon / lonLines) * Math.PI * 2 + rotAngle;
+
+                // Map longitude to frequency bin
+                const binI = Math.min(Math.floor((lon / lonLines) * bufLen * 0.65), bufLen - 1);
+                const freq = vFreq[binI] / 255;
+
+                // Deform sphere outward by audio energy
+                const deformAmt = 1 + freq * 0.32 * fxParams.bass;
+                const deformR = R * deformAmt;
+
+                // 3D coords on sphere
+                const sx = sinPhi * Math.cos(theta);
+                const sy_raw = sinPhi * Math.sin(theta);
+                const sz_raw = cosPhi;
+
+                // Apply tilt rotation (around X axis)
+                const sy = sy_raw * cosTilt - sz_raw * sinTilt;
+                const sz = sy_raw * sinTilt + sz_raw * cosTilt;
+
+                // Perspective projection
+                const fov = 2.6;
+                const persp = fov / (fov + sz * 0.9);
+
+                const px = cx + sx * deformR * persp;
+                const py = cy + sy * deformR * persp * 0.88;
+
+                // Depth-based brightness — front faces are bright
+                const depth = (sz + 1.4) / 2.8;
+                const alpha = Math.max(0, (0.05 + depth * 0.55) * (0.12 + freq * 0.88));
+                const dotR  = Math.max(0.3, (0.65 + freq * 2.2) * state.thickness * persp * 0.75);
+
+                if(alpha < 0.015) continue;
+
+                // Only add glow for loud frequency bins to keep it fast
+                mainCtx.shadowBlur = freq > 0.5 ? freq * 10 * state.glow : 0;
+                mainCtx.shadowColor = state.color;
+                mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
+                mainCtx.beginPath();
+                mainCtx.arc(px, py, dotR, 0, Math.PI * 2);
+                mainCtx.fill();
+            }
+        }
+
+        // Outer glow ring — pulses hard on bass hits
+        mainCtx.shadowBlur  = (22 + bassE * 40) * state.glow;
+        mainCtx.shadowColor = state.color;
+        mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${0.65 + bassE * 0.35})`;
+        mainCtx.lineWidth   = (2 + bassE * 6) * state.thickness;
+        mainCtx.beginPath();
+        mainCtx.arc(cx, cy, R * 0.97, 0, Math.PI * 2);
+        mainCtx.stroke();
+
+        // Soft inner ambient glow
+        mainCtx.shadowBlur = 0;
+        const innerGrad = mainCtx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
+        innerGrad.addColorStop(0, `rgba(${col.r},${col.g},${col.b},${avgV * 0.08})`);
+        innerGrad.addColorStop(1, `rgba(${col.r},${col.g},${col.b},0)`);
+        mainCtx.fillStyle = innerGrad;
+        mainCtx.beginPath();
+        mainCtx.arc(cx, cy, R * 0.55, 0, Math.PI * 2);
+        mainCtx.fill();
+
+    // ── Rain Lines (updated: NCS bars + symmetrical wave in center) ──
+    } else if(state.mode==='rainlines'){
+        const col      = hexToRgb(state.color);
+        const avgVol   = getAvgVolume(vFreq);
+        const bassE    = getBassEnergy(vFreq);
+
+        // 1. Background drifting particles
+        const particleSpeed = 0.5 + avgVol * 4.0 * fxParams.volume;
+        mainCtx.shadowBlur = 0;
+        for(let p of rainParticles){
+            p.y += p.baseSpeed * particleSpeed * fxParams.speed;
+            if(p.y > h + 4) p.y = -4;
+            p.x += Math.sin(drawPhase * 0.25 + p.y * 0.008) * 0.25;
+            if(p.x > w) p.x -= w; if(p.x < 0) p.x += w;
+            const a = p.opacity * (0.2 + avgVol * 0.8);
+            mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${a})`;
+            mainCtx.beginPath();
+            mainCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            mainCtx.fill();
+        }
+
+        // 2. NCS-style mirrored frequency bars
         const barCount = Math.min(bufLen, 128);
         const totalW   = w * 0.88;
         const barW     = (totalW / barCount) * 0.7;
@@ -860,109 +968,131 @@ function draw(){
         const baseY    = h * 0.72;
 
         for(let i = 0; i < barCount; i++){
-            // Mirror symmetry: both halves read inward from center (low freq in middle)
             const half = Math.floor(barCount / 2);
             const binI = i < half ? (half - 1 - i) : (i - half);
             const raw  = vFreq[binI] / 255;
-            const barH = raw * h * 0.55 * state.thickness;
+            const barH = raw * h * 0.5 * state.thickness;
             const x    = startX + i * (barW + gap);
 
-            // Glow scales with bar height
             const glowMul = 0.4 + raw * 2.8;
             mainCtx.shadowBlur  = 16 * state.glow * glowMul;
             mainCtx.shadowColor = state.color;
-
-            // Main bar body
-            mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
+            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
             mainCtx.fillRect(jitter(x), baseY - barH, barW, barH);
 
-            // Bright top cap
             const capH = Math.max(2, barW * 0.4);
-            mainCtx.shadowBlur = 28 * state.glow;
-            mainCtx.fillStyle  = `rgba(${col.r},${col.g},${col.b},${0.55 + raw * 0.45})`;
+            mainCtx.shadowBlur  = 28 * state.glow;
+            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.55 + raw * 0.45})`;
             mainCtx.fillRect(jitter(x), baseY - barH - capH, barW, capH);
 
-            // Faded floor reflection
             mainCtx.shadowBlur = 0;
-            mainCtx.fillStyle  = `rgba(${col.r},${col.g},${col.b},${raw * 0.15})`;
-            mainCtx.fillRect(x, baseY + 2, barW, barH * 0.25);
+            mainCtx.fillStyle  = `rgba(${col.r},${col.g},${col.b},${raw * 0.14})`;
+            mainCtx.fillRect(x, baseY + 2, barW, barH * 0.22);
         }
 
-        // Baseline glow line
+        // Baseline
         mainCtx.shadowBlur  = 10 * state.glow;
         mainCtx.shadowColor = state.color;
-        mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},0.3)`;
+        mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},0.28)`;
         mainCtx.lineWidth   = 1;
         mainCtx.beginPath();
         mainCtx.moveTo(startX, baseY);
         mainCtx.lineTo(startX + totalW, baseY);
         mainCtx.stroke();
 
-    // ── Rain Lines ──
-    // Vertical lines from top+bottom reacting to freq bands + drifting background particles
-    } else if(state.mode==='rainlines'){
-        const col      = hexToRgb(state.color);
-        const avgVol   = getAvgVolume(vFreq);
-        const bassE    = getBassEnergy(vFreq);
-        const lineCount = 64;
-        const spacing  = w / lineCount;
+        // 3. Symmetrical wave in center (replacing the flash line)
+        mainCtx.shadowBlur  = (8 + reverbGlow * 7) * state.glow;
+        mainCtx.shadowColor = state.color;
+        mainCtx.strokeStyle = state.color;
+        mainCtx.lineWidth   = 2.5 * state.thickness;
+        mainCtx.lineCap     = 'round';
+        const slice = w / bufLen;
+        let x = 0;
+        mainCtx.beginPath();
+        for(let i = 0; i < bufLen; i++){
+            const nx  = (vTime[i] - 128) / 128;
+            const nx2 = (vTime[(i + 1) % bufLen] - 128) / 128;
+            const phase = Math.sin(speedOsc * 0.5 + i * 0.02) * 0.05 * fxParams.speed;
+            const off  = bassY((nx  + phase) * volScaleWave) * (h * 0.18) * state.thickness;
+            const offN = bassY((nx2 + phase) * volScaleWave) * (h * 0.18) * state.thickness;
+            mainCtx.moveTo(jitter(x),         jitter(h / 2 - off));
+            mainCtx.lineTo(jitter(x + slice), jitter(h / 2 - offN));
+            mainCtx.moveTo(jitter(x),         jitter(h / 2 + off));
+            mainCtx.lineTo(jitter(x + slice), jitter(h / 2 + offN));
+            x += slice;
+        }
+        mainCtx.stroke();
 
-        // Background particles — speed driven by volume
-        const particleSpeed = 0.5 + avgVol * 4.0 * fxParams.volume;
+    // ── Spectrum Torus ──
+    // 3D tilted ring — rainbow history trails with frequency spikes
+    } else if(state.mode==='torus'){
+        // Snapshot current frame into history
+        torusHistory.unshift(new Uint8Array(vFreq));
+        while(torusHistory.length > TORUS_HIST_MAX) torusHistory.pop();
+
+        const cx = w / 2;
+        const cy = h * 0.56;
+        const ringR = Math.min(w, h) * 0.27;
+
+        // Tilt: 1.05 rad ≈ 60° — matches the tilted racetrack look
+        const tiltX  = 1.05;
+        const cosTX  = Math.cos(tiltX);
+        const sinTX  = Math.sin(tiltX);
+
+        const segments  = 100;
+        const rotOffset = drawPhase * 0.09 * fxParams.speed;
+
+        // Draw oldest → newest so newer lines appear on top
+        for(let hi = torusHistory.length - 1; hi >= 0; hi--){
+            const frame  = torusHistory[hi];
+            const histT  = hi / Math.max(1, TORUS_HIST_MAX - 1); // 0=newest,1=oldest
+            const hue    = (hi * (300 / TORUS_HIST_MAX) + drawPhase * 18) % 360;
+            const alpha  = (1 - histT * 0.88) * 0.85;
+            if(alpha < 0.02) continue;
+
+            const lw = (1.8 * state.thickness) * (1 - histT * 0.45);
+
+            mainCtx.strokeStyle = `hsla(${hue}, 100%, 62%, ${alpha})`;
+            mainCtx.shadowColor = `hsl(${hue}, 100%, 62%)`;
+            mainCtx.shadowBlur  = (9 + (1 - histT) * 10) * state.glow;
+            mainCtx.lineWidth   = Math.max(0.4, lw);
+            mainCtx.lineCap     = 'round';
+
+            mainCtx.beginPath();
+            for(let seg = 0; seg <= segments; seg++){
+                const theta    = (seg / segments) * Math.PI * 2 + rotOffset;
+                const cosTheta = Math.cos(theta);
+                const sinTheta = Math.sin(theta);
+
+                const binI = Math.min(Math.floor((seg / segments) * bufLen * 0.82), bufLen - 1);
+                const freq = frame[binI] / 255;
+
+                // Radius = base ring + audio spike going outward
+                const spikeScale = 1 - histT * 0.35; // older frames have smaller spikes
+                const r = ringR + freq * 72 * state.thickness * spikeScale;
+
+                // 3D: ring in XZ plane, spike goes radially outward
+                const rx = r * cosTheta;
+                const ry_raw = -freq * 18 * state.thickness * spikeScale; // slight vertical lift on peaks
+                const rz = r * sinTheta;
+
+                // Tilt (rotate around X axis)
+                const ry = ry_raw * cosTX - rz * sinTX;
+                const rz2 = ry_raw * sinTX + rz * cosTX;
+
+                // Perspective
+                const fov   = 4.2;
+                const persp = fov / (fov + rz2 / ringR);
+
+                const px = cx + rx * persp;
+                const py = cy + ry * persp;
+
+                seg === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+            }
+            mainCtx.stroke();
+        }
+
         mainCtx.shadowBlur = 0;
-        for(let p of rainParticles){
-            p.y += p.baseSpeed * particleSpeed * fxParams.speed;
-            if(p.y > h + 4) p.y = -4;
-            // slight horizontal drift tied to the draw phase
-            p.x += Math.sin(drawPhase * 0.25 + p.y * 0.008) * 0.25;
-            if(p.x > w) p.x -= w; if(p.x < 0) p.x += w;
-
-            const a = p.opacity * (0.25 + avgVol * 0.75);
-            mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${a})`;
-            mainCtx.beginPath();
-            mainCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            mainCtx.fill();
-        }
-
-        // Vertical lines: top & bottom, length = frequency value
-        mainCtx.lineCap   = 'round';
-        mainCtx.lineWidth = Math.max(1, 2 * state.thickness);
-        for(let i = 0; i < lineCount; i++){
-            const binI  = Math.floor((i / lineCount) * bufLen * 0.75);
-            const v     = vFreq[binI] / 255;
-            const x     = i * spacing + spacing / 2;
-            const maxL  = h * 0.44;
-            const lineL = v * maxL * state.thickness;
-            if(lineL < 1) continue;
-
-            const alpha = 0.18 + v * 0.82;
-            mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
-            mainCtx.shadowBlur  = (5 + v * 20) * state.glow;
-            mainCtx.shadowColor = state.color;
-
-            // From top
-            mainCtx.beginPath();
-            mainCtx.moveTo(jitter(x), 0);
-            mainCtx.lineTo(jitter(x), lineL);
-            mainCtx.stroke();
-
-            // From bottom (mirror)
-            mainCtx.beginPath();
-            mainCtx.moveTo(jitter(x), h);
-            mainCtx.lineTo(jitter(x), h - lineL);
-            mainCtx.stroke();
-        }
-
-        // On big bass hits: brief horizontal center flash
-        if(bassE > 0.42){
-            const pulseA = (bassE - 0.42) * 2.5 * 0.55;
-            mainCtx.shadowBlur  = 28 * state.glow;
-            mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${pulseA})`;
-            mainCtx.lineWidth   = 1.5 * state.thickness;
-            mainCtx.beginPath();
-            mainCtx.moveTo(0, h/2); mainCtx.lineTo(w, h/2);
-            mainCtx.stroke();
-        }
     }
 
     mainCtx.shadowBlur=0;
