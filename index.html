@@ -142,6 +142,15 @@ input[type="file"] { display: none; }
 .progress-track { width: 100%; height: 1px; background: rgba(255,255,255,0.1); border-radius: 1px; position: relative; }
 .progress-fill { height: 100%; width: 0%; background: #ffffff; border-radius: 1px; box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.15); transition: width 0.1s linear; }
 .progress-thumb { position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%); width: 7px; height: 7px; background: #ffffff; border-radius: 50%; box-shadow: 0 0 14px rgba(255,255,255,0.9); pointer-events: none; }
+/* Torus drag hint */
+#torus-hint {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font); font-size: 0.78rem; letter-spacing: 3px;
+    text-transform: uppercase; color: rgba(255,255,255,0.28); font-style: italic;
+    pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
+    z-index: 50;
+}
+#torus-hint.visible { opacity: 1; }
 </style>
 </head>
 <body>
@@ -162,6 +171,8 @@ input[type="file"] { display: none; }
 <button id="hamburger" title="Toggle UI">
     <span></span><span></span><span></span>
 </button>
+
+<div id="torus-hint">drag to orbit</div>
 
 <div id="controls" class="panel">
     <div class="panel-header" id="controls-handle">
@@ -311,6 +322,7 @@ const hamburger        = document.getElementById('hamburger');
 const btnCapture       = document.getElementById('btn-capture');
 const btnRecord        = document.getElementById('btn-record');
 const sourceBadge      = document.getElementById('source-badge');
+const torusHint        = document.getElementById('torus-hint');
 
 let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
@@ -352,6 +364,14 @@ function initRainParticles(w, h) {
 // ── Spectrum Torus history buffer ──
 const torusHistory = [];
 const TORUS_HIST_MAX = 55;
+
+// ── Torus camera state ──
+let torusCamRotX = 1.05;
+let torusCamRotY = 0;
+let torusDragging = false;
+let torusDragLastX = 0;
+let torusDragLastY = 0;
+let triangleHue = 0;
 
 function hexToRgb(hex) {
     const r = parseInt(hex.slice(1,3),16);
@@ -563,8 +583,12 @@ document.getElementById('mode-selector').onchange = e => {
     state.mode=e.target.value;
     sepGroup.classList.toggle('ctrl-disabled', state.mode!=='2');
     lissDensityGroup.classList.toggle('hidden-ctrl', state.mode!=='lissajous');
-    // Clear torus history on mode change to avoid artifacts
     if(state.mode!=='torus') torusHistory.length=0;
+    // Show torus hint
+    if(state.mode==='torus'){
+        torusHint.classList.add('visible');
+        setTimeout(()=>torusHint.classList.remove('visible'), 3500);
+    }
 };
 
 document.getElementById('color-picker').oninput = e => {
@@ -670,6 +694,33 @@ function makeDraggable(panel,handle){
 makeDraggable(controls, document.getElementById('controls-handle'));
 makeDraggable(transport,document.getElementById('transport-handle'));
 makeDraggable(hamburger,hamburger);
+
+// ── Torus camera drag (click + drag on canvas) ──
+mainCanvas.addEventListener('mousedown', e => {
+    if (state.mode !== 'torus') return;
+    torusDragging = true;
+    torusDragLastX = e.clientX;
+    torusDragLastY = e.clientY;
+    mainCanvas.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', e => {
+    if (!torusDragging) return;
+    const dx = e.clientX - torusDragLastX;
+    const dy = e.clientY - torusDragLastY;
+    torusCamRotY += dx * 0.009;
+    torusCamRotX += dy * 0.009;
+    torusCamRotX = Math.max(0.08, Math.min(Math.PI - 0.08, torusCamRotX));
+    torusDragLastX = e.clientX;
+    torusDragLastY = e.clientY;
+});
+window.addEventListener('mouseup', () => {
+    if (torusDragging) { torusDragging = false; mainCanvas.style.cursor = ''; }
+});
+// Update cursor when hovering torus
+mainCanvas.addEventListener('mousemove', () => {
+    if (state.mode === 'torus' && !torusDragging) mainCanvas.style.cursor = 'grab';
+    else if (state.mode !== 'torus') mainCanvas.style.cursor = '';
+});
 
 // ── Welcome ──
 const welcome=document.getElementById('welcome');
@@ -849,19 +900,17 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Particle Sphere (NCS 2018 redesign) ──
+    // ── Particle Sphere ──
     } else if(state.mode==='ncs'){
         const col = hexToRgb(state.color);
         const cx = w/2, cy = h/2;
         const bassE = getBassEnergy(vFreq);
         const avgV  = getAvgVolume(vFreq);
 
-        // Sphere breathes with bass
         const baseR = Math.min(w,h) * 0.36;
         const R = baseR * (1 + bassE * 0.13 * fxParams.bass);
         const rotAngle = drawPhase * 0.28;
 
-        // Tilt for 3D feel
         const tiltAngle = 0.32;
         const cosTilt = Math.cos(tiltAngle);
         const sinTilt = Math.sin(tiltAngle);
@@ -869,7 +918,6 @@ function draw(){
         const latLines = 26;
         const lonLines = 52;
 
-        // Draw particle grid on sphere surface
         for(let lat = 0; lat <= latLines; lat++){
             const phi = (lat / latLines) * Math.PI;
             const sinPhi = Math.sin(phi);
@@ -878,38 +926,31 @@ function draw(){
             for(let lon = 0; lon <= lonLines; lon++){
                 const theta = (lon / lonLines) * Math.PI * 2 + rotAngle;
 
-                // Map longitude to frequency bin
                 const binI = Math.min(Math.floor((lon / lonLines) * bufLen * 0.65), bufLen - 1);
                 const freq = vFreq[binI] / 255;
 
-                // Deform sphere outward by audio energy
                 const deformAmt = 1 + freq * 0.32 * fxParams.bass;
                 const deformR = R * deformAmt;
 
-                // 3D coords on sphere
                 const sx = sinPhi * Math.cos(theta);
                 const sy_raw = sinPhi * Math.sin(theta);
                 const sz_raw = cosPhi;
 
-                // Apply tilt rotation (around X axis)
                 const sy = sy_raw * cosTilt - sz_raw * sinTilt;
                 const sz = sy_raw * sinTilt + sz_raw * cosTilt;
 
-                // Perspective projection
                 const fov = 2.6;
                 const persp = fov / (fov + sz * 0.9);
 
                 const px = cx + sx * deformR * persp;
                 const py = cy + sy * deformR * persp * 0.88;
 
-                // Depth-based brightness — front faces are bright
                 const depth = (sz + 1.4) / 2.8;
                 const alpha = Math.max(0, (0.05 + depth * 0.55) * (0.12 + freq * 0.88));
                 const dotR  = Math.max(0.3, (0.65 + freq * 2.2) * state.thickness * persp * 0.75);
 
                 if(alpha < 0.015) continue;
 
-                // Only add glow for loud frequency bins to keep it fast
                 mainCtx.shadowBlur = freq > 0.5 ? freq * 10 * state.glow : 0;
                 mainCtx.shadowColor = state.color;
                 mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
@@ -919,16 +960,7 @@ function draw(){
             }
         }
 
-        // Outer glow ring — pulses hard on bass hits
-        mainCtx.shadowBlur  = (22 + bassE * 40) * state.glow;
-        mainCtx.shadowColor = state.color;
-        mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${0.65 + bassE * 0.35})`;
-        mainCtx.lineWidth   = (2 + bassE * 6) * state.thickness;
-        mainCtx.beginPath();
-        mainCtx.arc(cx, cy, R * 0.97, 0, Math.PI * 2);
-        mainCtx.stroke();
-
-        // Soft inner ambient glow
+        // Soft inner ambient glow only (outer ring removed)
         mainCtx.shadowBlur = 0;
         const innerGrad = mainCtx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
         innerGrad.addColorStop(0, `rgba(${col.r},${col.g},${col.b},${avgV * 0.08})`);
@@ -938,7 +970,7 @@ function draw(){
         mainCtx.arc(cx, cy, R * 0.55, 0, Math.PI * 2);
         mainCtx.fill();
 
-    // ── Rain Lines (updated: NCS bars + symmetrical wave in center) ──
+    // ── Rain Lines ──
     } else if(state.mode==='rainlines'){
         const col      = hexToRgb(state.color);
         const avgVol   = getAvgVolume(vFreq);
@@ -959,48 +991,58 @@ function draw(){
             mainCtx.fill();
         }
 
-        // 2. NCS-style mirrored frequency bars
+        // 2. Frequency bars at top AND bottom edges
         const barCount = Math.min(bufLen, 128);
         const totalW   = w * 0.88;
         const barW     = (totalW / barCount) * 0.7;
         const gap      = (totalW / barCount) * 0.3;
         const startX   = (w - totalW) / 2;
-        const baseY    = h * 0.72;
+        const edgePad  = 4; // px from screen edge
 
         for(let i = 0; i < barCount; i++){
             const half = Math.floor(barCount / 2);
             const binI = i < half ? (half - 1 - i) : (i - half);
             const raw  = vFreq[binI] / 255;
-            const barH = raw * h * 0.5 * state.thickness;
+            const barH = raw * h * 0.42 * state.thickness;
             const x    = startX + i * (barW + gap);
-
+            const capH = Math.max(2, barW * 0.4);
             const glowMul = 0.4 + raw * 2.8;
+
+            // ── Bottom bars: grow upward from bottom edge ──
             mainCtx.shadowBlur  = 16 * state.glow * glowMul;
             mainCtx.shadowColor = state.color;
             mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
-            mainCtx.fillRect(jitter(x), baseY - barH, barW, barH);
-
-            const capH = Math.max(2, barW * 0.4);
+            mainCtx.fillRect(jitter(x), h - edgePad - barH, barW, barH);
+            // cap glow at peak of bottom bar
             mainCtx.shadowBlur  = 28 * state.glow;
-            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.55 + raw * 0.45})`;
-            mainCtx.fillRect(jitter(x), baseY - barH - capH, barW, capH);
+            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.6 + raw * 0.4})`;
+            mainCtx.fillRect(jitter(x), h - edgePad - barH - capH, barW, capH);
+
+            // ── Top bars: grow downward from top edge ──
+            mainCtx.shadowBlur  = 16 * state.glow * glowMul;
+            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
+            mainCtx.fillRect(jitter(x), edgePad, barW, barH);
+            // cap glow at peak of top bar
+            mainCtx.shadowBlur  = 28 * state.glow;
+            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.6 + raw * 0.4})`;
+            mainCtx.fillRect(jitter(x), edgePad + barH, barW, capH);
 
             mainCtx.shadowBlur = 0;
-            mainCtx.fillStyle  = `rgba(${col.r},${col.g},${col.b},${raw * 0.14})`;
-            mainCtx.fillRect(x, baseY + 2, barW, barH * 0.22);
         }
 
-        // Baseline
+        // Baselines at top and bottom
         mainCtx.shadowBlur  = 10 * state.glow;
         mainCtx.shadowColor = state.color;
         mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},0.28)`;
         mainCtx.lineWidth   = 1;
         mainCtx.beginPath();
-        mainCtx.moveTo(startX, baseY);
-        mainCtx.lineTo(startX + totalW, baseY);
+        mainCtx.moveTo(startX, h - edgePad);
+        mainCtx.lineTo(startX + totalW, h - edgePad);
+        mainCtx.moveTo(startX, edgePad);
+        mainCtx.lineTo(startX + totalW, edgePad);
         mainCtx.stroke();
 
-        // 3. Symmetrical wave in center (replacing the flash line)
+        // 3. Symmetrical wave in center
         mainCtx.shadowBlur  = (8 + reverbGlow * 7) * state.glow;
         mainCtx.shadowColor = state.color;
         mainCtx.strokeStyle = state.color;
@@ -1024,71 +1066,115 @@ function draw(){
         mainCtx.stroke();
 
     // ── Spectrum Torus ──
-    // 3D tilted ring — rainbow history trails with frequency spikes
+    // 4 concentric rings (sub / bass / mids / highs) + drag camera + rainbow triangle
     } else if(state.mode==='torus'){
-        // Snapshot current frame into history
         torusHistory.unshift(new Uint8Array(vFreq));
         while(torusHistory.length > TORUS_HIST_MAX) torusHistory.pop();
 
         const cx = w / 2;
-        const cy = h * 0.56;
-        const ringR = Math.min(w, h) * 0.27;
+        const cy = h * 0.52;
+        const baseRingR = Math.min(w, h) * 0.20;
 
-        // Tilt: 1.05 rad ≈ 60° — matches the tilted racetrack look
-        const tiltX  = 1.05;
-        const cosTX  = Math.cos(tiltX);
-        const sinTX  = Math.sin(tiltX);
+        const cosTX = Math.cos(torusCamRotX);
+        const sinTX = Math.sin(torusCamRotX);
 
-        const segments  = 100;
-        const rotOffset = drawPhase * 0.09 * fxParams.speed;
+        // Auto-slow-rotate when not dragging
+        const rotOffset = drawPhase * 0.09 * fxParams.speed + torusCamRotY;
 
-        // Draw oldest → newest so newer lines appear on top
+        // 4 frequency bands → 4 rings at different radii
+        const BANDS = [
+            { startFrac: 0.0,  endFrac: 0.05, radiusMul: 0.50, spikeScale: 1.5 },  // sub-bass  (innermost)
+            { startFrac: 0.05, endFrac: 0.15, radiusMul: 0.73, spikeScale: 1.2 },  // bass
+            { startFrac: 0.15, endFrac: 0.45, radiusMul: 1.0,  spikeScale: 1.0 },  // mids
+            { startFrac: 0.45, endFrac: 1.0,  radiusMul: 1.30, spikeScale: 0.75},  // highs (outermost)
+        ];
+
+        const segments = 88;
+
+        // Draw oldest → newest so newer lines paint on top
         for(let hi = torusHistory.length - 1; hi >= 0; hi--){
-            const frame  = torusHistory[hi];
-            const histT  = hi / Math.max(1, TORUS_HIST_MAX - 1); // 0=newest,1=oldest
-            const hue    = (hi * (300 / TORUS_HIST_MAX) + drawPhase * 18) % 360;
-            const alpha  = (1 - histT * 0.88) * 0.85;
-            if(alpha < 0.02) continue;
+            const frame = torusHistory[hi];
+            const histT = hi / Math.max(1, TORUS_HIST_MAX - 1); // 0=newest, 1=oldest
+            const alpha = (1 - histT * 0.9) * 0.88;
+            if(alpha < 0.018) continue;
 
-            const lw = (1.8 * state.thickness) * (1 - histT * 0.45);
+            for(let bi = 0; bi < BANDS.length; bi++){
+                const band   = BANDS[bi];
+                const ringR  = baseRingR * band.radiusMul;
 
-            mainCtx.strokeStyle = `hsla(${hue}, 100%, 62%, ${alpha})`;
-            mainCtx.shadowColor = `hsl(${hue}, 100%, 62%)`;
-            mainCtx.shadowBlur  = (9 + (1 - histT) * 10) * state.glow;
-            mainCtx.lineWidth   = Math.max(0.4, lw);
-            mainCtx.lineCap     = 'round';
+                // Each band gets its own hue offset so they're visually distinct
+                const hue = ((bi * 70) + hi * (300 / TORUS_HIST_MAX) + drawPhase * 20) % 360;
+                const lw  = Math.max(0.3, (1.7 * state.thickness) * (1 - histT * 0.5));
 
-            mainCtx.beginPath();
-            for(let seg = 0; seg <= segments; seg++){
-                const theta    = (seg / segments) * Math.PI * 2 + rotOffset;
-                const cosTheta = Math.cos(theta);
-                const sinTheta = Math.sin(theta);
+                mainCtx.strokeStyle = `hsla(${hue}, 100%, 63%, ${alpha})`;
+                mainCtx.shadowColor = `hsl(${hue}, 100%, 63%)`;
+                mainCtx.shadowBlur  = (6 + (1 - histT) * 12) * state.glow;
+                mainCtx.lineWidth   = lw;
+                mainCtx.lineCap     = 'round';
 
-                const binI = Math.min(Math.floor((seg / segments) * bufLen * 0.82), bufLen - 1);
-                const freq = frame[binI] / 255;
+                const binStart = Math.floor(band.startFrac * bufLen);
+                const binEnd   = Math.max(binStart + 1, Math.floor(band.endFrac * bufLen));
+                const binRange = binEnd - binStart;
 
-                // Radius = base ring + audio spike going outward
-                const spikeScale = 1 - histT * 0.35; // older frames have smaller spikes
-                const r = ringR + freq * 72 * state.thickness * spikeScale;
+                mainCtx.beginPath();
+                for(let seg = 0; seg <= segments; seg++){
+                    const theta    = (seg / segments) * Math.PI * 2 + rotOffset;
+                    const cosTheta = Math.cos(theta);
+                    const sinTheta = Math.sin(theta);
 
-                // 3D: ring in XZ plane, spike goes radially outward
-                const rx = r * cosTheta;
-                const ry_raw = -freq * 18 * state.thickness * spikeScale; // slight vertical lift on peaks
-                const rz = r * sinTheta;
+                    const binI = binStart + Math.min(Math.floor((seg / segments) * binRange), binRange - 1);
+                    const freq = frame[binI] / 255;
 
-                // Tilt (rotate around X axis)
-                const ry = ry_raw * cosTX - rz * sinTX;
-                const rz2 = ry_raw * sinTX + rz * cosTX;
+                    const ageScale = 1 - histT * 0.38;
+                    const r = ringR + freq * 58 * state.thickness * band.spikeScale * ageScale;
 
-                // Perspective
-                const fov   = 4.2;
-                const persp = fov / (fov + rz2 / ringR);
+                    // 3-D coords — spike radially outward + slight upward lift on peaks
+                    const rx     = r * cosTheta;
+                    const ry_raw = -freq * 15 * state.thickness * band.spikeScale * ageScale;
+                    const rz     = r * sinTheta;
 
-                const px = cx + rx * persp;
-                const py = cy + ry * persp;
+                    // Apply camera tilt (rotate around X axis)
+                    const ry  = ry_raw * cosTX - rz * sinTX;
+                    const rz2 = ry_raw * sinTX + rz * cosTX;
 
-                seg === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+                    // Perspective
+                    const fov   = 4.5;
+                    const persp = fov / (fov + rz2 / ringR);
+
+                    const px = cx + rx * persp;
+                    const py = cy + ry * persp;
+
+                    seg === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+                }
+                mainCtx.stroke();
             }
+        }
+
+        // ── Rainbow triangle in the center (for the memes) ──
+        triangleHue = (triangleHue + 8) % 360;
+        const triSize = baseRingR * 0.20;
+        // Slowly spin the triangle
+        const triSpin = drawPhase * 0.6;
+
+        mainCtx.lineWidth = 2.5 * state.thickness;
+        mainCtx.lineCap   = 'round';
+        mainCtx.lineJoin  = 'round';
+
+        const triPts = [];
+        for(let ti = 0; ti < 3; ti++){
+            const ta = (ti / 3) * Math.PI * 2 + triSpin - Math.PI / 2;
+            triPts.push({ x: cx + Math.cos(ta) * triSize, y: cy + Math.sin(ta) * triSize });
+        }
+        // Each side its own vivid hue
+        for(let ti = 0; ti < 3; ti++){
+            const sideHue = (triangleHue + ti * 120) % 360;
+            const a = triPts[ti], b = triPts[(ti + 1) % 3];
+            mainCtx.strokeStyle = `hsl(${sideHue}, 100%, 68%)`;
+            mainCtx.shadowColor = `hsl(${sideHue}, 100%, 68%)`;
+            mainCtx.shadowBlur  = 20 * state.glow;
+            mainCtx.beginPath();
+            mainCtx.moveTo(a.x, a.y);
+            mainCtx.lineTo(b.x, b.y);
             mainCtx.stroke();
         }
 
