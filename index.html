@@ -27,6 +27,106 @@ body {
     height: 100vh;
     overflow: hidden;
 }
+
+/* ── FPS Counter ── */
+#fps-counter {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    z-index: 999;
+    background: rgba(5,5,5,0.75);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 11px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    font-style: italic;
+    pointer-events: none;
+    transition: color 0.3s;
+}
+#fps-counter.fps-good  { color: rgba(100,255,160,0.8); }
+#fps-counter.fps-mid   { color: rgba(255,220,80,0.8);  }
+#fps-counter.fps-bad   { color: rgba(255,100,80,0.8);  }
+
+/* ── Torus Warning Overlay ── */
+#torus-warning {
+    position: fixed; inset: 0; z-index: 8000;
+    display: none;
+    align-items: center; justify-content: center;
+}
+#torus-warning.active { display: flex; }
+#torus-blur-bg {
+    position: absolute; inset: 0;
+    backdrop-filter: blur(18px) saturate(0.7);
+    background: rgba(5,5,5,0.72);
+}
+#torus-warning-box {
+    position: relative; z-index: 1;
+    background: rgba(8,8,8,0.96);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 6px;
+    padding: 42px 52px 38px;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 40px 120px rgba(0,0,0,0.95);
+    animation: warn-rise 0.45s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes warn-rise { from { opacity:0; transform: scale(0.92) translateY(16px); } to { opacity:1; transform: scale(1) translateY(0); } }
+#torus-warning-box .warn-hey {
+    font-size: clamp(2.8rem, 7vw, 4.2rem);
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 18px;
+    color: #fff;
+    text-shadow: 0 0 60px rgba(255,255,255,0.18);
+}
+#torus-warning-box p {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.78);
+    font-style: italic;
+    margin-bottom: 30px;
+}
+#torus-warning-box p strong {
+    color: #fff;
+    font-style: normal;
+}
+.warn-btn-row { display: flex; gap: 12px; justify-content: center; }
+.warn-btn {
+    padding: 11px 32px;
+    border-radius: 60px;
+    font-family: var(--font);
+    font-size: 0.88rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
+}
+.warn-btn-proceed {
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.8);
+}
+.warn-btn-proceed:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.45);
+    color: #fff;
+}
+.warn-btn-cancel {
+    border: 1px solid rgba(255,80,60,0.28);
+    background: rgba(255,60,40,0.06);
+    color: rgba(255,160,140,0.85);
+}
+.warn-btn-cancel:hover {
+    border-color: rgba(255,80,60,0.52);
+    background: rgba(255,60,40,0.13);
+    color: rgba(255,180,160,1);
+}
+
 #welcome {
     position: fixed; inset: 0; z-index: 9000;
     background: var(--bg);
@@ -120,6 +220,8 @@ input[type="file"] { display: none; }
 .ctrl-disabled { opacity: 0.2; pointer-events: none; transition: opacity 0.2s; }
 .liss-only { transition: opacity 0.2s; }
 .liss-only.hidden-ctrl { opacity: 0.2; pointer-events: none; }
+.torus-only { transition: opacity 0.2s; }
+.torus-only.hidden-ctrl { opacity: 0.2; pointer-events: none; }
 .tip { font-size: 0.825rem; letter-spacing: 0.3px; color: var(--text-dim); line-height: 1.65; font-style: italic; }
 #source-badge { display: none; font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-top: 3px; border: 1px solid rgba(100,200,255,0.25); color: rgba(160,220,255,0.8); background: rgba(100,200,255,0.05); font-family: var(--font); }
 #source-badge.visible { display: inline-block; }
@@ -142,7 +244,6 @@ input[type="file"] { display: none; }
 .progress-track { width: 100%; height: 1px; background: rgba(255,255,255,0.1); border-radius: 1px; position: relative; }
 .progress-fill { height: 100%; width: 0%; background: #ffffff; border-radius: 1px; box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.15); transition: width 0.1s linear; }
 .progress-thumb { position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%); width: 7px; height: 7px; background: #ffffff; border-radius: 50%; box-shadow: 0 0 14px rgba(255,255,255,0.9); pointer-events: none; }
-/* Torus drag hint */
 #torus-hint {
     position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
     font-family: var(--font); font-size: 0.78rem; letter-spacing: 3px;
@@ -151,11 +252,33 @@ input[type="file"] { display: none; }
     z-index: 50;
 }
 #torus-hint.visible { opacity: 1; }
+
+/* WebGPU badge */
+#gpu-badge {
+    position: fixed; bottom: 22px; right: 22px;
+    font-family: var(--font); font-size: 0.72rem; letter-spacing: 3px;
+    text-transform: uppercase; color: rgba(100,200,255,0.4); font-style: italic;
+    pointer-events: none; z-index: 50; display: none;
+}
+#gpu-badge.visible { display: block; }
 </style>
 </head>
 <body>
 
 <canvas id="main-canvas"></canvas>
+
+<!-- Torus Warning Modal -->
+<div id="torus-warning">
+    <div id="torus-blur-bg"></div>
+    <div id="torus-warning-box">
+        <div class="warn-hey">HEY!</div>
+        <p>I advise <strong>HEAVILY</strong> in case you don't have a strong PC to <strong>NOT USE THIS!</strong> It is <strong>VERY GRAPHIC INTENSIVE.</strong></p>
+        <div class="warn-btn-row">
+            <button class="warn-btn warn-btn-cancel" id="warn-cancel">Go back</button>
+            <button class="warn-btn warn-btn-proceed" id="warn-proceed">I understand, proceed</button>
+        </div>
+    </div>
+</div>
 
 <div id="welcome">
     <canvas id="welcome-canvas"></canvas>
@@ -172,7 +295,9 @@ input[type="file"] { display: none; }
     <span></span><span></span><span></span>
 </button>
 
+<div id="fps-counter">-- fps</div>
 <div id="torus-hint">drag to orbit</div>
+<div id="gpu-badge">⬡ WebGPU</div>
 
 <div id="controls" class="panel">
     <div class="panel-header" id="controls-handle">
@@ -231,7 +356,7 @@ input[type="file"] { display: none; }
         </div>
         <div class="ctrl-row">
             <label class="ctrl-label"><span>Glow</span><span class="ctrl-val" id="val-glow">1.00</span></label>
-            <input type="range" id="fx-glow" min="0.1" max="5.0" step="0.01" value="1.0">
+            <input type="range" id="fx-glow" min="0.0" max="5.0" step="0.01" value="1.0">
         </div>
         <div class="ctrl-row liss-only" id="liss-density-group">
             <label class="ctrl-label"><span>Liss density + spread</span><span class="ctrl-val" id="val-liss-density">15</span></label>
@@ -240,6 +365,11 @@ input[type="file"] { display: none; }
         <div class="ctrl-row ctrl-disabled" id="sep-group">
             <label class="ctrl-label"><span>Line count</span><span class="ctrl-val" id="val-separation">15</span></label>
             <input type="range" id="fx-separation" min="10" max="2500" step="1" value="15">
+        </div>
+        <!-- Torus ring spacing (only relevant for torus mode) -->
+        <div class="ctrl-row torus-only hidden-ctrl" id="torus-spacing-group">
+            <label class="ctrl-label"><span>Ring spacing</span><span class="ctrl-val" id="val-torus-spacing">0.50</span></label>
+            <input type="range" id="fx-torus-spacing" min="0.10" max="2.5" step="0.01" value="0.5">
         </div>
     </div>
 
@@ -311,6 +441,7 @@ const eqPanel          = document.getElementById('eq-panel');
 const btnToggleEq      = document.getElementById('btn-toggle-eq');
 const sepGroup         = document.getElementById('sep-group');
 const lissDensityGroup = document.getElementById('liss-density-group');
+const torusSpacingGroup= document.getElementById('torus-spacing-group');
 const progressFill     = document.getElementById('progress-fill');
 const progressThumb    = document.getElementById('progress-thumb');
 const progressWrap     = document.getElementById('progress-wrap');
@@ -323,6 +454,11 @@ const btnCapture       = document.getElementById('btn-capture');
 const btnRecord        = document.getElementById('btn-record');
 const sourceBadge      = document.getElementById('source-badge');
 const torusHint        = document.getElementById('torus-hint');
+const fpsCounter       = document.getElementById('fps-counter');
+const gpuBadge         = document.getElementById('gpu-badge');
+const torusWarning     = document.getElementById('torus-warning');
+const warnProceed      = document.getElementById('warn-proceed');
+const warnCancel       = document.getElementById('warn-cancel');
 
 let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
@@ -330,6 +466,19 @@ let micStream = null, micSource = null;
 let bassNode, crushNode, convolverNode, dryGain, wetGain, volumeNode, monitorGain;
 let mediaRecorder = null, recordChunks = [], isRecording = false;
 let inputMode = 'file', animationId, isScrubbing = false;
+
+// ── FPS tracking ──
+let fpsSamples = [], fpsLastTime = performance.now(), fpsDisplay = 0;
+function updateFps() {
+    const now = performance.now();
+    fpsSamples.push(now - fpsLastTime);
+    fpsLastTime = now;
+    if (fpsSamples.length > 30) fpsSamples.shift();
+    const avg = fpsSamples.reduce((a,b)=>a+b,0)/fpsSamples.length;
+    fpsDisplay = Math.round(1000 / avg);
+    fpsCounter.textContent = fpsDisplay + ' fps';
+    fpsCounter.className = fpsDisplay >= 50 ? 'fps-good' : fpsDisplay >= 30 ? 'fps-mid' : 'fps-bad';
+}
 
 const state = {
     mode: 'lissajous',
@@ -339,7 +488,8 @@ const state = {
     glow: 1,
     lineCount: 15,
     lissOffset: 15,
-    lissSpread: 0.28
+    lissSpread: 0.28,
+    torusSpacing: 0.5
 };
 
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
@@ -373,6 +523,350 @@ let torusDragLastX = 0;
 let torusDragLastY = 0;
 let triangleHue = 0;
 
+// ── WebGPU state ──
+let gpuDevice = null, gpuContext = null, gpuFormat = null;
+let gpuReady = false;
+let gpuPipeline = null, gpuUniformBuf = null, gpuFreqBuf = null, gpuTimeBuf = null;
+let gpuBindGroup = null, gpuBindGroupLayout = null;
+let gpuPrevMode = null;
+
+async function initWebGPU() {
+    if (gpuReady) return true;
+    if (!navigator.gpu) return false;
+    try {
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        if (!adapter) return false;
+        gpuDevice = await adapter.requestDevice();
+        gpuFormat = navigator.gpu.getPreferredCanvasFormat();
+        gpuContext = mainCanvas.getContext('webgpu');
+        if (!gpuContext) return false;
+        gpuContext.configure({ device: gpuDevice, format: gpuFormat, alphaMode: 'premultiplied' });
+        gpuReady = true;
+        gpuBadge.classList.add('visible');
+        return true;
+    } catch(e) { return false; }
+}
+
+// Lazy pipeline creation for WebGPU modes
+function ensureGPUPipeline(mode) {
+    if (!gpuReady || gpuPipeline) return;
+    // Minimal GPU pipeline: vertex full-screen quad + fragment shader for each mode
+    // We encode freq/time data into a storage buffer and render in the shader
+    const BUF_SIZE = 1024;
+
+    const shaderSrc = `
+struct Uniforms {
+    time: f32,
+    bass: f32,
+    volume: f32,
+    reverb: f32,
+    thickness: f32,
+    glow: f32,
+    spacing: f32,
+    camRotX: f32,
+    camRotY: f32,
+    width: f32,
+    height: f32,
+    crush: f32,
+};
+@group(0) @binding(0) var<uniform> u: Uniforms;
+@group(0) @binding(1) var<storage, read> freq: array<f32, 1024>;
+@group(0) @binding(2) var<storage, read> timed: array<f32, 1024>;
+
+struct VOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
+
+@vertex fn vs(@builtin(vertex_index) vi: u32) -> VOut {
+    var pos = array<vec2f,6>(
+        vec2f(-1.0,-1.0), vec2f(1.0,-1.0), vec2f(-1.0,1.0),
+        vec2f(-1.0,1.0),  vec2f(1.0,-1.0), vec2f(1.0,1.0)
+    );
+    var o: VOut;
+    o.pos = vec4f(pos[vi], 0.0, 1.0);
+    o.uv = (pos[vi] + vec2f(1.0)) * 0.5;
+    return o;
+}
+
+fn hsl2rgb(h: f32, s: f32, l: f32) -> vec3f {
+    let c = (1.0 - abs(2.0 * l - 1.0)) * s;
+    let x = c * (1.0 - abs(fract(h / 60.0) * 2.0 - 1.0));
+    let m = l - c / 2.0;
+    var rgb: vec3f;
+    let h6 = h / 60.0;
+    if (h6 < 1.0) { rgb = vec3f(c, x, 0.0); }
+    else if (h6 < 2.0) { rgb = vec3f(x, c, 0.0); }
+    else if (h6 < 3.0) { rgb = vec3f(0.0, c, x); }
+    else if (h6 < 4.0) { rgb = vec3f(0.0, x, c); }
+    else if (h6 < 5.0) { rgb = vec3f(x, 0.0, c); }
+    else { rgb = vec3f(c, 0.0, x); }
+    return rgb + vec3f(m);
+}
+
+fn getFreq(i: i32) -> f32 {
+    let idx = clamp(i, 0, 1023);
+    return freq[idx];
+}
+
+fn project3d(x: f32, y: f32, z: f32) -> vec2f {
+    let fov: f32 = 4.5;
+    let p = fov / (fov + z);
+    return vec2f(x * p, y * p);
+}
+
+fn rotate3dX(ry: f32, rz: f32, angle: f32) -> vec2f {
+    let c = cos(angle); let s = sin(angle);
+    return vec2f(ry * c - rz * s, ry * s + rz * c);
+}
+
+@fragment fn fs(in: VOut) -> @location(0) vec4f {
+    let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+    let px = uv.x * u.width;
+    let py = uv.y * u.height;
+
+    // ── TORUS MODE ──
+    let cx = u.width * 0.5;
+    let cy = u.height * 0.52;
+    let baseR = min(u.width, u.height) * 0.20;
+
+    // 4 bands
+    let bandStarts = array<f32, 4>(0.0, 0.05, 0.15, 0.45);
+    let bandEnds   = array<f32, 4>(0.05, 0.15, 0.45, 1.0);
+    let bandMuls   = array<f32, 4>(0.50, 0.73, 1.0, 1.30);
+    let spikeScale = array<f32, 4>(1.5,  1.2,  1.0, 0.75);
+
+    let segments: i32 = 88;
+    let binCount: i32 = 1024;
+
+    var minDist = 1e9;
+    var bestColor = vec3f(0.0);
+    var bestAlpha = 0.0;
+
+    let rotOffset = u.time * 0.09 + u.camRotY;
+    let cosTX = cos(u.camRotX);
+    let sinTX = sin(u.camRotX);
+
+    for (var bi: i32 = 0; bi < 4; bi++) {
+        let bStart = bandStarts[bi];
+        let bEnd = bandEnds[bi];
+        let ringR = baseR * bandMuls[bi] * u.spacing;
+        let ss = spikeScale[bi];
+
+        for (var seg: i32 = 0; seg <= segments; seg++) {
+            let theta = (f32(seg) / f32(segments)) * 6.28318 + rotOffset;
+            let cosT = cos(theta);
+            let sinT = sin(theta);
+
+            let binI = i32(bStart * f32(binCount)) + i32((f32(seg) / f32(segments)) * (bEnd - bStart) * f32(binCount));
+            let fv = getFreq(clamp(binI, 0, 1023));
+
+            let r = ringR + fv * 58.0 * u.thickness * ss;
+            let rx = r * cosT;
+            let ry_raw = -fv * 15.0 * u.thickness * ss;
+            let rz = r * sinT;
+            let ry_ = rotate3dX(ry_raw, rz, u.camRotX);
+            let ry = ry_.x;
+            let rz2 = ry_.y;
+
+            let fovV: f32 = 4.5;
+            let persp = fovV / (fovV + rz2 / ringR);
+            let spx = cx + rx * persp;
+            let spy = cy + ry * persp;
+
+            let dist = distance(vec2f(px, py), vec2f(spx, spy));
+            let lineW = max(0.4, 1.7 * u.thickness * persp);
+            if (dist < lineW + 2.0) {
+                let hue = f32(bi) * 70.0 + u.time * 20.0;
+                let rgb = hsl2rgb(hue % 360.0, 1.0, 0.63);
+                let sharpness = 1.0 - smoothstep(lineW * 0.3, lineW + 2.0, dist);
+                if (sharpness > bestAlpha) {
+                    bestAlpha = sharpness;
+                    bestColor = rgb;
+                }
+            }
+        }
+    }
+
+    // Rainbow triangle center
+    let triSize = baseR * 0.20;
+    let triSpin = u.time * 0.6;
+    for (var ti: i32 = 0; ti < 3; ti++) {
+        let ta = f32(ti) / 3.0 * 6.28318 + triSpin - 1.5708;
+        let tb = f32(ti + 1) / 3.0 * 6.28318 + triSpin - 1.5708;
+        let ax = cx + cos(ta) * triSize;
+        let ay = cy + sin(ta) * triSize;
+        let bx = cx + cos(tb) * triSize;
+        let by = cy + sin(tb) * triSize;
+        let ab = vec2f(bx - ax, by - ay);
+        let ap = vec2f(px - ax, py - ay);
+        let t2 = clamp(dot(ap, ab) / dot(ab, ab), 0.0, 1.0);
+        let closest = vec2f(ax + t2 * ab.x, ay + t2 * ab.y);
+        let d = distance(vec2f(px, py), closest);
+        let lw = 2.5 * u.thickness;
+        if (d < lw + 2.0) {
+            let sideHue = (f32(ti) * 120.0 + u.time * 40.0) % 360.0;
+            let rgb = hsl2rgb(sideHue, 1.0, 0.68);
+            let s = 1.0 - smoothstep(lw * 0.3, lw + 2.0, d);
+            if (s > bestAlpha) { bestAlpha = s; bestColor = rgb; }
+        }
+    }
+
+    if (bestAlpha < 0.01) { discard; }
+    return vec4f(bestColor * bestAlpha, bestAlpha);
+}
+`;
+    try {
+        const shaderMod = gpuDevice.createShaderModule({ code: shaderSrc });
+
+        gpuBindGroupLayout = gpuDevice.createBindGroupLayout({
+            entries: [
+                { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+                { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+                { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+            ]
+        });
+
+        const pipelineLayout = gpuDevice.createPipelineLayout({ bindGroupLayouts: [gpuBindGroupLayout] });
+
+        gpuPipeline = gpuDevice.createRenderPipeline({
+            layout: pipelineLayout,
+            vertex: { module: shaderMod, entryPoint: 'vs' },
+            fragment: { module: shaderMod, entryPoint: 'fs',
+                targets: [{ format: gpuFormat,
+                    blend: {
+                        color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
+                        alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+                    }
+                }]
+            },
+            primitive: { topology: 'triangle-list' }
+        });
+
+        // Uniform buffer: 12 f32 = 48 bytes, pad to 64
+        gpuUniformBuf = gpuDevice.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        gpuFreqBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+        gpuTimeBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+
+        gpuBindGroup = gpuDevice.createBindGroup({
+            layout: gpuBindGroupLayout,
+            entries: [
+                { binding: 0, resource: { buffer: gpuUniformBuf } },
+                { binding: 1, resource: { buffer: gpuFreqBuf } },
+                { binding: 2, resource: { buffer: gpuTimeBuf } },
+            ]
+        });
+    } catch(e) {
+        console.warn('WebGPU pipeline creation failed:', e);
+        gpuPipeline = null;
+    }
+}
+
+// ── WebGPU sphere pipeline ──
+let gpuSpherePipeline = null, gpuSphereUniformBuf = null, gpuSphereFreqBuf = null, gpuSphereBindGroup = null;
+
+function ensureGPUSpherePipeline() {
+    if (!gpuReady || gpuSpherePipeline) return;
+
+    const shaderSrc = `
+struct Uniforms {
+    time: f32, bass: f32, volume: f32, reverb: f32,
+    thickness: f32, glow: f32,
+    cx: f32, cy: f32, radius: f32,
+    width: f32, height: f32, _pad: f32,
+};
+@group(0) @binding(0) var<uniform> u: Uniforms;
+@group(0) @binding(1) var<storage, read> freq: array<f32, 1024>;
+
+struct VOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
+
+@vertex fn vs(@builtin(vertex_index) vi: u32) -> VOut {
+    var pos = array<vec2f,6>(
+        vec2f(-1.0,-1.0), vec2f(1.0,-1.0), vec2f(-1.0,1.0),
+        vec2f(-1.0,1.0),  vec2f(1.0,-1.0), vec2f(1.0,1.0)
+    );
+    var o: VOut; o.pos = vec4f(pos[vi],0.0,1.0);
+    o.uv = (pos[vi]+vec2f(1.0))*0.5; return o;
+}
+
+@fragment fn fs(in: VOut) -> @location(0) vec4f {
+    let px = in.uv.x * u.width;
+    let py = (1.0 - in.uv.y) * u.height;
+    let latLines: i32 = 26;
+    let lonLines: i32 = 52;
+    let binCount: i32 = 1024;
+    let rotAngle = u.time * 0.28;
+    let tiltA: f32 = 0.32;
+    let cosTilt = cos(tiltA);
+    let sinTilt = sin(tiltA);
+    let fov: f32 = 2.6;
+
+    var bestA = 0.0;
+    var bestC = vec3f(1.0);
+
+    for (var lat: i32 = 0; lat <= latLines; lat++) {
+        let phi = f32(lat) / f32(latLines) * 3.14159;
+        let sinPhi = sin(phi); let cosPhi = cos(phi);
+        for (var lon: i32 = 0; lon <= lonLines; lon++) {
+            let theta = f32(lon) / f32(lonLines) * 6.28318 + rotAngle;
+            let binI = clamp(i32(f32(lon) / f32(lonLines) * f32(binCount) * 0.65), 0, 1023);
+            let fv = freq[binI];
+            let deformR = u.radius * (1.0 + fv * 0.32 * u.bass);
+            let sx = sinPhi * cos(theta);
+            let sy_raw = sinPhi * sin(theta);
+            let sz_raw = cosPhi;
+            let sy = sy_raw * cosTilt - sz_raw * sinTilt;
+            let sz = sy_raw * sinTilt + sz_raw * cosTilt;
+            let persp = fov / (fov + sz * 0.9);
+            let spx = u.cx + sx * deformR * persp;
+            let spy = u.cy + sy * deformR * persp * 0.88;
+            let depth = (sz + 1.4) / 2.8;
+            let alpha = max(0.0, (0.05 + depth * 0.55) * (0.12 + fv * 0.88));
+            let dotR = max(0.3, (0.65 + fv * 2.2) * u.thickness * persp * 0.75);
+            let d = distance(vec2f(px, py), vec2f(spx, spy));
+            if (d < dotR + 1.5 && alpha > bestA) {
+                bestA = alpha * (1.0 - smoothstep(dotR * 0.5, dotR + 1.5, d));
+                bestC = vec3f(1.0);
+            }
+        }
+    }
+    if (bestA < 0.01) { discard; }
+    return vec4f(bestC * bestA, bestA);
+}
+`;
+    try {
+        const shaderMod = gpuDevice.createShaderModule({ code: shaderSrc });
+        const bgl = gpuDevice.createBindGroupLayout({
+            entries: [
+                { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+                { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+            ]
+        });
+        gpuSpherePipeline = gpuDevice.createRenderPipeline({
+            layout: gpuDevice.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+            vertex: { module: shaderMod, entryPoint: 'vs' },
+            fragment: { module: shaderMod, entryPoint: 'fs',
+                targets: [{ format: gpuFormat,
+                    blend: {
+                        color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
+                        alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+                    }
+                }]
+            },
+            primitive: { topology: 'triangle-list' }
+        });
+        gpuSphereUniformBuf = gpuDevice.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        gpuSphereFreqBuf    = gpuDevice.createBuffer({ size: 1024*4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+        gpuSphereBindGroup  = gpuDevice.createBindGroup({
+            layout: bgl,
+            entries: [
+                { binding: 0, resource: { buffer: gpuSphereUniformBuf } },
+                { binding: 1, resource: { buffer: gpuSphereFreqBuf } },
+            ]
+        });
+    } catch(e) {
+        console.warn('WebGPU sphere pipeline failed:', e);
+        gpuSpherePipeline = null;
+    }
+}
+
 function hexToRgb(hex) {
     const r = parseInt(hex.slice(1,3),16);
     const g = parseInt(hex.slice(3,5),16);
@@ -383,9 +877,47 @@ function hexToRgb(hex) {
 function resize() {
     mainCanvas.width = window.innerWidth;
     mainCanvas.height = window.innerHeight;
+    // Reconfigure WebGPU context on resize
+    if (gpuReady && gpuContext) {
+        try { gpuContext.configure({ device: gpuDevice, format: gpuFormat, alphaMode: 'premultiplied' }); } catch(e){}
+    }
     initRainParticles(mainCanvas.width, mainCanvas.height);
 }
 window.addEventListener('resize', resize); resize();
+
+// ── Torus Warning ──
+let pendingTorusMode = false;
+
+function showTorusWarning() {
+    torusWarning.classList.add('active');
+}
+function hideTorusWarning() {
+    torusWarning.classList.remove('active');
+}
+
+warnProceed.addEventListener('click', () => {
+    hideTorusWarning();
+    // Force glow to 0 when entering torus
+    const glowSlider = document.getElementById('fx-glow');
+    glowSlider.value = 0;
+    document.getElementById('val-glow').innerText = '0.00';
+    state.glow = 0;
+
+    state.mode = 'torus';
+    sepGroup.classList.toggle('ctrl-disabled', true);
+    lissDensityGroup.classList.add('hidden-ctrl');
+    torusSpacingGroup.classList.remove('hidden-ctrl');
+    torusHistory.length = 0;
+    torusHint.classList.add('visible');
+    setTimeout(()=>torusHint.classList.remove('visible'), 3500);
+    if (!animationId) draw();
+});
+
+warnCancel.addEventListener('click', () => {
+    hideTorusWarning();
+    // Revert selector back to previous mode
+    document.getElementById('mode-selector').value = state.mode;
+});
 
 function createImpulseResponse(ctx) {
     const rate = ctx.sampleRate, len = rate*3;
@@ -580,15 +1112,20 @@ btnToggleEq.onclick = () => {
 };
 
 document.getElementById('mode-selector').onchange = e => {
-    state.mode=e.target.value;
-    sepGroup.classList.toggle('ctrl-disabled', state.mode!=='2');
-    lissDensityGroup.classList.toggle('hidden-ctrl', state.mode!=='lissajous');
-    if(state.mode!=='torus') torusHistory.length=0;
-    // Show torus hint
-    if(state.mode==='torus'){
-        torusHint.classList.add('visible');
-        setTimeout(()=>torusHint.classList.remove('visible'), 3500);
+    const newMode = e.target.value;
+
+    if (newMode === 'torus') {
+        // Show warning — actual mode switch happens in warnProceed handler
+        showTorusWarning();
+        return;
     }
+
+    state.mode = newMode;
+    sepGroup.classList.toggle('ctrl-disabled', newMode !== '2');
+    lissDensityGroup.classList.toggle('hidden-ctrl', newMode !== 'lissajous');
+    torusSpacingGroup.classList.add('hidden-ctrl');
+    if (newMode !== 'torus') torusHistory.length = 0;
+    gpuBadge.classList.remove('visible');
 };
 
 document.getElementById('color-picker').oninput = e => {
@@ -614,6 +1151,10 @@ bindSlider('liss-density', v => {
 bindSlider('separation', v => {
     state.lineCount = Math.round(v);
     document.getElementById('val-separation').innerText = Math.round(v);
+});
+
+bindSlider('torus-spacing', v => {
+    state.torusSpacing = v;
 });
 
 bindSlider('volume', v => { fxParams.volume=v; if(volumeNode) volumeNode.gain.value=v; });
@@ -695,7 +1236,7 @@ makeDraggable(controls, document.getElementById('controls-handle'));
 makeDraggable(transport,document.getElementById('transport-handle'));
 makeDraggable(hamburger,hamburger);
 
-// ── Torus camera drag (click + drag on canvas) ──
+// ── Torus camera drag ──
 mainCanvas.addEventListener('mousedown', e => {
     if (state.mode !== 'torus') return;
     torusDragging = true;
@@ -716,7 +1257,6 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => {
     if (torusDragging) { torusDragging = false; mainCanvas.style.cursor = ''; }
 });
-// Update cursor when hovering torus
 mainCanvas.addEventListener('mousemove', () => {
     if (state.mode === 'torus' && !torusDragging) mainCanvas.style.cursor = 'grab';
     else if (state.mode !== 'torus') mainCanvas.style.cursor = '';
@@ -751,6 +1291,8 @@ function enterApp(){
     document.documentElement.requestFullscreen().catch(()=>{});
     welcome.classList.add('fade-out');
     welcome.addEventListener('transitionend',()=>{ welcome.style.display='none'; cancelAnimationFrame(welcomeAnimId); },{once:true});
+    // Try to init WebGPU in background
+    initWebGPU();
     if(!animationId) draw();
 }
 document.getElementById('welcome-enter').addEventListener('click',e=>{e.stopPropagation();enterApp();});
@@ -782,8 +1324,124 @@ function getBassEnergy(freqData) {
     return sum / end / 255;
 }
 
+// Convert freq data to normalized f32 for GPU
+function toF32(u8arr) {
+    const out = new Float32Array(1024);
+    const len = Math.min(u8arr.length, 1024);
+    for (let i = 0; i < len; i++) out[i] = u8arr[i] / 255;
+    return out;
+}
+
+function drawTorusGPU(vFreq, vTime, w, h) {
+    ensureGPUPipeline();
+    if (!gpuPipeline) return false;
+
+    const bg = hexToRgb(state.bgColor);
+    // Clear canvas 2D first with bg color + trail
+    const trailAlpha = 0.12;
+    mainCtx.fillStyle = `rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
+    mainCtx.fillRect(0, 0, w, h);
+
+    const freqF32 = toF32(vFreq);
+    gpuDevice.queue.writeBuffer(gpuFreqBuf, 0, freqF32);
+    const timeF32 = toF32(vTime);
+    gpuDevice.queue.writeBuffer(gpuTimeBuf, 0, timeF32);
+
+    const uniforms = new Float32Array(16);
+    uniforms[0]  = drawPhase;
+    uniforms[1]  = fxParams.bass;
+    uniforms[2]  = fxParams.volume;
+    uniforms[3]  = fxParams.reverb;
+    uniforms[4]  = state.thickness;
+    uniforms[5]  = state.glow;
+    uniforms[6]  = state.torusSpacing;
+    uniforms[7]  = torusCamRotX;
+    uniforms[8]  = torusCamRotY + drawPhase * 0.09 * fxParams.speed;
+    uniforms[9]  = w;
+    uniforms[10] = h;
+    uniforms[11] = fxParams.crush;
+    gpuDevice.queue.writeBuffer(gpuUniformBuf, 0, uniforms);
+
+    try {
+        const cmdEncoder = gpuDevice.createCommandEncoder();
+        const tex = gpuContext.getCurrentTexture();
+        const pass = cmdEncoder.beginRenderPass({
+            colorAttachments: [{
+                view: tex.createView(),
+                clearValue: { r: bg.r/255, g: bg.g/255, b: bg.b/255, a: 1 },
+                loadOp: 'clear',
+                storeOp: 'store'
+            }]
+        });
+        pass.setPipeline(gpuPipeline);
+        pass.setBindGroup(0, gpuBindGroup);
+        pass.draw(6);
+        pass.end();
+        gpuDevice.queue.submit([cmdEncoder.finish()]);
+    } catch(e) {
+        console.warn('WebGPU draw failed, falling back:', e);
+        gpuPipeline = null; gpuSpherePipeline = null;
+        gpuReady = false;
+        return false;
+    }
+    return true;
+}
+
+function drawSphereGPU(vFreq, w, h) {
+    ensureGPUSpherePipeline();
+    if (!gpuSpherePipeline) return false;
+
+    const freqF32 = toF32(vFreq);
+    gpuDevice.queue.writeBuffer(gpuSphereFreqBuf, 0, freqF32);
+
+    const bassE = getBassEnergy(vFreq);
+    const baseR = Math.min(w, h) * 0.36;
+    const R = baseR * (1 + bassE * 0.13 * fxParams.bass);
+
+    const uniforms = new Float32Array(12);
+    uniforms[0]  = drawPhase;
+    uniforms[1]  = fxParams.bass;
+    uniforms[2]  = fxParams.volume;
+    uniforms[3]  = fxParams.reverb;
+    uniforms[4]  = state.thickness;
+    uniforms[5]  = state.glow;
+    uniforms[6]  = w / 2;
+    uniforms[7]  = h / 2;
+    uniforms[8]  = R;
+    uniforms[9]  = w;
+    uniforms[10] = h;
+    uniforms[11] = 0;
+    gpuDevice.queue.writeBuffer(gpuSphereUniformBuf, 0, uniforms);
+
+    const bg = hexToRgb(state.bgColor);
+    try {
+        const cmdEncoder = gpuDevice.createCommandEncoder();
+        const tex = gpuContext.getCurrentTexture();
+        const pass = cmdEncoder.beginRenderPass({
+            colorAttachments: [{
+                view: tex.createView(),
+                clearValue: { r: bg.r/255, g: bg.g/255, b: bg.b/255, a: 1 },
+                loadOp: 'clear',
+                storeOp: 'store'
+            }]
+        });
+        pass.setPipeline(gpuSpherePipeline);
+        pass.setBindGroup(0, gpuSphereBindGroup);
+        pass.draw(6);
+        pass.end();
+        gpuDevice.queue.submit([cmdEncoder.finish()]);
+    } catch(e) {
+        console.warn('WebGPU sphere draw failed:', e);
+        gpuSpherePipeline = null;
+        gpuReady = false;
+        return false;
+    }
+    return true;
+}
+
 function draw(){
     animationId=requestAnimationFrame(draw);
+    updateFps();
     if(!analyser) return;
 
     drawPhase += 0.012 * fxParams.speed;
@@ -800,6 +1458,27 @@ function draw(){
     const vRaw  = quantizeData(rawTime,  fxParams.crush);
 
     const w=mainCanvas.width, h=mainCanvas.height;
+
+    // ── Torus: try WebGPU first ──
+    if (state.mode === 'torus') {
+        if (gpuReady) {
+            const ok = drawTorusGPU(vFreq, vTime, w, h);
+            if (ok) { gpuBadge.classList.add('visible'); return; }
+        }
+        gpuBadge.classList.remove('visible');
+        // CPU fallback below
+    }
+
+    // ── Particle Sphere: try WebGPU first ──
+    if (state.mode === 'ncs') {
+        if (gpuReady) {
+            const ok = drawSphereGPU(vFreq, w, h);
+            if (ok) { gpuBadge.classList.add('visible'); return; }
+        }
+        gpuBadge.classList.remove('visible');
+    }
+
+    // ── CPU 2D canvas render ──
     const bg = hexToRgb(state.bgColor);
     const trailAlpha = 0.08 + (1 - Math.min((fxParams.reverb-0.1)/4.9, 1)) * 0.32;
     mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
@@ -900,7 +1579,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Particle Sphere ──
+    // ── Particle Sphere (CPU fallback) ──
     } else if(state.mode==='ncs'){
         const col = hexToRgb(state.color);
         const cx = w/2, cy = h/2;
@@ -951,7 +1630,7 @@ function draw(){
 
                 if(alpha < 0.015) continue;
 
-                mainCtx.shadowBlur = freq > 0.5 ? freq * 10 * state.glow : 0;
+                mainCtx.shadowBlur = (freq > 0.5 ? freq * 10 * state.glow : 0);
                 mainCtx.shadowColor = state.color;
                 mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
                 mainCtx.beginPath();
@@ -960,7 +1639,6 @@ function draw(){
             }
         }
 
-        // Soft inner ambient glow only (outer ring removed)
         mainCtx.shadowBlur = 0;
         const innerGrad = mainCtx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
         innerGrad.addColorStop(0, `rgba(${col.r},${col.g},${col.b},${avgV * 0.08})`);
@@ -976,7 +1654,6 @@ function draw(){
         const avgVol   = getAvgVolume(vFreq);
         const bassE    = getBassEnergy(vFreq);
 
-        // 1. Background drifting particles
         const particleSpeed = 0.5 + avgVol * 4.0 * fxParams.volume;
         mainCtx.shadowBlur = 0;
         for(let p of rainParticles){
@@ -991,13 +1668,12 @@ function draw(){
             mainCtx.fill();
         }
 
-        // 2. Frequency bars at top AND bottom edges
         const barCount = Math.min(bufLen, 128);
         const totalW   = w * 0.88;
         const barW     = (totalW / barCount) * 0.7;
         const gap      = (totalW / barCount) * 0.3;
         const startX   = (w - totalW) / 2;
-        const edgePad  = 4; // px from screen edge
+        const edgePad  = 4;
 
         for(let i = 0; i < barCount; i++){
             const half = Math.floor(barCount / 2);
@@ -1008,21 +1684,17 @@ function draw(){
             const capH = Math.max(2, barW * 0.4);
             const glowMul = 0.4 + raw * 2.8;
 
-            // ── Bottom bars: grow upward from bottom edge ──
             mainCtx.shadowBlur  = 16 * state.glow * glowMul;
             mainCtx.shadowColor = state.color;
             mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
             mainCtx.fillRect(jitter(x), h - edgePad - barH, barW, barH);
-            // cap glow at peak of bottom bar
             mainCtx.shadowBlur  = 28 * state.glow;
             mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.6 + raw * 0.4})`;
             mainCtx.fillRect(jitter(x), h - edgePad - barH - capH, barW, capH);
 
-            // ── Top bars: grow downward from top edge ──
             mainCtx.shadowBlur  = 16 * state.glow * glowMul;
             mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
             mainCtx.fillRect(jitter(x), edgePad, barW, barH);
-            // cap glow at peak of top bar
             mainCtx.shadowBlur  = 28 * state.glow;
             mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.6 + raw * 0.4})`;
             mainCtx.fillRect(jitter(x), edgePad + barH, barW, capH);
@@ -1030,7 +1702,6 @@ function draw(){
             mainCtx.shadowBlur = 0;
         }
 
-        // Baselines at top and bottom
         mainCtx.shadowBlur  = 10 * state.glow;
         mainCtx.shadowColor = state.color;
         mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},0.28)`;
@@ -1042,7 +1713,6 @@ function draw(){
         mainCtx.lineTo(startX + totalW, edgePad);
         mainCtx.stroke();
 
-        // 3. Symmetrical wave in center
         mainCtx.shadowBlur  = (8 + reverbGlow * 7) * state.glow;
         mainCtx.shadowColor = state.color;
         mainCtx.strokeStyle = state.color;
@@ -1065,8 +1735,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Spectrum Torus ──
-    // 4 concentric rings (sub / bass / mids / highs) + drag camera + rainbow triangle
+    // ── Spectrum Torus (CPU fallback) ──
     } else if(state.mode==='torus'){
         torusHistory.unshift(new Uint8Array(vFreq));
         while(torusHistory.length > TORUS_HIST_MAX) torusHistory.pop();
@@ -1077,24 +1746,20 @@ function draw(){
 
         const cosTX = Math.cos(torusCamRotX);
         const sinTX = Math.sin(torusCamRotX);
-
-        // Auto-slow-rotate when not dragging
         const rotOffset = drawPhase * 0.09 * fxParams.speed + torusCamRotY;
 
-        // 4 frequency bands → 4 rings at different radii
         const BANDS = [
-            { startFrac: 0.0,  endFrac: 0.05, radiusMul: 0.50, spikeScale: 1.5 },  // sub-bass  (innermost)
-            { startFrac: 0.05, endFrac: 0.15, radiusMul: 0.73, spikeScale: 1.2 },  // bass
-            { startFrac: 0.15, endFrac: 0.45, radiusMul: 1.0,  spikeScale: 1.0 },  // mids
-            { startFrac: 0.45, endFrac: 1.0,  radiusMul: 1.30, spikeScale: 0.75},  // highs (outermost)
+            { startFrac: 0.0,  endFrac: 0.05, radiusMul: 0.50 * state.torusSpacing, spikeScale: 1.5 },
+            { startFrac: 0.05, endFrac: 0.15, radiusMul: 0.73 * state.torusSpacing, spikeScale: 1.2 },
+            { startFrac: 0.15, endFrac: 0.45, radiusMul: 1.0  * state.torusSpacing, spikeScale: 1.0 },
+            { startFrac: 0.45, endFrac: 1.0,  radiusMul: 1.30 * state.torusSpacing, spikeScale: 0.75},
         ];
 
         const segments = 88;
 
-        // Draw oldest → newest so newer lines paint on top
         for(let hi = torusHistory.length - 1; hi >= 0; hi--){
             const frame = torusHistory[hi];
-            const histT = hi / Math.max(1, TORUS_HIST_MAX - 1); // 0=newest, 1=oldest
+            const histT = hi / Math.max(1, TORUS_HIST_MAX - 1);
             const alpha = (1 - histT * 0.9) * 0.88;
             if(alpha < 0.018) continue;
 
@@ -1102,13 +1767,12 @@ function draw(){
                 const band   = BANDS[bi];
                 const ringR  = baseRingR * band.radiusMul;
 
-                // Each band gets its own hue offset so they're visually distinct
                 const hue = ((bi * 70) + hi * (300 / TORUS_HIST_MAX) + drawPhase * 20) % 360;
                 const lw  = Math.max(0.3, (1.7 * state.thickness) * (1 - histT * 0.5));
 
                 mainCtx.strokeStyle = `hsla(${hue}, 100%, 63%, ${alpha})`;
                 mainCtx.shadowColor = `hsl(${hue}, 100%, 63%)`;
-                mainCtx.shadowBlur  = (6 + (1 - histT) * 12) * state.glow;
+                mainCtx.shadowBlur  = 0; // forced 0 for torus
                 mainCtx.lineWidth   = lw;
                 mainCtx.lineCap     = 'round';
 
@@ -1128,16 +1792,13 @@ function draw(){
                     const ageScale = 1 - histT * 0.38;
                     const r = ringR + freq * 58 * state.thickness * band.spikeScale * ageScale;
 
-                    // 3-D coords — spike radially outward + slight upward lift on peaks
                     const rx     = r * cosTheta;
                     const ry_raw = -freq * 15 * state.thickness * band.spikeScale * ageScale;
                     const rz     = r * sinTheta;
 
-                    // Apply camera tilt (rotate around X axis)
                     const ry  = ry_raw * cosTX - rz * sinTX;
                     const rz2 = ry_raw * sinTX + rz * cosTX;
 
-                    // Perspective
                     const fov   = 4.5;
                     const persp = fov / (fov + rz2 / ringR);
 
@@ -1150,10 +1811,9 @@ function draw(){
             }
         }
 
-        // ── Rainbow triangle in the center (for the memes) ──
+        // Rainbow triangle
         triangleHue = (triangleHue + 8) % 360;
         const triSize = baseRingR * 0.20;
-        // Slowly spin the triangle
         const triSpin = drawPhase * 0.6;
 
         mainCtx.lineWidth = 2.5 * state.thickness;
@@ -1165,13 +1825,12 @@ function draw(){
             const ta = (ti / 3) * Math.PI * 2 + triSpin - Math.PI / 2;
             triPts.push({ x: cx + Math.cos(ta) * triSize, y: cy + Math.sin(ta) * triSize });
         }
-        // Each side its own vivid hue
         for(let ti = 0; ti < 3; ti++){
             const sideHue = (triangleHue + ti * 120) % 360;
             const a = triPts[ti], b = triPts[(ti + 1) % 3];
             mainCtx.strokeStyle = `hsl(${sideHue}, 100%, 68%)`;
             mainCtx.shadowColor = `hsl(${sideHue}, 100%, 68%)`;
-            mainCtx.shadowBlur  = 20 * state.glow;
+            mainCtx.shadowBlur  = 0; // forced 0 for torus
             mainCtx.beginPath();
             mainCtx.moveTo(a.x, a.y);
             mainCtx.lineTo(b.x, b.y);
