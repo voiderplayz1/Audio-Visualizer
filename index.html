@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Studio FX / Audio Destroyer</title>
+<title>Audio Destroyer</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400&display=swap');
 
@@ -505,7 +505,7 @@ let bassNode, crushNode, convolverNode, dryGain, wetGain, volumeNode, monitorGai
 let mediaRecorder = null, recordChunks = [], isRecording = false;
 let inputMode = 'file', animationId, isScrubbing = false;
 
-// ── FPS tracking ──
+// FPS tracking
 let fpsSamples = [], fpsLastTime = performance.now(), fpsDisplay = 0;
 function updateFps() {
     const now = performance.now();
@@ -536,7 +536,7 @@ const state = {
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 const FX_DEFAULTS = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 
-// ── Rain Lines particles ──
+// Rain Lines particles
 const rainParticles = [];
 const RAIN_COUNT = 120;
 function initRainParticles(w, h) {
@@ -552,11 +552,11 @@ function initRainParticles(w, h) {
     }
 }
 
-// ── Spectrum Torus history buffer ──
+// Spectrum Torus history buffer
 const torusHistory = [];
 const TORUS_HIST_MAX = 55;
 
-// ── Torus camera state ──
+// Torus camera state
 let torusCamRotX = 1.05;
 let torusCamRotY = 0;
 let torusDragging = false;
@@ -564,7 +564,7 @@ let torusDragLastX = 0;
 let torusDragLastY = 0;
 let triangleHue = 0;
 
-// ── WebGPU state ──
+// WebGPU state 
 let gpuDevice = null, gpuContext = null, gpuFormat = null;
 let gpuReady = false;
 let gpuPipeline = null, gpuUniformBuf = null, gpuFreqBuf = null, gpuTimeBuf = null;
@@ -588,7 +588,7 @@ async function initWebGPU() {
     } catch(e) { return false; }
 }
 
-// Lazy pipeline creation for WebGPU modes
+// pipeline creation for WebGPU
 function ensureGPUPipeline(mode) {
     if (!gpuReady || gpuPipeline) return;
     const BUF_SIZE = 1024;
@@ -718,7 +718,7 @@ fn getFreq(i: i32) -> f32 {
         }
     }
 
-    // Rainbow triangle center
+    // Rainbow triangle
     let triSize = baseR * 0.20;
     let triSpin = u.time * 0.6;
     for (var ti: i32 = 0; ti < 3; ti++) {
@@ -1149,7 +1149,7 @@ document.getElementById('mode-selector').onchange = e => {
     const newMode = e.target.value;
 
     if (newMode === 'torus') {
-        // Check localStorage for "don't show again"
+        // localStorage for "don't show again"
         let skip = false;
         try { skip = localStorage.getItem('torus-skip-warning') === '1'; } catch(ex) {}
         if (skip) {
@@ -1203,7 +1203,7 @@ bindSlider('torus-color-speed', v => {
     state.torusColorSpeed = v;
 });
 
-// ── Toggle: Torus Color Change ──
+// toggle Torus Color Change 
 btnTorusColorToggle.addEventListener('click', () => {
     state.torusColorEnabled = !state.torusColorEnabled;
     btnTorusColorToggle.textContent = 'Toggle: Torus Color Change ' + (state.torusColorEnabled ? '✓' : '✗');
@@ -1211,7 +1211,7 @@ btnTorusColorToggle.addEventListener('click', () => {
         (state.torusColorEnabled ? 'btn-toggle-on' : 'btn-toggle-off');
 });
 
-// ── Toggle: Rotation ──
+// toggle Rotation
 btnRotationToggle.addEventListener('click', () => {
     state.rotationEnabled = !state.rotationEnabled;
     btnRotationToggle.textContent = 'Toggle: Rotation ' + (state.rotationEnabled ? '✓' : '✗');
@@ -1324,7 +1324,7 @@ mainCanvas.addEventListener('mousemove', () => {
     else if (state.mode !== 'torus') mainCanvas.style.cursor = '';
 });
 
-// ── Welcome ──
+// Welcome
 const welcome=document.getElementById('welcome');
 const welcomeCanvas=document.getElementById('welcome-canvas');
 const welcomeCtx=welcomeCanvas.getContext('2d');
@@ -1534,7 +1534,7 @@ function draw(){
         gpuBadge.classList.remove('visible');
     }
 
-    // ── Particle Sphere: try WebGPU first ──
+    // Particle Sphere: try WebGPU first
     if (state.mode === 'ncs') {
         if (gpuReady) {
             const ok = drawSphereGPU(vFreq, w, h);
@@ -1543,7 +1543,7 @@ function draw(){
         gpuBadge.classList.remove('visible');
     }
 
-    // ── CPU 2D canvas render ──
+    // CPU 2D canvas render
     const bg = hexToRgb(state.bgColor);
     const trailAlpha = 0.08 + (1 - Math.min((fxParams.reverb-0.1)/4.9, 1)) * 0.32;
     mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
@@ -1571,7 +1571,7 @@ function draw(){
         return n < 0 ? n * bassWarp * (1 + Math.abs(n) * 0.5) : n * bassWarp;
     }
 
-    // ── Lissajous / XY ──
+    // Lissajous / XY
     if(state.mode==='lissajous'){
         const lissLen=Math.min(vRaw.length,1024), offset=Math.min(state.lissOffset,lissLen-1);
         const scl = volScaleWave * 0.5 * state.lissSpread;
@@ -1586,7 +1586,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Chaotic Waveform ──
+    // Chaotic Waveform 
     } else if(state.mode==='0'){
         const slice=w/bufLen; let x=0;
         for(let i=0;i<bufLen;i++){
@@ -1598,7 +1598,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Frequency Circles ──
+    // Frequency Circles 
     } else if(state.mode==='1'){
         const baseR=(w/bufLen)*3*state.thickness; let x=0;
         for(let i=0;i<bufLen;i+=2){
@@ -1612,7 +1612,7 @@ function draw(){
             x+=baseR*2+5; if(x>w) break;
         }
 
-    // ── Circular Burst ──
+    // Circular Burst
     } else if(state.mode==='2'){
         const radius = Math.min(w,h)*0.25;
         const step=Math.max(1,Math.round(bufLen/state.lineCount));
@@ -1628,7 +1628,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Symmetrical Wave ──
+    // Symmetrical Wave
     } else if(state.mode==='3'){
         const slice=w/bufLen; let x=0;
         for(let i=0;i<bufLen;i++){
@@ -1644,7 +1644,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Particle Sphere (CPU fallback) ──
+    // Particle Sphere (CPU fallback)
     } else if(state.mode==='ncs'){
         const col = hexToRgb(state.color);
         const cx = w/2, cy = h/2;
@@ -1713,7 +1713,7 @@ function draw(){
         mainCtx.arc(cx, cy, R * 0.55, 0, Math.PI * 2);
         mainCtx.fill();
 
-    // ── Rain Lines ──
+    // Rain Lines 
     } else if(state.mode==='rainlines'){
         const col      = hexToRgb(state.color);
         const avgVol   = getAvgVolume(vFreq);
@@ -1800,7 +1800,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // ── Spectrum Torus (CPU fallback) ──
+    // Spectrum Torus (CPU fallback)
     } else if(state.mode==='torus'){
         torusHistory.unshift(new Uint8Array(vFreq));
         while(torusHistory.length > TORUS_HIST_MAX) torusHistory.pop();
@@ -1865,7 +1865,7 @@ function draw(){
 
                     const ageScale = 1 - histT * 0.38;
 
-                    // ── Spikes go UPWARD (vertical Y-axis) instead of radially ──
+                    // Spikes go UPWARD (vertical Y-axis) instead of radially
                     const r = ringR; // ring radius stays fixed — no radial expansion
                     const rx     = r * cosTheta;
                     const ry_raw = -freq * 80 * state.thickness * band.spikeScale * ageScale;
