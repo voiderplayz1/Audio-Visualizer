@@ -1384,28 +1384,20 @@ function draw(){
             avgE/=bfEnergyHist.length;
 
             const now=performance.now();
-            // Slightly more sensitive detection: 1.28x avg, min 0.05, 180ms cooldown
             const isBeat=instantE>avgE*1.28&&instantE>0.05&&now-bfLastBeatTime>180;
 
             if(isBeat){
                 bfLastBeatTime=now;
                 bfBeatPulse=1.0;
                 bfBeatCount++;
-                // Invert every 4th beat (beats 4, 8, 12, ...)
-                if(bfBeatCount%4===0){
-                    bfInverted=!bfInverted;
-                    bfInvertFlash=1.0; // trigger snap flash
-                }
             }else{
                 bfBeatPulse*=0.80;
-                bfInvertFlash*=0.72; // fast flash decay
             }
         }
 
-        // Derive fg/bg from current inversion state
-        const fgHex  = bfInverted ? state.bgColor : state.color;
-        const bgHex  = bfInverted ? state.color   : state.bgColor;
-        const fgRgb  = hexToRgb(fgHex);
+        const fgHex = state.color;
+        const bgHex = state.bgColor;
+        const fgRgb = hexToRgb(fgHex);
 
         // Hard solid fill
         mainCtx.fillStyle=bgHex;
@@ -1454,24 +1446,25 @@ function draw(){
                 i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
 
                 // ── Particle spawn on expansion ──
-                // Every ~4 points to keep GPU load manageable
-                if(i%4===0 && state.bfParticleIntensity > 0 && bfParticlePool.length < BF_MAX_PARTICLES){
+                if(i%3===0 && state.bfParticleIntensity > 0 && bfParticlePool.length < BF_MAX_PARTICLES){
                     const expansion=Math.max(0,rMod/baseR-1.0);
-                    if(expansion>0.05){
-                        // Spawn probability proportional to expansion × intensity
-                        const spawnP=expansion*0.18*state.bfParticleIntensity*(1+bfBeatPulse*1.8);
+                    if(expansion>0.04){
+                        const spawnP=expansion*0.22*state.bfParticleIntensity*(1+bfBeatPulse*2.0);
                         if(Math.random()<spawnP){
                             const outAngle=Math.atan2(py-cy,px-cx);
-                            // More expansion → faster, bigger particles
-                            const spd=1.2+expansion*5.5*state.bfParticleIntensity+Math.random()*1.2;
-                            const life=14+Math.random()*22|0;
+                            const spread=(Math.random()-0.5)*0.55;
+                            const spd=0.8+expansion*4.5*state.bfParticleIntensity+Math.random()*1.0;
+                            const life=(10+Math.random()*18)|0;
+                            const streakLen=1.5+spd*0.9*state.bfParticleIntensity;
+                            const type=Math.random()<0.6?0:Math.random()<0.6?1:2;
                             bfParticlePool.push({
                                 x:px, y:py,
-                                vx:Math.cos(outAngle)*spd,
-                                vy:Math.sin(outAngle)*spd,
+                                vx:Math.cos(outAngle+spread)*spd,
+                                vy:Math.sin(outAngle+spread)*spd,
+                                angle:outAngle+spread,
                                 life:0, maxLife:life,
-                                size:0.6+expansion*3.0*state.bfParticleIntensity+Math.random()*0.8,
-                                alpha0:0.6+expansion*0.4,
+                                streakLen, type,
+                                alpha0:0.55+expansion*0.45,
                             });
                         }
                     }
@@ -1482,22 +1475,48 @@ function draw(){
         }
 
         // ── Update & render beat flash particles ──
-        // Process in reverse so splicing doesn't skip entries
+        mainCtx.shadowBlur=state.glow*3;
+        mainCtx.shadowColor=fgHex;
         for(let i=bfParticlePool.length-1;i>=0;i--){
             const p=bfParticlePool[i];
             p.x+=p.vx; p.y+=p.vy;
-            p.vx*=0.90; p.vy*=0.90; // friction
+            p.vx*=0.88; p.vy*=0.88; // friction
             p.life++;
             const lifeT=p.life/p.maxLife;
-            const a=p.alpha0*(1-lifeT*lifeT); // quadratic fade
-            if(p.life>=p.maxLife||a<0.012){bfParticlePool.splice(i,1);continue;}
-            const r=Math.max(0.2,p.size*(1-lifeT*0.55));
-            mainCtx.shadowBlur=state.glow*6*(1-lifeT);
-            mainCtx.shadowColor=fgHex;
-            mainCtx.fillStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${a})`;
-            mainCtx.beginPath();
-            mainCtx.arc(p.x,p.y,r,0,Math.PI*2);
-            mainCtx.fill();
+            const a=p.alpha0*(1-lifeT*lifeT);
+            if(p.life>=p.maxLife||a<0.01){bfParticlePool.splice(i,1);continue;}
+
+            // Current travel angle from velocity (rotates as friction slows it)
+            const curAngle=Math.atan2(p.vy,p.vx);
+            const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+            // Streak shrinks as it slows
+            const len=Math.max(0.6,p.streakLen*(spd/4.0)*(1-lifeT*0.4));
+            const w2=Math.max(0.15,0.55*(1-lifeT*0.6));
+
+            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${a})`;
+            mainCtx.lineWidth=w2;
+            mainCtx.lineCap='round';
+
+            if(p.type===0){
+                // Streak: short line along travel direction
+                mainCtx.beginPath();
+                mainCtx.moveTo(p.x-Math.cos(curAngle)*len*0.5, p.y-Math.sin(curAngle)*len*0.5);
+                mainCtx.lineTo(p.x+Math.cos(curAngle)*len*0.5, p.y+Math.sin(curAngle)*len*0.5);
+                mainCtx.stroke();
+            }else if(p.type===1){
+                // Cross tick: two tiny crossed lines
+                const t=len*0.35,perp=curAngle+Math.PI*0.5;
+                mainCtx.beginPath();
+                mainCtx.moveTo(p.x-Math.cos(curAngle)*t, p.y-Math.sin(curAngle)*t);
+                mainCtx.lineTo(p.x+Math.cos(curAngle)*t, p.y+Math.sin(curAngle)*t);
+                mainCtx.moveTo(p.x-Math.cos(perp)*t*0.55, p.y-Math.sin(perp)*t*0.55);
+                mainCtx.lineTo(p.x+Math.cos(perp)*t*0.55, p.y+Math.sin(perp)*t*0.55);
+                mainCtx.stroke();
+            }else{
+                // Pixel: 1×1 filled square — extremely fine
+                mainCtx.fillStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${a})`;
+                mainCtx.fillRect(p.x-0.5, p.y-0.5, 1, 1);
+            }
         }
 
         // ── Radial burst spokes on beat ──
@@ -1544,13 +1563,6 @@ function draw(){
             for(let gx=cx%gridStep;gx<w;gx+=gridStep){mainCtx.moveTo(gx,0);mainCtx.lineTo(gx,h);}
             for(let gy=cy%gridStep;gy<h;gy+=gridStep){mainCtx.moveTo(0,gy);mainCtx.lineTo(w,gy);}
             mainCtx.stroke();
-        }
-
-        // ── Inversion flash overlay ──
-        // Brief white/color pop that makes the color-flip feel physical
-        if(bfInvertFlash>0.01){
-            mainCtx.fillStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${bfInvertFlash*0.22})`;
-            mainCtx.fillRect(0,0,w,h);
         }
 
         mainCtx.shadowBlur=0;
