@@ -28,34 +28,21 @@ body {
     overflow: hidden;
 }
 
-/* ── FPS Counter ── */
 #fps-counter {
-    position: fixed;
-    top: 22px;
-    right: 22px;
-    z-index: 999;
-    background: rgba(5,5,5,0.75);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 5px 11px;
-    font-family: var(--font);
-    font-size: 0.82rem;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    font-style: italic;
-    pointer-events: none;
-    transition: color 0.3s;
+    position: fixed; top: 22px; right: 22px; z-index: 999;
+    background: rgba(5,5,5,0.75); backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 5px 11px; font-family: var(--font); font-size: 0.82rem;
+    letter-spacing: 2px; color: var(--text-dim); font-style: italic;
+    pointer-events: none; transition: color 0.3s;
 }
 #fps-counter.fps-good  { color: rgba(100,255,160,0.8); }
 #fps-counter.fps-mid   { color: rgba(255,220,80,0.8);  }
 #fps-counter.fps-bad   { color: rgba(255,100,80,0.8);  }
 
-/* ── Torus Warning Overlay ── */
 #torus-warning {
     position: fixed; inset: 0; z-index: 8000;
-    display: none;
-    align-items: center; justify-content: center;
+    display: none; align-items: center; justify-content: center;
 }
 #torus-warning.active { display: flex; }
 #torus-blur-bg {
@@ -65,232 +52,138 @@ body {
 }
 #torus-warning-box {
     position: relative; z-index: 1;
-    background: rgba(8,8,8,0.96);
-    border: 1px solid rgba(255,255,255,0.22);
-    border-radius: 6px;
-    padding: 42px 52px 38px;
-    max-width: 480px;
+    background: rgba(8,8,8,0.96); border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 6px; padding: 42px 52px 38px; max-width: 480px;
     text-align: center;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 40px 120px rgba(0,0,0,0.95);
     animation: warn-rise 0.45s cubic-bezier(0.22,1,0.36,1) both;
 }
 @keyframes warn-rise { from { opacity:0; transform: scale(0.92) translateY(16px); } to { opacity:1; transform: scale(1) translateY(0); } }
-#torus-warning-box .warn-hey {
-    font-size: clamp(2.8rem, 7vw, 4.2rem);
-    font-weight: 700;
-    letter-spacing: -2px;
-    line-height: 1;
-    margin-bottom: 18px;
-    color: #fff;
-    text-shadow: 0 0 60px rgba(255,255,255,0.18);
-}
-#torus-warning-box p {
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: rgba(255,255,255,0.78);
-    font-style: italic;
-    margin-bottom: 24px;
-}
-#torus-warning-box p strong {
-    color: #fff;
-    font-style: normal;
-}
-.warn-dont-show-row {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    justify-content: center;
-    margin-bottom: 22px;
-    cursor: pointer;
-    font-size: 0.83rem;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.42);
-    font-style: italic;
-    font-family: var(--font);
-    user-select: none;
-}
-.warn-dont-show-row input[type="checkbox"] {
-    accent-color: #ffffff;
-    width: 13px; height: 13px;
-    cursor: pointer;
-}
-.warn-btn-row { display: flex; gap: 12px; justify-content: center; }
-.warn-btn {
-    padding: 11px 32px;
-    border-radius: 60px;
-    font-family: var(--font);
-    font-size: 0.88rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.25s, border-color 0.25s, color 0.25s;
-}
-.warn-btn-proceed {
-    border: 1px solid rgba(255,255,255,0.22);
-    background: rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.8);
-}
-.warn-btn-proceed:hover {
-    background: rgba(255,255,255,0.14);
-    border-color: rgba(255,255,255,0.45);
-    color: #fff;
-}
-.warn-btn-cancel {
-    border: 1px solid rgba(255,80,60,0.28);
-    background: rgba(255,60,40,0.06);
-    color: rgba(255,160,140,0.85);
-}
-.warn-btn-cancel:hover {
-    border-color: rgba(255,80,60,0.52);
-    background: rgba(255,60,40,0.13);
-    color: rgba(255,180,160,1);
-}
+#torus-warning-box .warn-hey { font-size: clamp(2.8rem,7vw,4.2rem); font-weight:700; letter-spacing:-2px; line-height:1; margin-bottom:18px; color:#fff; text-shadow:0 0 60px rgba(255,255,255,0.18); }
+#torus-warning-box p { font-size:1.05rem; line-height:1.8; color:rgba(255,255,255,0.78); font-style:italic; margin-bottom:24px; }
+#torus-warning-box p strong { color:#fff; font-style:normal; }
+.warn-dont-show-row { display:flex; align-items:center; gap:9px; justify-content:center; margin-bottom:22px; cursor:pointer; font-size:0.83rem; letter-spacing:2px; color:rgba(255,255,255,0.42); font-style:italic; font-family:var(--font); user-select:none; }
+.warn-dont-show-row input[type="checkbox"] { accent-color:#ffffff; width:13px; height:13px; cursor:pointer; }
+.warn-btn-row { display:flex; gap:12px; justify-content:center; }
+.warn-btn { padding:11px 32px; border-radius:60px; font-family:var(--font); font-size:0.88rem; letter-spacing:4px; text-transform:uppercase; cursor:pointer; transition:background 0.25s,border-color 0.25s,color 0.25s; }
+.warn-btn-proceed { border:1px solid rgba(255,255,255,0.22); background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.8); }
+.warn-btn-proceed:hover { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.45); color:#fff; }
+.warn-btn-cancel { border:1px solid rgba(255,80,60,0.28); background:rgba(255,60,40,0.06); color:rgba(255,160,140,0.85); }
+.warn-btn-cancel:hover { border-color:rgba(255,80,60,0.52); background:rgba(255,60,40,0.13); color:rgba(255,180,160,1); }
 
 #welcome {
-    position: fixed; inset: 0; z-index: 9000;
-    background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
+    position:fixed; inset:0; z-index:9000; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:opacity 0.8s ease,visibility 0.8s ease;
 }
-#welcome.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
-#welcome::after {
-    content: '';
-    position: absolute; inset: 0; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
-    opacity: 0.55;
-}
-#welcome-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.15; pointer-events: none; }
-.welcome-inner {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 20px;
-    text-align: center; padding: 0 32px;
-    animation: rise 1.3s cubic-bezier(0.22,1,0.36,1) both;
-}
-@keyframes rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
-.welcome-eyebrow { font-size: 0.87rem; letter-spacing: 6px; text-transform: uppercase; color: var(--text-muted); font-style: italic; animation: rise 1.3s 0.1s cubic-bezier(0.22,1,0.36,1) both; }
-.welcome-title { font-size: clamp(4.8rem, 13.5vw, 11.25rem); font-weight: 700; letter-spacing: -3px; line-height: 0.9; color: #ffffff; text-shadow: 0 0 100px rgba(255,255,255,0.2), 0 0 40px rgba(255,255,255,0.1); animation: rise 1.3s 0.05s cubic-bezier(0.22,1,0.36,1) both; }
-.welcome-sub { font-size: clamp(1.02rem, 2.25vw, 1.275rem); color: var(--text-muted); max-width: 400px; line-height: 1.75; letter-spacing: 0.3px; font-style: italic; animation: rise 1.3s 0.18s cubic-bezier(0.22,1,0.36,1) both; }
-.welcome-enter { margin-top: 10px; padding: 13px 48px; border: 1px solid var(--border-mid); border-radius: 60px; background: var(--accent-faint); color: #ffffff; font-family: var(--font); font-size: 0.975rem; letter-spacing: 5px; text-transform: uppercase; cursor: pointer; transition: background 0.3s, border-color 0.3s, box-shadow 0.3s; animation: rise 1.3s 0.28s cubic-bezier(0.22,1,0.36,1) both; }
-.welcome-enter:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.5); box-shadow: 0 0 60px rgba(255,255,255,0.07), inset 0 0 20px rgba(255,255,255,0.04); }
-.welcome-hint { font-size: 0.825rem; letter-spacing: 3px; text-transform: uppercase; color: var(--text-dim); font-style: italic; animation: rise 1.3s 0.5s cubic-bezier(0.22,1,0.36,1) both; }
-canvas { display: block; }
-#main-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
-#hamburger { position: fixed; top: 22px; left: 22px; z-index: 999; width: 34px; height: 34px; background: rgba(5,5,5,0.75); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; transition: border-color 0.2s, background 0.2s; }
-#hamburger:hover { border-color: var(--border-mid); }
-#hamburger span { display: block; width: 14px; height: 1px; background: var(--text-muted); transition: background 0.2s; }
-#hamburger:hover span { background: #ffffff; }
-.panel { position: fixed; background: var(--panel-bg); backdrop-filter: blur(40px) saturate(1.3); border: 1px solid var(--border); border-radius: 3px; z-index: 100; box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 24px 80px rgba(0,0,0,0.9); transition: transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease; overflow: hidden; }
-.panel::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"); opacity: 0.45; }
-.panel > * { position: relative; z-index: 1; }
-.panel-header { padding: 15px 18px 13px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 9px; cursor: grab; user-select: none; }
-.panel-header:active { cursor: grabbing; }
-.panel-title { font-size: 0.825rem; letter-spacing: 5px; text-transform: uppercase; color: var(--text-dim); flex: 1; font-family: var(--font); }
-.drag-pip { display: flex; gap: 3px; opacity: 0.2; }
-.drag-pip span { width: 3px; height: 3px; border-radius: 50%; background: #ffffff; display: block; }
-#controls { top: 22px; left: 66px; width: 285px; max-height: 86vh; overflow-y: scroll; scrollbar-gutter: stable; }
-#controls.hidden { transform: translateX(calc(-100% - 80px)); opacity: 0; pointer-events: none; }
-#controls::-webkit-scrollbar { width: 3px; }
-#controls::-webkit-scrollbar-track { background: transparent; }
-#controls::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 2px; }
-#controls::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.32); }
-.panel-section { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 11px; }
-.panel-section:last-child { border-bottom: none; padding-bottom: 18px; }
-.section-label { font-size: 0.75rem; letter-spacing: 4.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 1px; font-style: italic; }
-.btn { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 60px; background: var(--accent-faint); color: var(--text-muted); font-family: var(--font); font-size: 0.9rem; letter-spacing: 3.5px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.25s, background 0.25s, color 0.25s, box-shadow 0.25s; }
-.btn:hover { border-color: var(--border-mid); background: rgba(255,255,255,0.11); color: #ffffff; box-shadow: 0 0 35px rgba(255,255,255,0.05); }
-.btn-dashed { border-style: dashed; }
-.btn-square { border-radius: 3px; }
-.btn-record { border-color: rgba(255,80,80,0.22); color: rgba(255,150,150,0.7); background: rgba(255,55,55,0.05); }
-.btn-record:hover { border-color: rgba(255,80,80,0.45); color: rgba(255,180,180,1); background: rgba(255,55,55,0.11); box-shadow: 0 0 30px rgba(255,55,55,0.06); }
-.btn-record.recording { border-color: rgba(255,80,80,0.55); color: rgba(255,190,190,1); background: rgba(255,55,55,0.14); animation: pulse-rec 1.5s ease-in-out infinite; }
-@keyframes pulse-rec { 0%,100% { box-shadow: 0 0 0 0 rgba(255,60,60,0); } 50% { box-shadow: 0 0 0 5px rgba(255,60,60,0.12); } }
-.btn-capture { border-color: rgba(100,200,255,0.2); color: rgba(160,220,255,0.7); background: rgba(100,200,255,0.04); }
-.btn-capture:hover { border-color: rgba(100,200,255,0.4); color: rgba(180,230,255,1); background: rgba(100,200,255,0.1); }
-.btn-capture.active { border-color: rgba(255,100,100,0.45); color: rgba(255,170,170,1); background: rgba(255,75,75,0.1); animation: pulse-cap 2s ease-in-out infinite; }
-@keyframes pulse-cap { 0%,100% { box-shadow: 0 0 0 0 rgba(255,80,80,0); } 50% { box-shadow: 0 0 0 4px rgba(255,80,80,0.12); } }
-.btn-mic { border-color: rgba(100,255,160,0.2); color: rgba(150,255,190,0.7); background: rgba(60,255,130,0.04); }
-.btn-mic:hover { border-color: rgba(100,255,160,0.42); color: rgba(180,255,210,1); background: rgba(60,255,130,0.1); box-shadow: 0 0 30px rgba(60,255,130,0.06); }
-.btn-mic.active { border-color: rgba(100,255,160,0.55); color: rgba(180,255,210,1); background: rgba(60,255,130,0.13); animation: pulse-mic 2s ease-in-out infinite; }
-@keyframes pulse-mic { 0%,100% { box-shadow: 0 0 0 0 rgba(60,255,130,0); } 50% { box-shadow: 0 0 0 5px rgba(60,255,130,0.1); } }
-.btn-mic.active .dot { animation: blink 1.2s step-start infinite; }
-.btn-reset { border-color: rgba(255,80,60,0.2); color: rgba(255,150,130,0.7); background: rgba(255,60,40,0.04); font-size: 0.855rem; }
-.btn-reset:hover { border-color: rgba(255,80,60,0.42); color: rgba(255,170,150,1); background: rgba(255,60,40,0.1); }
-/* Toggle buttons: active = enabled state with faint tint */
-.btn-toggle-on  { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.06); }
-.btn-toggle-off { border-color: rgba(255,255,255,0.1);  color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.02); }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-.btn-record.recording .dot { animation: blink 1s step-start infinite; }
-.btn-capture.active .dot { animation: blink 1.3s step-start infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.1} }
-.ctrl-row { display: flex; flex-direction: column; gap: 6px; }
-.ctrl-label { font-size: 0.87rem; letter-spacing: 2px; text-transform: uppercase; color: #ffffff; display: flex; justify-content: space-between; }
-.ctrl-val { color: #ffffff; opacity: 0.7; font-variant-numeric: tabular-nums; letter-spacing: 0; font-style: italic; }
-input[type="range"] { width: 100%; height: 1px; appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.14); border-radius: 1px; outline: none; cursor: pointer; }
-input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 9px; height: 9px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.65); cursor: pointer; }
-input[type="range"]::-moz-range-thumb { width: 9px; height: 9px; border-radius: 50%; border: none; background: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.65); }
-select { width: 100%; background: rgba(255,255,255,0.04); color: #ffffff; border: 1px solid var(--border); padding: 9px 32px 9px 12px; border-radius: 3px; font-family: var(--font); font-size: 0.9rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; transition: border-color 0.2s; }
-select:hover { border-color: var(--border-mid); }
-select option { background: #080808; color: #ffffff; }
-input[type="color"] { width: 100%; height: 32px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; padding: 3px 6px; transition: border-color 0.2s; }
-input[type="color"]:hover { border-color: var(--border-mid); }
-input[type="file"] { display: none; }
-#eq-panel { max-height: 0; overflow: hidden; transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1); }
-#eq-panel.open { max-height: 1000px; }
-.eq-inner { display: flex; flex-direction: column; gap: 11px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.07); margin-top: 2px; }
-.ctrl-disabled { opacity: 0.2; pointer-events: none; transition: opacity 0.2s; }
-.liss-only { transition: opacity 0.2s; }
-.liss-only.hidden-ctrl { opacity: 0.2; pointer-events: none; }
-.torus-only { transition: opacity 0.2s; }
-.torus-only.hidden-ctrl { opacity: 0.2; pointer-events: none; }
-.hidden-ctrl { opacity: 0.2 !important; pointer-events: none !important; }
-.tip { font-size: 0.825rem; letter-spacing: 0.3px; color: var(--text-dim); line-height: 1.65; font-style: italic; }
-#source-badge { display: none; font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-top: 3px; border: 1px solid rgba(100,200,255,0.25); color: rgba(160,220,255,0.8); background: rgba(100,200,255,0.05); font-family: var(--font); }
-#source-badge.visible { display: inline-block; }
-.fx-influence-label { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,220,100,0.6); font-style: italic; margin-top: -4px; }
-.color-row { display: flex; flex-direction: column; gap: 6px; }
-.color-row .ctrl-label { font-size: 0.87rem; letter-spacing: 2px; text-transform: uppercase; color: #ffffff; display: flex; justify-content: space-between; }
-#transport { top: 22px; left: 368px; width: 300px; }
-#transport.hidden { transform: translateX(calc(-100vw - 40px)); opacity: 0; pointer-events: none; }
-#btn-fullscreen { width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 3px; background: var(--accent-faint); color: var(--text-dim); font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s, background 0.2s; }
-#btn-fullscreen:hover { border-color: var(--border-mid); color: #ffffff; background: rgba(255,255,255,0.11); }
-.transport-body { padding: 15px 18px 16px; }
-.playback-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.t-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--accent-faint); color: var(--text-muted); cursor: pointer; flex-shrink: 0; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s; }
-.t-btn:hover { border-color: var(--border-mid); color: #ffffff; background: rgba(255,255,255,0.11); box-shadow: 0 0 20px rgba(255,255,255,0.06); }
-.t-btn.large { width: 38px; height: 38px; font-size: 0.85rem; }
-.track-info { flex: 1; overflow: hidden; }
-.track-name { font-size: 0.87rem; letter-spacing: 1px; text-transform: uppercase; color: #ffffff; font-family: var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.time-display { font-size: 1.02rem; color: #ffffff; opacity: 0.6; font-variant-numeric: tabular-nums; letter-spacing: 1px; margin-top: 3px; font-family: var(--font); font-style: italic; }
-.progress-wrap { position: relative; height: 16px; display: flex; align-items: center; cursor: pointer; }
-.progress-track { width: 100%; height: 1px; background: rgba(255,255,255,0.1); border-radius: 1px; position: relative; }
-.progress-fill { height: 100%; width: 0%; background: #ffffff; border-radius: 1px; box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.15); transition: width 0.1s linear; }
-.progress-thumb { position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%); width: 7px; height: 7px; background: #ffffff; border-radius: 50%; box-shadow: 0 0 14px rgba(255,255,255,0.9); pointer-events: none; }
-#torus-hint {
-    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
-    font-family: var(--font); font-size: 0.78rem; letter-spacing: 3px;
-    text-transform: uppercase; color: rgba(255,255,255,0.28); font-style: italic;
-    pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
-    z-index: 50;
-}
-#torus-hint.visible { opacity: 1; }
-
-/* WebGPU badge */
-#gpu-badge {
-    position: fixed; bottom: 22px; right: 22px;
-    font-family: var(--font); font-size: 0.72rem; letter-spacing: 3px;
-    text-transform: uppercase; color: rgba(100,200,255,0.4); font-style: italic;
-    pointer-events: none; z-index: 50; display: none;
-}
-#gpu-badge.visible { display: block; }
+#welcome.fade-out { opacity:0; visibility:hidden; pointer-events:none; }
+#welcome::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"); opacity:0.55; }
+#welcome-canvas { position:absolute; inset:0; width:100%; height:100%; opacity:0.15; pointer-events:none; }
+.welcome-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center; padding:0 32px; animation:rise 1.3s cubic-bezier(0.22,1,0.36,1) both; }
+@keyframes rise { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+.welcome-eyebrow { font-size:0.87rem; letter-spacing:6px; text-transform:uppercase; color:var(--text-muted); font-style:italic; animation:rise 1.3s 0.1s cubic-bezier(0.22,1,0.36,1) both; }
+.welcome-title { font-size:clamp(4.8rem,13.5vw,11.25rem); font-weight:700; letter-spacing:-3px; line-height:0.9; color:#ffffff; text-shadow:0 0 100px rgba(255,255,255,0.2),0 0 40px rgba(255,255,255,0.1); animation:rise 1.3s 0.05s cubic-bezier(0.22,1,0.36,1) both; }
+.welcome-sub { font-size:clamp(1.02rem,2.25vw,1.275rem); color:var(--text-muted); max-width:400px; line-height:1.75; letter-spacing:0.3px; font-style:italic; animation:rise 1.3s 0.18s cubic-bezier(0.22,1,0.36,1) both; }
+.welcome-enter { margin-top:10px; padding:13px 48px; border:1px solid var(--border-mid); border-radius:60px; background:var(--accent-faint); color:#ffffff; font-family:var(--font); font-size:0.975rem; letter-spacing:5px; text-transform:uppercase; cursor:pointer; transition:background 0.3s,border-color 0.3s,box-shadow 0.3s; animation:rise 1.3s 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+.welcome-enter:hover { background:rgba(255,255,255,0.13); border-color:rgba(255,255,255,0.5); box-shadow:0 0 60px rgba(255,255,255,0.07),inset 0 0 20px rgba(255,255,255,0.04); }
+.welcome-hint { font-size:0.825rem; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); font-style:italic; animation:rise 1.3s 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+canvas { display:block; }
+#main-canvas { position:fixed; inset:0; width:100vw; height:100vh; z-index:0; }
+#hamburger { position:fixed; top:22px; left:22px; z-index:999; width:34px; height:34px; background:rgba(5,5,5,0.75); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:4px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:border-color 0.2s,background 0.2s; }
+#hamburger:hover { border-color:var(--border-mid); }
+#hamburger span { display:block; width:14px; height:1px; background:var(--text-muted); transition:background 0.2s; }
+#hamburger:hover span { background:#ffffff; }
+.panel { position:fixed; background:var(--panel-bg); backdrop-filter:blur(40px) saturate(1.3); border:1px solid var(--border); border-radius:3px; z-index:100; box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 24px 80px rgba(0,0,0,0.9); transition:transform 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.4s ease; overflow:hidden; }
+.panel::before { content:''; position:absolute; inset:0; z-index:0; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"); opacity:0.45; }
+.panel > * { position:relative; z-index:1; }
+.panel-header { padding:15px 18px 13px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:9px; cursor:grab; user-select:none; }
+.panel-header:active { cursor:grabbing; }
+.panel-title { font-size:0.825rem; letter-spacing:5px; text-transform:uppercase; color:var(--text-dim); flex:1; font-family:var(--font); }
+.drag-pip { display:flex; gap:3px; opacity:0.2; }
+.drag-pip span { width:3px; height:3px; border-radius:50%; background:#ffffff; display:block; }
+#controls { top:22px; left:66px; width:285px; max-height:86vh; overflow-y:scroll; scrollbar-gutter:stable; }
+#controls.hidden { transform:translateX(calc(-100% - 80px)); opacity:0; pointer-events:none; }
+#controls::-webkit-scrollbar { width:3px; }
+#controls::-webkit-scrollbar-track { background:transparent; }
+#controls::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.14); border-radius:2px; }
+#controls::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.32); }
+.panel-section { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:11px; }
+.panel-section:last-child { border-bottom:none; padding-bottom:18px; }
+.section-label { font-size:0.75rem; letter-spacing:4.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:1px; font-style:italic; }
+.btn { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:60px; background:var(--accent-faint); color:var(--text-muted); font-family:var(--font); font-size:0.9rem; letter-spacing:3.5px; text-transform:uppercase; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:border-color 0.25s,background 0.25s,color 0.25s,box-shadow 0.25s; }
+.btn:hover { border-color:var(--border-mid); background:rgba(255,255,255,0.11); color:#ffffff; box-shadow:0 0 35px rgba(255,255,255,0.05); }
+.btn-dashed { border-style:dashed; }
+.btn-square { border-radius:3px; }
+.btn-record { border-color:rgba(255,80,80,0.22); color:rgba(255,150,150,0.7); background:rgba(255,55,55,0.05); }
+.btn-record:hover { border-color:rgba(255,80,80,0.45); color:rgba(255,180,180,1); background:rgba(255,55,55,0.11); box-shadow:0 0 30px rgba(255,55,55,0.06); }
+.btn-record.recording { border-color:rgba(255,80,80,0.55); color:rgba(255,190,190,1); background:rgba(255,55,55,0.14); animation:pulse-rec 1.5s ease-in-out infinite; }
+@keyframes pulse-rec { 0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,0);}50%{box-shadow:0 0 0 5px rgba(255,60,60,0.12);} }
+.btn-capture { border-color:rgba(100,200,255,0.2); color:rgba(160,220,255,0.7); background:rgba(100,200,255,0.04); }
+.btn-capture:hover { border-color:rgba(100,200,255,0.4); color:rgba(180,230,255,1); background:rgba(100,200,255,0.1); }
+.btn-capture.active { border-color:rgba(255,100,100,0.45); color:rgba(255,170,170,1); background:rgba(255,75,75,0.1); animation:pulse-cap 2s ease-in-out infinite; }
+@keyframes pulse-cap { 0%,100%{box-shadow:0 0 0 0 rgba(255,80,80,0);}50%{box-shadow:0 0 0 4px rgba(255,80,80,0.12);} }
+.btn-mic { border-color:rgba(100,255,160,0.2); color:rgba(150,255,190,0.7); background:rgba(60,255,130,0.04); }
+.btn-mic:hover { border-color:rgba(100,255,160,0.42); color:rgba(180,255,210,1); background:rgba(60,255,130,0.1); box-shadow:0 0 30px rgba(60,255,130,0.06); }
+.btn-mic.active { border-color:rgba(100,255,160,0.55); color:rgba(180,255,210,1); background:rgba(60,255,130,0.13); animation:pulse-mic 2s ease-in-out infinite; }
+@keyframes pulse-mic { 0%,100%{box-shadow:0 0 0 0 rgba(60,255,130,0);}50%{box-shadow:0 0 0 5px rgba(60,255,130,0.1);} }
+.btn-mic.active .dot { animation:blink 1.2s step-start infinite; }
+.btn-reset { border-color:rgba(255,80,60,0.2); color:rgba(255,150,130,0.7); background:rgba(255,60,40,0.04); font-size:0.855rem; }
+.btn-reset:hover { border-color:rgba(255,80,60,0.42); color:rgba(255,170,150,1); background:rgba(255,60,40,0.1); }
+.btn-toggle-on  { border-color:rgba(255,255,255,0.22); color:rgba(255,255,255,0.82); background:rgba(255,255,255,0.06); }
+.btn-toggle-off { border-color:rgba(255,255,255,0.1); color:rgba(255,255,255,0.35); background:rgba(255,255,255,0.02); }
+.dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.btn-record.recording .dot { animation:blink 1s step-start infinite; }
+.btn-capture.active .dot { animation:blink 1.3s step-start infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.1} }
+.ctrl-row { display:flex; flex-direction:column; gap:6px; }
+.ctrl-label { font-size:0.87rem; letter-spacing:2px; text-transform:uppercase; color:#ffffff; display:flex; justify-content:space-between; }
+.ctrl-val { color:#ffffff; opacity:0.7; font-variant-numeric:tabular-nums; letter-spacing:0; font-style:italic; }
+input[type="range"] { width:100%; height:1px; appearance:none; -webkit-appearance:none; background:rgba(255,255,255,0.14); border-radius:1px; outline:none; cursor:pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:9px; height:9px; border-radius:50%; background:#ffffff; box-shadow:0 0 10px rgba(255,255,255,0.65); cursor:pointer; }
+input[type="range"]::-moz-range-thumb { width:9px; height:9px; border-radius:50%; border:none; background:#ffffff; box-shadow:0 0 10px rgba(255,255,255,0.65); }
+select { width:100%; background:rgba(255,255,255,0.04); color:#ffffff; border:1px solid var(--border); padding:9px 32px 9px 12px; border-radius:3px; font-family:var(--font); font-size:0.9rem; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; outline:none; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; transition:border-color 0.2s; }
+select:hover { border-color:var(--border-mid); }
+select option { background:#080808; color:#ffffff; }
+input[type="color"] { width:100%; height:32px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:3px; cursor:pointer; padding:3px 6px; transition:border-color 0.2s; }
+input[type="color"]:hover { border-color:var(--border-mid); }
+input[type="file"] { display:none; }
+#eq-panel { max-height:0; overflow:hidden; transition:max-height 0.45s cubic-bezier(0.4,0,0.2,1); }
+#eq-panel.open { max-height:1000px; }
+.eq-inner { display:flex; flex-direction:column; gap:11px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.07); margin-top:2px; }
+/* hidden-ctrl = completely invisible + non-interactive */
+.hidden-ctrl { display:none !important; }
+.tip { font-size:0.825rem; letter-spacing:0.3px; color:var(--text-dim); line-height:1.65; font-style:italic; }
+#source-badge { display:none; font-size:0.78rem; letter-spacing:3px; text-transform:uppercase; padding:3px 10px; border-radius:20px; margin-top:3px; border:1px solid rgba(100,200,255,0.25); color:rgba(160,220,255,0.8); background:rgba(100,200,255,0.05); font-family:var(--font); }
+#source-badge.visible { display:inline-block; }
+.fx-influence-label { font-size:0.72rem; letter-spacing:2px; text-transform:uppercase; color:rgba(255,220,100,0.6); font-style:italic; margin-top:-4px; }
+.color-row { display:flex; flex-direction:column; gap:6px; }
+.color-row .ctrl-label { font-size:0.87rem; letter-spacing:2px; text-transform:uppercase; color:#ffffff; display:flex; justify-content:space-between; }
+#transport { top:22px; left:368px; width:300px; }
+#transport.hidden { transform:translateX(calc(-100vw - 40px)); opacity:0; pointer-events:none; }
+#btn-fullscreen { width:24px; height:24px; border:1px solid var(--border); border-radius:3px; background:var(--accent-faint); color:var(--text-dim); font-size:0.68rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:border-color 0.2s,color 0.2s,background 0.2s; }
+#btn-fullscreen:hover { border-color:var(--border-mid); color:#ffffff; background:rgba(255,255,255,0.11); }
+.transport-body { padding:15px 18px 16px; }
+.playback-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.t-btn { width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:var(--accent-faint); color:var(--text-muted); cursor:pointer; flex-shrink:0; font-size:0.72rem; display:flex; align-items:center; justify-content:center; transition:border-color 0.2s,color 0.2s,background 0.2s,box-shadow 0.2s; }
+.t-btn:hover { border-color:var(--border-mid); color:#ffffff; background:rgba(255,255,255,0.11); box-shadow:0 0 20px rgba(255,255,255,0.06); }
+.t-btn.large { width:38px; height:38px; font-size:0.85rem; }
+.track-info { flex:1; overflow:hidden; }
+.track-name { font-size:0.87rem; letter-spacing:1px; text-transform:uppercase; color:#ffffff; font-family:var(--font); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.time-display { font-size:1.02rem; color:#ffffff; opacity:0.6; font-variant-numeric:tabular-nums; letter-spacing:1px; margin-top:3px; font-family:var(--font); font-style:italic; }
+.progress-wrap { position:relative; height:16px; display:flex; align-items:center; cursor:pointer; }
+.progress-track { width:100%; height:1px; background:rgba(255,255,255,0.1); border-radius:1px; position:relative; }
+.progress-fill { height:100%; width:0%; background:#ffffff; border-radius:1px; box-shadow:0 0 10px rgba(255,255,255,0.5),0 0 30px rgba(255,255,255,0.15); transition:width 0.1s linear; }
+.progress-thumb { position:absolute; top:50%; left:0%; transform:translate(-50%,-50%); width:7px; height:7px; background:#ffffff; border-radius:50%; box-shadow:0 0 14px rgba(255,255,255,0.9); pointer-events:none; }
+#torus-hint { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--font); font-size:0.78rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.28); font-style:italic; pointer-events:none; opacity:0; transition:opacity 0.5s ease; z-index:50; }
+#torus-hint.visible { opacity:1; }
+#gpu-badge { position:fixed; bottom:22px; right:22px; font-family:var(--font); font-size:0.72rem; letter-spacing:3px; text-transform:uppercase; color:rgba(100,200,255,0.4); font-style:italic; pointer-events:none; z-index:50; display:none; }
+#gpu-badge.visible { display:block; }
 </style>
 </head>
 <body>
 
 <canvas id="main-canvas"></canvas>
 
-<!-- Torus Warning Modal -->
 <div id="torus-warning">
     <div id="torus-blur-bg"></div>
     <div id="torus-warning-box">
@@ -378,6 +271,8 @@ input[type="file"] { display: none; }
             <span class="ctrl-label">Background color</span>
             <input type="color" id="bg-color-picker" value="#050505">
         </div>
+
+        <!-- thickness: all modes except beatflash -->
         <div class="ctrl-row" id="thickness-group">
             <label class="ctrl-label"><span>Thickness</span><span class="ctrl-val" id="val-thickness">1.00</span></label>
             <input type="range" id="fx-thickness" min="0.1" max="5.0" step="0.01" value="1.0">
@@ -386,27 +281,37 @@ input[type="file"] { display: none; }
             <label class="ctrl-label"><span>Glow</span><span class="ctrl-val" id="val-glow">1.00</span></label>
             <input type="range" id="fx-glow" min="0.0" max="5.0" step="0.01" value="1.0">
         </div>
-        <div class="ctrl-row liss-only" id="liss-density-group">
+
+        <!-- Lissajous only -->
+        <div class="ctrl-row" id="liss-density-group">
             <label class="ctrl-label"><span>Liss density + spread</span><span class="ctrl-val" id="val-liss-density">15</span></label>
             <input type="range" id="fx-liss-density" min="1" max="512" step="1" value="15">
         </div>
-        <div class="ctrl-row ctrl-disabled" id="sep-group">
+
+        <!-- Circular Burst only -->
+        <div class="ctrl-row" id="sep-group">
             <label class="ctrl-label"><span>Line count</span><span class="ctrl-val" id="val-separation">15</span></label>
             <input type="range" id="fx-separation" min="10" max="2500" step="1" value="15">
         </div>
-        <!-- Torus ring spacing -->
-        <div class="ctrl-row torus-only hidden-ctrl" id="torus-spacing-group">
+
+        <!-- Torus only -->
+        <div class="ctrl-row" id="torus-spacing-group">
             <label class="ctrl-label"><span>Ring spacing</span><span class="ctrl-val" id="val-torus-spacing">0.50</span></label>
             <input type="range" id="fx-torus-spacing" min="-1.0" max="2.5" step="0.01" value="0.5">
         </div>
-        <!-- Torus color speed -->
-        <div class="ctrl-row torus-only hidden-ctrl" id="torus-color-speed-group">
+        <div class="ctrl-row" id="torus-color-speed-group">
             <label class="ctrl-label"><span>Torus color speed</span><span class="ctrl-val" id="val-torus-color-speed">1.00</span></label>
             <input type="range" id="fx-torus-color-speed" min="0.10" max="5.0" step="0.01" value="1.0">
         </div>
-        <!-- Torus color toggle -->
-        <button id="btn-torus-color-toggle" class="btn btn-square btn-toggle-on torus-only hidden-ctrl">Toggle: Torus Color Change ✓</button>
-        <!-- Rotation toggle (global) -->
+        <button id="btn-torus-color-toggle" class="btn btn-square btn-toggle-on">Toggle: Torus Color Change ✓</button>
+
+        <!-- Beat Flash only -->
+        <div class="ctrl-row" id="bf-particle-group">
+            <label class="ctrl-label"><span>Particle intensity</span><span class="ctrl-val" id="val-bf-particles">1.00</span></label>
+            <input type="range" id="fx-bf-particles" min="0.0" max="3.0" step="0.05" value="1.0">
+        </div>
+
+        <!-- most modes (not beatflash) -->
         <button id="btn-rotation-toggle" class="btn btn-square btn-toggle-on">Toggle: Rotation ✓</button>
     </div>
 
@@ -500,6 +405,7 @@ const torusColorSpeedGroup = document.getElementById('torus-color-speed-group');
 const btnTorusColorToggle  = document.getElementById('btn-torus-color-toggle');
 const btnRotationToggle    = document.getElementById('btn-rotation-toggle');
 const thicknessGroup       = document.getElementById('thickness-group');
+const bfParticleGroup      = document.getElementById('bf-particle-group');
 
 let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
@@ -508,7 +414,7 @@ let bassNode, crushNode, convolverNode, dryGain, wetGain, volumeNode, monitorGai
 let mediaRecorder = null, recordChunks = [], isRecording = false;
 let inputMode = 'file', animationId, isScrubbing = false;
 
-// FPS tracking
+// FPS
 let fpsSamples = [], fpsLastTime = performance.now(), fpsDisplay = 0;
 function updateFps() {
     const now = performance.now();
@@ -516,7 +422,7 @@ function updateFps() {
     fpsLastTime = now;
     if (fpsSamples.length > 30) fpsSamples.shift();
     const avg = fpsSamples.reduce((a,b)=>a+b,0)/fpsSamples.length;
-    fpsDisplay = Math.round(1000 / avg);
+    fpsDisplay = Math.round(1000/avg);
     fpsCounter.textContent = fpsDisplay + ' fps';
     fpsCounter.className = fpsDisplay >= 50 ? 'fps-good' : fpsDisplay >= 30 ? 'fps-mid' : 'fps-bad';
 }
@@ -534,20 +440,20 @@ const state = {
     torusColorEnabled: true,
     torusColorSpeed: 1,
     rotationEnabled: true,
+    bfParticleIntensity: 1.0,
 };
 
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 const FX_DEFAULTS = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
 
-// Rain Lines particles
+// Rain particles
 const rainParticles = [];
 const RAIN_COUNT = 120;
 function initRainParticles(w, h) {
     rainParticles.length = 0;
     for (let i = 0; i < RAIN_COUNT; i++) {
         rainParticles.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
+            x: Math.random() * w, y: Math.random() * h,
             baseSpeed: 0.3 + Math.random() * 1.2,
             size: 0.5 + Math.random() * 1.8,
             opacity: 0.1 + Math.random() * 0.35
@@ -555,399 +461,248 @@ function initRainParticles(w, h) {
     }
 }
 
-// Spectrum Torus history buffer
+// Torus
 const torusHistory = [];
 const TORUS_HIST_MAX = 55;
-
-// Torus camera state
-let torusCamRotX = 1.05;
-let torusCamRotY = 0;
-let torusDragging = false;
-let torusDragLastX = 0;
-let torusDragLastY = 0;
+let torusCamRotX = 1.05, torusCamRotY = 0;
+let torusDragging = false, torusDragLastX = 0, torusDragLastY = 0;
 let triangleHue = 0;
 
-// ── Beat Flash state ──
-// Pre-allocated energy history (~52 frames ≈ ~0.87s at 60fps)
-const bfEnergyHist   = new Float32Array(52);
-let   bfEHistIdx     = 0;
-let   bfBeatCount    = 0;
-let   bfLastBeatTime = 0;
-let   bfInverted     = false;
-let   bfBeatPulse    = 0;   // 0..1, decays each frame — drives glow burst
-// Pre-allocated scratch buffers for Beat Flash draw (avoid per-frame GC)
-const BF_RINGS       = 8;
-const BF_PTS         = 256; // points per ring — enough detail, easy on GPU
+// Beat Flash state
+const bfEnergyHist = new Float32Array(52);
+let bfEHistIdx    = 0;
+let bfBeatCount   = 0;
+let bfLastBeatTime= 0;
+let bfInverted    = false;
+let bfBeatPulse   = 0;
+let bfInvertFlash = 0;   // 0→1, decays — drives the snap-white overlay on inversion
+const BF_RINGS    = 8;
+const BF_PTS      = 256;
 
-// WebGPU state 
+// Beat Flash particles
+const bfParticlePool = [];
+const BF_MAX_PARTICLES = 900;
+
+// WebGPU
 let gpuDevice = null, gpuContext = null, gpuFormat = null;
 let gpuReady = false;
 let gpuPipeline = null, gpuUniformBuf = null, gpuFreqBuf = null, gpuTimeBuf = null;
 let gpuBindGroup = null, gpuBindGroupLayout = null;
-let gpuPrevMode = null;
 
 async function initWebGPU() {
     if (gpuReady) return true;
     if (!navigator.gpu) return false;
     try {
-        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference:'high-performance' });
         if (!adapter) return false;
         gpuDevice = await adapter.requestDevice();
         gpuFormat = navigator.gpu.getPreferredCanvasFormat();
         gpuContext = mainCanvas.getContext('webgpu');
         if (!gpuContext) return false;
-        gpuContext.configure({ device: gpuDevice, format: gpuFormat, alphaMode: 'premultiplied' });
+        gpuContext.configure({ device:gpuDevice, format:gpuFormat, alphaMode:'premultiplied' });
         gpuReady = true;
         gpuBadge.classList.add('visible');
         return true;
     } catch(e) { return false; }
 }
 
-// pipeline creation for WebGPU
-function ensureGPUPipeline(mode) {
+function ensureGPUPipeline() {
     if (!gpuReady || gpuPipeline) return;
     const BUF_SIZE = 1024;
-
     const shaderSrc = `
-struct Uniforms {
-    time: f32,
-    bass: f32,
-    volume: f32,
-    reverb: f32,
-    thickness: f32,
-    glow: f32,
-    spacing: f32,
-    camRotX: f32,
-    camRotY: f32,
-    width: f32,
-    height: f32,
-    crush: f32,
-    colorSpeed: f32,
-    colorR: f32,
-    colorG: f32,
-    colorB: f32,
-};
+struct Uniforms { time:f32, bass:f32, volume:f32, reverb:f32, thickness:f32, glow:f32, spacing:f32, camRotX:f32, camRotY:f32, width:f32, height:f32, crush:f32, colorSpeed:f32, colorR:f32, colorG:f32, colorB:f32 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
-@group(0) @binding(1) var<storage, read> freq: array<f32, 1024>;
-@group(0) @binding(2) var<storage, read> timed: array<f32, 1024>;
-
-struct VOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
-
-@vertex fn vs(@builtin(vertex_index) vi: u32) -> VOut {
-    var pos = array<vec2f,6>(
-        vec2f(-1.0,-1.0), vec2f(1.0,-1.0), vec2f(-1.0,1.0),
-        vec2f(-1.0,1.0),  vec2f(1.0,-1.0), vec2f(1.0,1.0)
-    );
-    var o: VOut;
-    o.pos = vec4f(pos[vi], 0.0, 1.0);
-    o.uv = (pos[vi] + vec2f(1.0)) * 0.5;
-    return o;
+@group(0) @binding(1) var<storage,read> freq: array<f32,1024>;
+@group(0) @binding(2) var<storage,read> timed: array<f32,1024>;
+struct VOut { @builtin(position) pos:vec4f, @location(0) uv:vec2f };
+@vertex fn vs(@builtin(vertex_index) vi:u32)->VOut {
+    var pos=array<vec2f,6>(vec2f(-1,-1),vec2f(1,-1),vec2f(-1,1),vec2f(-1,1),vec2f(1,-1),vec2f(1,1));
+    var o:VOut; o.pos=vec4f(pos[vi],0,1); o.uv=(pos[vi]+vec2f(1))*0.5; return o;
 }
-
-fn hsl2rgb(h: f32, s: f32, l: f32) -> vec3f {
-    let c = (1.0 - abs(2.0 * l - 1.0)) * s;
-    let x = c * (1.0 - abs(fract(h / 60.0) * 2.0 - 1.0));
-    let m = l - c / 2.0;
-    var rgb: vec3f;
-    let h6 = h / 60.0;
-    if (h6 < 1.0) { rgb = vec3f(c, x, 0.0); }
-    else if (h6 < 2.0) { rgb = vec3f(x, c, 0.0); }
-    else if (h6 < 3.0) { rgb = vec3f(0.0, c, x); }
-    else if (h6 < 4.0) { rgb = vec3f(0.0, x, c); }
-    else if (h6 < 5.0) { rgb = vec3f(x, 0.0, c); }
-    else { rgb = vec3f(c, 0.0, x); }
-    return rgb + vec3f(m);
+fn hsl2rgb(h:f32,s:f32,l:f32)->vec3f {
+    let c=(1-abs(2*l-1))*s; let x=c*(1-abs(fract(h/60)*2-1)); let m=l-c/2;
+    var rgb:vec3f; let h6=h/60;
+    if(h6<1){rgb=vec3f(c,x,0);}else if(h6<2){rgb=vec3f(x,c,0);}else if(h6<3){rgb=vec3f(0,c,x);}
+    else if(h6<4){rgb=vec3f(0,x,c);}else if(h6<5){rgb=vec3f(x,0,c);}else{rgb=vec3f(c,0,x);}
+    return rgb+vec3f(m);
 }
-
-fn getFreq(i: i32) -> f32 {
-    let idx = clamp(i, 0, 1023);
-    return freq[idx];
-}
-
-@fragment fn fs(in: VOut) -> @location(0) vec4f {
-    let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
-    let px = uv.x * u.width;
-    let py = uv.y * u.height;
-
-    let cx = u.width * 0.5;
-    let cy = u.height * 0.52;
-    let baseR = min(u.width, u.height) * 0.20;
-
-    let bandStarts = array<f32, 4>(0.0, 0.05, 0.15, 0.45);
-    let bandEnds   = array<f32, 4>(0.05, 0.15, 0.45, 1.0);
-    let bandMuls   = array<f32, 4>(0.50, 0.73, 1.0, 1.30);
-    let spikeScale = array<f32, 4>(1.5,  1.2,  1.0, 0.75);
-
-    let segments: i32 = 88;
-    let binCount: i32 = 1024;
-
-    var minDist = 1e9;
-    var bestColor = vec3f(0.0);
-    var bestAlpha = 0.0;
-
-    let rotOffset = u.time * 0.09 + u.camRotY;
-    let cosTX = cos(u.camRotX);
-    let sinTX = sin(u.camRotX);
-
-    for (var bi: i32 = 0; bi < 4; bi++) {
-        let bStart = bandStarts[bi];
-        let bEnd = bandEnds[bi];
-        let ringR = baseR * bandMuls[bi] * u.spacing;
-        let ss = spikeScale[bi];
-
-        for (var seg: i32 = 0; seg <= segments; seg++) {
-            let theta = (f32(seg) / f32(segments)) * 6.28318 + rotOffset;
-            let cosT = cos(theta);
-            let sinT = sin(theta);
-
-            let binI = i32(bStart * f32(binCount)) + i32((f32(seg) / f32(segments)) * (bEnd - bStart) * f32(binCount));
-            let fv = getFreq(clamp(binI, 0, 1023));
-
-            let r = ringR;
-            let rx = r * cosT;
-            let ry_raw = -fv * 80.0 * u.thickness * ss;
-            let rz = r * sinT;
-
-            let ry_ = vec2f(ry_raw * cosTX - rz * sinTX, ry_raw * sinTX + rz * cosTX);
-            let ry = ry_.x;
-            let rz2 = ry_.y;
-
-            let fovV: f32 = 4.5;
-            let persp = fovV / (fovV + rz2 / max(ringR, 0.001));
-            let spx = cx + rx * persp;
-            let spy = cy + ry * persp;
-
-            let dist = distance(vec2f(px, py), vec2f(spx, spy));
-            let lineW = max(0.4, 1.7 * u.thickness * persp);
-            if (dist < lineW + 2.0) {
-                let hue = f32(bi) * 70.0 + u.time * 20.0 * u.colorSpeed;
-                let rgb = hsl2rgb(hue % 360.0, 1.0, 0.63);
-                let glowColor = select(vec3f(u.colorR, u.colorG, u.colorB), rgb, u.colorSpeed > 0.0);
-                let sharpness = 1.0 - smoothstep(lineW * 0.3, lineW + 2.0, dist);
-                if (sharpness > bestAlpha) {
-                    bestAlpha = sharpness;
-                    bestColor = glowColor;
-                }
+@fragment fn fs(in:VOut)->@location(0) vec4f {
+    let uv=vec2f(in.uv.x,1-in.uv.y); let px=uv.x*u.width; let py=uv.y*u.height;
+    let cx=u.width*0.5; let cy=u.height*0.52; let baseR=min(u.width,u.height)*0.20;
+    let bandStarts=array<f32,4>(0,0.05,0.15,0.45); let bandEnds=array<f32,4>(0.05,0.15,0.45,1);
+    let bandMuls=array<f32,4>(0.50,0.73,1,1.30); let spikeScale=array<f32,4>(1.5,1.2,1,0.75);
+    let segments:i32=88; let binCount:i32=1024;
+    var minDist=1e9; var bestColor=vec3f(0); var bestAlpha=0.0;
+    let rotOffset=u.time*0.09+u.camRotY; let cosTX=cos(u.camRotX); let sinTX=sin(u.camRotX);
+    for(var bi:i32=0;bi<4;bi++){
+        let bStart=bandStarts[bi]; let bEnd=bandEnds[bi];
+        let ringR=baseR*bandMuls[bi]*u.spacing; let ss=spikeScale[bi];
+        for(var seg:i32=0;seg<=segments;seg++){
+            let theta=(f32(seg)/f32(segments))*6.28318+rotOffset;
+            let cosT=cos(theta); let sinT=sin(theta);
+            let binI=i32(bStart*f32(binCount))+i32((f32(seg)/f32(segments))*(bEnd-bStart)*f32(binCount));
+            let fv=freq[clamp(binI,0,1023)]; let r=ringR;
+            let rx=r*cosT; let ry_raw=-fv*80*u.thickness*ss; let rz=r*sinT;
+            let ry_=vec2f(ry_raw*cosTX-rz*sinTX,ry_raw*sinTX+rz*cosTX);
+            let ry=ry_.x; let rz2=ry_.y;
+            let fovV:f32=4.5; let persp=fovV/(fovV+rz2/max(ringR,0.001));
+            let spx=cx+rx*persp; let spy=cy+ry*persp;
+            let dist=distance(vec2f(px,py),vec2f(spx,spy));
+            let lineW=max(0.4,1.7*u.thickness*persp);
+            if(dist<lineW+2){
+                let hue=f32(bi)*70+u.time*20*u.colorSpeed;
+                let rgb=hsl2rgb(hue%360,1,0.63);
+                let glowColor=select(vec3f(u.colorR,u.colorG,u.colorB),rgb,u.colorSpeed>0);
+                let sharpness=1-smoothstep(lineW*0.3,lineW+2,dist);
+                if(sharpness>bestAlpha){bestAlpha=sharpness;bestColor=glowColor;}
             }
         }
     }
-
-    // Rainbow triangle
-    let triSize = baseR * 0.20;
-    let triSpin = u.time * 0.6;
-    for (var ti: i32 = 0; ti < 3; ti++) {
-        let ta = f32(ti) / 3.0 * 6.28318 + triSpin - 1.5708;
-        let tb = f32(ti + 1) / 3.0 * 6.28318 + triSpin - 1.5708;
-        let ax = cx + cos(ta) * triSize;
-        let ay = cy + sin(ta) * triSize;
-        let bx = cx + cos(tb) * triSize;
-        let by = cy + sin(tb) * triSize;
-        let ab = vec2f(bx - ax, by - ay);
-        let ap = vec2f(px - ax, py - ay);
-        let t2 = clamp(dot(ap, ab) / dot(ab, ab), 0.0, 1.0);
-        let closest = vec2f(ax + t2 * ab.x, ay + t2 * ab.y);
-        let d = distance(vec2f(px, py), closest);
-        let lw = 2.5 * u.thickness;
-        if (d < lw + 2.0) {
-            let sideHue = (f32(ti) * 120.0 + u.time * 40.0 * u.colorSpeed) % 360.0;
-            let rgb = hsl2rgb(sideHue, 1.0, 0.68);
-            let triColor = select(vec3f(u.colorR, u.colorG, u.colorB), rgb, u.colorSpeed > 0.0);
-            let s = 1.0 - smoothstep(lw * 0.3, lw + 2.0, d);
-            if (s > bestAlpha) { bestAlpha = s; bestColor = triColor; }
+    let triSize=baseR*0.20; let triSpin=u.time*0.6;
+    for(var ti:i32=0;ti<3;ti++){
+        let ta=f32(ti)/3*6.28318+triSpin-1.5708; let tb=f32(ti+1)/3*6.28318+triSpin-1.5708;
+        let ax=cx+cos(ta)*triSize; let ay=cy+sin(ta)*triSize;
+        let bx=cx+cos(tb)*triSize; let by=cy+sin(tb)*triSize;
+        let ab=vec2f(bx-ax,by-ay); let ap=vec2f(px-ax,py-ay);
+        let t2=clamp(dot(ap,ab)/dot(ab,ab),0,1);
+        let closest=vec2f(ax+t2*ab.x,ay+t2*ab.y);
+        let d=distance(vec2f(px,py),closest); let lw=2.5*u.thickness;
+        if(d<lw+2){
+            let sideHue=(f32(ti)*120+u.time*40*u.colorSpeed)%360;
+            let rgb=hsl2rgb(sideHue,1,0.68);
+            let triColor=select(vec3f(u.colorR,u.colorG,u.colorB),rgb,u.colorSpeed>0);
+            let s=1-smoothstep(lw*0.3,lw+2,d);
+            if(s>bestAlpha){bestAlpha=s;bestColor=triColor;}
         }
     }
-
-    if (bestAlpha < 0.01) { discard; }
-    return vec4f(bestColor * bestAlpha, bestAlpha);
-}
-`;
+    if(bestAlpha<0.01){discard;} return vec4f(bestColor*bestAlpha,bestAlpha);
+}`;
     try {
         const shaderMod = gpuDevice.createShaderModule({ code: shaderSrc });
-
-        gpuBindGroupLayout = gpuDevice.createBindGroupLayout({
-            entries: [
-                { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-                { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-                { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-            ]
-        });
-
-        const pipelineLayout = gpuDevice.createPipelineLayout({ bindGroupLayouts: [gpuBindGroupLayout] });
-
+        gpuBindGroupLayout = gpuDevice.createBindGroupLayout({ entries:[
+            {binding:0,visibility:GPUShaderStage.FRAGMENT,buffer:{type:'uniform'}},
+            {binding:1,visibility:GPUShaderStage.FRAGMENT,buffer:{type:'read-only-storage'}},
+            {binding:2,visibility:GPUShaderStage.FRAGMENT,buffer:{type:'read-only-storage'}},
+        ]});
         gpuPipeline = gpuDevice.createRenderPipeline({
-            layout: pipelineLayout,
-            vertex: { module: shaderMod, entryPoint: 'vs' },
-            fragment: { module: shaderMod, entryPoint: 'fs',
-                targets: [{ format: gpuFormat,
-                    blend: {
-                        color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
-                        alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
-                    }
-                }]
-            },
-            primitive: { topology: 'triangle-list' }
+            layout: gpuDevice.createPipelineLayout({bindGroupLayouts:[gpuBindGroupLayout]}),
+            vertex:{module:shaderMod,entryPoint:'vs'},
+            fragment:{module:shaderMod,entryPoint:'fs',targets:[{format:gpuFormat,blend:{
+                color:{srcFactor:'src-alpha',dstFactor:'one',operation:'add'},
+                alpha:{srcFactor:'one',dstFactor:'one',operation:'add'}}}]},
+            primitive:{topology:'triangle-list'}
         });
-
-        gpuUniformBuf = gpuDevice.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-        gpuFreqBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-        gpuTimeBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-
-        gpuBindGroup = gpuDevice.createBindGroup({
-            layout: gpuBindGroupLayout,
-            entries: [
-                { binding: 0, resource: { buffer: gpuUniformBuf } },
-                { binding: 1, resource: { buffer: gpuFreqBuf } },
-                { binding: 2, resource: { buffer: gpuTimeBuf } },
-            ]
-        });
-    } catch(e) {
-        console.warn('WebGPU pipeline creation failed:', e);
-        gpuPipeline = null;
-    }
+        gpuUniformBuf = gpuDevice.createBuffer({size:64,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+        gpuFreqBuf    = gpuDevice.createBuffer({size:BUF_SIZE*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+        gpuTimeBuf    = gpuDevice.createBuffer({size:BUF_SIZE*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+        gpuBindGroup  = gpuDevice.createBindGroup({layout:gpuBindGroupLayout,entries:[
+            {binding:0,resource:{buffer:gpuUniformBuf}},
+            {binding:1,resource:{buffer:gpuFreqBuf}},
+            {binding:2,resource:{buffer:gpuTimeBuf}},
+        ]});
+    } catch(e) { console.warn('WebGPU pipeline failed:',e); gpuPipeline=null; }
 }
 
-// ── WebGPU sphere pipeline ──
-let gpuSpherePipeline = null, gpuSphereUniformBuf = null, gpuSphereFreqBuf = null, gpuSphereBindGroup = null;
-
+let gpuSpherePipeline=null,gpuSphereUniformBuf=null,gpuSphereFreqBuf=null,gpuSphereBindGroup=null;
 function ensureGPUSpherePipeline() {
     if (!gpuReady || gpuSpherePipeline) return;
-
     const shaderSrc = `
-struct Uniforms {
-    time: f32, bass: f32, volume: f32, reverb: f32,
-    thickness: f32, glow: f32,
-    cx: f32, cy: f32, radius: f32,
-    width: f32, height: f32, _pad: f32,
-};
-@group(0) @binding(0) var<uniform> u: Uniforms;
-@group(0) @binding(1) var<storage, read> freq: array<f32, 1024>;
-
-struct VOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
-
-@vertex fn vs(@builtin(vertex_index) vi: u32) -> VOut {
-    var pos = array<vec2f,6>(
-        vec2f(-1.0,-1.0), vec2f(1.0,-1.0), vec2f(-1.0,1.0),
-        vec2f(-1.0,1.0),  vec2f(1.0,-1.0), vec2f(1.0,1.0)
-    );
-    var o: VOut; o.pos = vec4f(pos[vi],0.0,1.0);
-    o.uv = (pos[vi]+vec2f(1.0))*0.5; return o;
+struct Uniforms{time:f32,bass:f32,volume:f32,reverb:f32,thickness:f32,glow:f32,cx:f32,cy:f32,radius:f32,width:f32,height:f32,_pad:f32};
+@group(0)@binding(0)var<uniform>u:Uniforms;
+@group(0)@binding(1)var<storage,read>freq:array<f32,1024>;
+struct VOut{@builtin(position)pos:vec4f,@location(0)uv:vec2f};
+@vertex fn vs(@builtin(vertex_index)vi:u32)->VOut{
+    var pos=array<vec2f,6>(vec2f(-1,-1),vec2f(1,-1),vec2f(-1,1),vec2f(-1,1),vec2f(1,-1),vec2f(1,1));
+    var o:VOut;o.pos=vec4f(pos[vi],0,1);o.uv=(pos[vi]+vec2f(1))*0.5;return o;
 }
-
-@fragment fn fs(in: VOut) -> @location(0) vec4f {
-    let px = in.uv.x * u.width;
-    let py = (1.0 - in.uv.y) * u.height;
-    let latLines: i32 = 26;
-    let lonLines: i32 = 52;
-    let binCount: i32 = 1024;
-    let rotAngle = u.time * 0.28;
-    let tiltA: f32 = 0.32;
-    let cosTilt = cos(tiltA);
-    let sinTilt = sin(tiltA);
-    let fov: f32 = 2.6;
-
-    var bestA = 0.0;
-    var bestC = vec3f(1.0);
-
-    for (var lat: i32 = 0; lat <= latLines; lat++) {
-        let phi = f32(lat) / f32(latLines) * 3.14159;
-        let sinPhi = sin(phi); let cosPhi = cos(phi);
-        for (var lon: i32 = 0; lon <= lonLines; lon++) {
-            let theta = f32(lon) / f32(lonLines) * 6.28318 + rotAngle;
-            let binI = clamp(i32(f32(lon) / f32(lonLines) * f32(binCount) * 0.65), 0, 1023);
-            let fv = freq[binI];
-            let deformR = u.radius * (1.0 + fv * 0.32 * u.bass);
-            let sx = sinPhi * cos(theta);
-            let sy_raw = sinPhi * sin(theta);
-            let sz_raw = cosPhi;
-            let sy = sy_raw * cosTilt - sz_raw * sinTilt;
-            let sz = sy_raw * sinTilt + sz_raw * cosTilt;
-            let persp = fov / (fov + sz * 0.9);
-            let spx = u.cx + sx * deformR * persp;
-            let spy = u.cy + sy * deformR * persp * 0.88;
-            let depth = (sz + 1.4) / 2.8;
-            let alpha = max(0.0, (0.05 + depth * 0.55) * (0.12 + fv * 0.88));
-            let dotR = max(0.3, (0.65 + fv * 2.2) * u.thickness * persp * 0.75);
-            let d = distance(vec2f(px, py), vec2f(spx, spy));
-            if (d < dotR + 1.5 && alpha > bestA) {
-                bestA = alpha * (1.0 - smoothstep(dotR * 0.5, dotR + 1.5, d));
-                bestC = vec3f(1.0);
-            }
+@fragment fn fs(in:VOut)->@location(0)vec4f{
+    let px=in.uv.x*u.width;let py=(1-in.uv.y)*u.height;
+    let latLines:i32=26;let lonLines:i32=52;let binCount:i32=1024;
+    let rotAngle=u.time*0.28;let tiltA:f32=0.32;let cosTilt=cos(tiltA);let sinTilt=sin(tiltA);let fov:f32=2.6;
+    var bestA=0.0;var bestC=vec3f(1);
+    for(var lat:i32=0;lat<=latLines;lat++){
+        let phi=f32(lat)/f32(latLines)*3.14159;let sinPhi=sin(phi);let cosPhi=cos(phi);
+        for(var lon:i32=0;lon<=lonLines;lon++){
+            let theta=f32(lon)/f32(lonLines)*6.28318+rotAngle;
+            let binI=clamp(i32(f32(lon)/f32(lonLines)*f32(binCount)*0.65),0,1023);
+            let fv=freq[binI];let deformR=u.radius*(1+fv*0.32*u.bass);
+            let sx=sinPhi*cos(theta);let sy_raw=sinPhi*sin(theta);let sz_raw=cosPhi;
+            let sy=sy_raw*cosTilt-sz_raw*sinTilt;let sz=sy_raw*sinTilt+sz_raw*cosTilt;
+            let persp=fov/(fov+sz*0.9);let spx=u.cx+sx*deformR*persp;let spy=u.cy+sy*deformR*persp*0.88;
+            let depth=(sz+1.4)/2.8;let alpha=max(0.0,(0.05+depth*0.55)*(0.12+fv*0.88));
+            let dotR=max(0.3,(0.65+fv*2.2)*u.thickness*persp*0.75);
+            let d=distance(vec2f(px,py),vec2f(spx,spy));
+            if(d<dotR+1.5&&alpha>bestA){bestA=alpha*(1-smoothstep(dotR*0.5,dotR+1.5,d));bestC=vec3f(1);}
         }
     }
-    if (bestA < 0.01) { discard; }
-    return vec4f(bestC * bestA, bestA);
-}
-`;
+    if(bestA<0.01){discard;}return vec4f(bestC*bestA,bestA);
+}`;
     try {
-        const shaderMod = gpuDevice.createShaderModule({ code: shaderSrc });
-        const bgl = gpuDevice.createBindGroupLayout({
-            entries: [
-                { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-                { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-            ]
+        const shaderMod=gpuDevice.createShaderModule({code:shaderSrc});
+        const bgl=gpuDevice.createBindGroupLayout({entries:[
+            {binding:0,visibility:GPUShaderStage.FRAGMENT,buffer:{type:'uniform'}},
+            {binding:1,visibility:GPUShaderStage.FRAGMENT,buffer:{type:'read-only-storage'}},
+        ]});
+        gpuSpherePipeline=gpuDevice.createRenderPipeline({
+            layout:gpuDevice.createPipelineLayout({bindGroupLayouts:[bgl]}),
+            vertex:{module:shaderMod,entryPoint:'vs'},
+            fragment:{module:shaderMod,entryPoint:'fs',targets:[{format:gpuFormat,blend:{
+                color:{srcFactor:'src-alpha',dstFactor:'one',operation:'add'},
+                alpha:{srcFactor:'one',dstFactor:'one',operation:'add'}}}]},
+            primitive:{topology:'triangle-list'}
         });
-        gpuSpherePipeline = gpuDevice.createRenderPipeline({
-            layout: gpuDevice.createPipelineLayout({ bindGroupLayouts: [bgl] }),
-            vertex: { module: shaderMod, entryPoint: 'vs' },
-            fragment: { module: shaderMod, entryPoint: 'fs',
-                targets: [{ format: gpuFormat,
-                    blend: {
-                        color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
-                        alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
-                    }
-                }]
-            },
-            primitive: { topology: 'triangle-list' }
-        });
-        gpuSphereUniformBuf = gpuDevice.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-        gpuSphereFreqBuf    = gpuDevice.createBuffer({ size: 1024*4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-        gpuSphereBindGroup  = gpuDevice.createBindGroup({
-            layout: bgl,
-            entries: [
-                { binding: 0, resource: { buffer: gpuSphereUniformBuf } },
-                { binding: 1, resource: { buffer: gpuSphereFreqBuf } },
-            ]
-        });
-    } catch(e) {
-        console.warn('WebGPU sphere pipeline failed:', e);
-        gpuSpherePipeline = null;
-    }
+        gpuSphereUniformBuf=gpuDevice.createBuffer({size:64,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+        gpuSphereFreqBuf=gpuDevice.createBuffer({size:1024*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+        gpuSphereBindGroup=gpuDevice.createBindGroup({layout:bgl,entries:[
+            {binding:0,resource:{buffer:gpuSphereUniformBuf}},
+            {binding:1,resource:{buffer:gpuSphereFreqBuf}},
+        ]});
+    } catch(e) { console.warn('WebGPU sphere pipeline failed:',e); gpuSpherePipeline=null; }
 }
 
 function hexToRgb(hex) {
-    const r = parseInt(hex.slice(1,3),16);
-    const g = parseInt(hex.slice(3,5),16);
-    const b = parseInt(hex.slice(5,7),16);
-    return {r,g,b};
+    return { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
 }
 
 function resize() {
     mainCanvas.width = window.innerWidth;
     mainCanvas.height = window.innerHeight;
     if (gpuReady && gpuContext) {
-        try { gpuContext.configure({ device: gpuDevice, format: gpuFormat, alphaMode: 'premultiplied' }); } catch(e){}
+        try { gpuContext.configure({device:gpuDevice,format:gpuFormat,alphaMode:'premultiplied'}); } catch(e){}
     }
     initRainParticles(mainCanvas.width, mainCanvas.height);
 }
 window.addEventListener('resize', resize); resize();
 
-// ── Torus Warning ──
-function showTorusWarning() {
-    torusWarning.classList.add('active');
+// ── Mode-specific control visibility ──
+function setVisualControls(mode) {
+    const isTorus     = mode === 'torus';
+    const isLiss      = mode === 'lissajous';
+    const isBurst     = mode === '2';
+    const isBeatFlash = mode === 'beatflash';
+
+    // Lissajous only
+    lissDensityGroup.classList.toggle('hidden-ctrl', !isLiss);
+    // Circular Burst only
+    sepGroup.classList.toggle('hidden-ctrl', !isBurst);
+    // Torus only
+    torusSpacingGroup.classList.toggle('hidden-ctrl', !isTorus);
+    torusColorSpeedGroup.classList.toggle('hidden-ctrl', !isTorus);
+    btnTorusColorToggle.classList.toggle('hidden-ctrl', !isTorus);
+    // Beat Flash only
+    bfParticleGroup.classList.toggle('hidden-ctrl', !isBeatFlash);
+    // Hidden IN Beat Flash
+    thicknessGroup.classList.toggle('hidden-ctrl', isBeatFlash);
+    btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash);
 }
-function hideTorusWarning() {
-    torusWarning.classList.remove('active');
-}
+
+// Torus warning
+function showTorusWarning() { torusWarning.classList.add('active'); }
+function hideTorusWarning() { torusWarning.classList.remove('active'); }
 
 function activateTorusMode() {
     state.mode = 'torus';
-    sepGroup.classList.toggle('ctrl-disabled', true);
-    lissDensityGroup.classList.add('hidden-ctrl');
-    torusSpacingGroup.classList.remove('hidden-ctrl');
-    torusColorSpeedGroup.classList.remove('hidden-ctrl');
-    btnTorusColorToggle.classList.remove('hidden-ctrl');
-    thicknessGroup.classList.remove('hidden-ctrl');
-    btnRotationToggle.classList.remove('hidden-ctrl');
+    setVisualControls('torus');
     torusHistory.length = 0;
     torusHint.classList.add('visible');
     setTimeout(()=>torusHint.classList.remove('visible'), 3500);
@@ -957,39 +712,37 @@ function activateTorusMode() {
 warnProceed.addEventListener('click', () => {
     hideTorusWarning();
     if (document.getElementById('warn-dont-show').checked) {
-        try { localStorage.setItem('torus-skip-warning', '1'); } catch(e) {}
+        try { localStorage.setItem('torus-skip-warning','1'); } catch(e){}
     }
     activateTorusMode();
 });
-
 warnCancel.addEventListener('click', () => {
     hideTorusWarning();
     document.getElementById('mode-selector').value = state.mode;
 });
 
 function createImpulseResponse(ctx) {
-    const rate = ctx.sampleRate, len = rate*3;
-    const imp = ctx.createBuffer(2, len, rate);
-    [imp.getChannelData(0), imp.getChannelData(1)].forEach(ch => {
-        for (let i=0;i<len;i++) ch[i] = (Math.random()*2-1)*Math.exp(-i/(rate*0.5));
+    const rate=ctx.sampleRate, len=rate*3, imp=ctx.createBuffer(2,len,rate);
+    [imp.getChannelData(0),imp.getChannelData(1)].forEach(ch=>{
+        for(let i=0;i<len;i++) ch[i]=(Math.random()*2-1)*Math.exp(-i/(rate*0.5));
     });
     return imp;
 }
 function makeCrushCurve(amt) {
-    const k=amt*10, n=44100, c=new Float32Array(n);
-    for (let i=0;i<n;i++) { const x=i*2/n-1; c[i]=(3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x)); }
+    const k=amt*10,n=44100,c=new Float32Array(n);
+    for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x));}
     return c;
 }
 
 function initAudioGraph() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    preAnalyser = audioCtx.createAnalyser(); preAnalyser.fftSize=2048; preAnalyser.smoothingTimeConstant=0.5;
-    analyser    = audioCtx.createAnalyser(); analyser.fftSize=2048;    analyser.smoothingTimeConstant=0.5;
-    volumeNode = audioCtx.createGain();
-    bassNode   = audioCtx.createBiquadFilter(); bassNode.type='lowshelf'; bassNode.frequency.value=150;
-    crushNode  = audioCtx.createWaveShaper();
-    convolverNode = audioCtx.createConvolver(); convolverNode.buffer=createImpulseResponse(audioCtx);
+    if(audioCtx) return;
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    preAnalyser=audioCtx.createAnalyser(); preAnalyser.fftSize=2048; preAnalyser.smoothingTimeConstant=0.5;
+    analyser=audioCtx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.5;
+    volumeNode=audioCtx.createGain(); bassNode=audioCtx.createBiquadFilter();
+    bassNode.type='lowshelf'; bassNode.frequency.value=150;
+    crushNode=audioCtx.createWaveShaper();
+    convolverNode=audioCtx.createConvolver(); convolverNode.buffer=createImpulseResponse(audioCtx);
     dryGain=audioCtx.createGain(); wetGain=audioCtx.createGain(); wetGain.gain.value=0;
     monitorGain=audioCtx.createGain();
     volumeNode.connect(bassNode); bassNode.connect(crushNode);
@@ -1000,24 +753,24 @@ function initAudioGraph() {
 function connectToGraph(node) { node.connect(preAnalyser); node.connect(volumeNode); }
 function initFileSource() {
     initAudioGraph();
-    if (!fileSource) { fileSource = audioCtx.createMediaElementSource(audioPlayer); connectToGraph(fileSource); }
+    if(!fileSource){fileSource=audioCtx.createMediaElementSource(audioPlayer);connectToGraph(fileSource);}
 }
 
-btnRecord.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
-function startRecording() {
-    if (!audioCtx) { alert('Load or capture audio first.'); return; }
-    if (audioCtx.state==='suspended') audioCtx.resume();
-    const cs = mainCanvas.captureStream(60);
-    const ad = audioCtx.createMediaStreamDestination(); analyser.connect(ad);
-    const at = ad.stream.getAudioTracks()[0]; if (at) cs.addTrack(at);
-    const mime = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
+btnRecord.addEventListener('click',()=>isRecording?stopRecording():startRecording());
+function startRecording(){
+    if(!audioCtx){alert('Load or capture audio first.');return;}
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const cs=mainCanvas.captureStream(60);
+    const ad=audioCtx.createMediaStreamDestination(); analyser.connect(ad);
+    const at=ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
+    const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
         .find(t=>MediaRecorder.isTypeSupported(t))||'video/webm';
-    mediaRecorder = new MediaRecorder(cs,{mimeType:mime,videoBitsPerSecond:8_000_000});
+    mediaRecorder=new MediaRecorder(cs,{mimeType:mime,videoBitsPerSecond:8_000_000});
     recordChunks=[];
-    mediaRecorder.ondataavailable = e => { if(e.data.size>0) recordChunks.push(e.data); };
-    mediaRecorder.onstop = () => {
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordChunks.push(e.data);};
+    mediaRecorder.onstop=()=>{
         analyser.disconnect(ad);
-        const blob=new Blob(recordChunks,{type:mime}), url=URL.createObjectURL(blob);
+        const blob=new Blob(recordChunks,{type:mime}),url=URL.createObjectURL(blob);
         Object.assign(document.createElement('a'),{href:url,download:`studio-${Date.now()}.webm`}).click();
         URL.revokeObjectURL(url);
     };
@@ -1025,36 +778,33 @@ function startRecording() {
     btnRecord.classList.add('recording');
     btnRecord.innerHTML='<span class="dot"></span>Stop & save';
 }
-function stopRecording() {
-    if (mediaRecorder?.state!=='inactive') mediaRecorder.stop();
+function stopRecording(){
+    if(mediaRecorder?.state!=='inactive') mediaRecorder.stop();
     isRecording=false; btnRecord.classList.remove('recording');
     btnRecord.innerHTML='<span class="dot"></span>Record video';
 }
 
-btnCapture.addEventListener('click', async () => {
-    if (captureStream) { stopCapture(); return; }
-    try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-            video:true, audio:{echoCancellation:false,noiseSuppression:false,sampleRate:44100}
+btnCapture.addEventListener('click',async()=>{
+    if(captureStream){stopCapture();return;}
+    try{
+        const stream=await navigator.mediaDevices.getDisplayMedia({
+            video:true,audio:{echoCancellation:false,noiseSuppression:false,sampleRate:44100}
         });
         stream.getVideoTracks().forEach(t=>t.stop());
-        const audioTracks = stream.getAudioTracks();
-        if (!audioTracks.length) {
-            alert('No audio track detected — tick "Share audio" in the screen-share picker.');
-            stream.getTracks().forEach(t=>t.stop()); return;
-        }
-        if (!audioPlayer.paused) { audioPlayer.pause(); playBtn.textContent='▶'; }
+        const audioTracks=stream.getAudioTracks();
+        if(!audioTracks.length){alert('No audio track — tick "Share audio" in the picker.');stream.getTracks().forEach(t=>t.stop());return;}
+        if(!audioPlayer.paused){audioPlayer.pause();playBtn.textContent='▶';}
         initAudioGraph(); if(audioCtx.state==='suspended') await audioCtx.resume();
         captureStream=stream; captureSource=audioCtx.createMediaStreamSource(captureStream);
         connectToGraph(captureSource); inputMode='capture'; monitorGain.gain.value=0;
         btnCapture.classList.add('active'); btnCapture.innerHTML='<span class="dot"></span>Stop capture';
-        trackName.textContent = audioTracks[0].label||'Live input';
+        trackName.textContent=audioTracks[0].label||'Live input';
         updateSourceBadge(); timeDisplay.textContent='Live';
         audioTracks[0].addEventListener('ended',stopCapture);
-        if (!animationId) draw();
-    } catch(err) { if(err.name!=='NotAllowedError') alert(`Capture failed: ${err.message}`); }
+        if(!animationId) draw();
+    }catch(err){if(err.name!=='NotAllowedError') alert(`Capture failed: ${err.message}`);}
 });
-function stopCapture() {
+function stopCapture(){
     captureStream?.getTracks().forEach(t=>t.stop()); captureSource?.disconnect();
     captureStream=captureSource=null; inputMode='file'; monitorGain.gain.value=1;
     btnCapture.classList.remove('active'); btnCapture.innerHTML='<span class="dot"></span>Capture app / tab';
@@ -1063,213 +813,133 @@ function stopCapture() {
     timeDisplay.textContent=audioPlayer.src?`${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`:'0:00 / 0:00';
 }
 
-const btnMic         = document.getElementById('btn-mic');
-const micDeviceRow   = document.getElementById('mic-device-row');
-const micVolRow      = document.getElementById('mic-vol-row');
-const micDeviceSel   = document.getElementById('mic-device-select');
-let micGainNode = null;
+const btnMic=document.getElementById('btn-mic');
+const micDeviceRow=document.getElementById('mic-device-row');
+const micVolRow=document.getElementById('mic-vol-row');
+const micDeviceSel=document.getElementById('mic-device-select');
+let micGainNode=null;
 
-function updateSourceBadge() {
-    const hasCapture = !!captureStream, hasMic = !!micStream;
-    if (hasCapture && hasMic)  { sourceBadge.textContent='● Live + Mic'; sourceBadge.classList.add('visible'); }
-    else if (hasCapture)       { sourceBadge.textContent='● Live';       sourceBadge.classList.add('visible'); }
-    else if (hasMic)           { sourceBadge.textContent='● Mic';        sourceBadge.classList.add('visible'); }
-    else                       { sourceBadge.classList.remove('visible'); }
+function updateSourceBadge(){
+    const hC=!!captureStream,hM=!!micStream;
+    if(hC&&hM){sourceBadge.textContent='● Live + Mic';sourceBadge.classList.add('visible');}
+    else if(hC){sourceBadge.textContent='● Live';sourceBadge.classList.add('visible');}
+    else if(hM){sourceBadge.textContent='● Mic';sourceBadge.classList.add('visible');}
+    else{sourceBadge.classList.remove('visible');}
 }
 
-async function populateMicDevices() {
-    try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const mics = devices.filter(d => d.kind === 'audioinput');
-        micDeviceSel.innerHTML = '';
-        mics.forEach((d, i) => {
-            const opt = document.createElement('option');
-            opt.value = d.deviceId; opt.textContent = d.label || `Microphone ${i+1}`;
-            micDeviceSel.appendChild(opt);
-        });
-        micDeviceRow.style.display = mics.length > 1 ? 'flex' : 'none';
-    } catch(e) { micDeviceRow.style.display = 'none'; }
+async function populateMicDevices(){
+    try{
+        const devices=await navigator.mediaDevices.enumerateDevices();
+        const mics=devices.filter(d=>d.kind==='audioinput');
+        micDeviceSel.innerHTML='';
+        mics.forEach((d,i)=>{const opt=document.createElement('option');opt.value=d.deviceId;opt.textContent=d.label||`Microphone ${i+1}`;micDeviceSel.appendChild(opt);});
+        micDeviceRow.style.display=mics.length>1?'flex':'none';
+    }catch(e){micDeviceRow.style.display='none';}
 }
 
-async function startMic(deviceId) {
-    const constraints = { audio: { deviceId: deviceId ? {exact:deviceId} : undefined, echoCancellation: true, noiseSuppression: true } };
-    micStream = await navigator.mediaDevices.getUserMedia(constraints);
+async function startMic(deviceId){
+    const constraints={audio:{deviceId:deviceId?{exact:deviceId}:undefined,echoCancellation:true,noiseSuppression:true}};
+    micStream=await navigator.mediaDevices.getUserMedia(constraints);
     initAudioGraph(); if(audioCtx.state==='suspended') await audioCtx.resume();
-    micGainNode = audioCtx.createGain();
-    micGainNode.gain.value = parseFloat(document.getElementById('fx-mic-gain').value);
-    micSource = audioCtx.createMediaStreamSource(micStream);
+    micGainNode=audioCtx.createGain();
+    micGainNode.gain.value=parseFloat(document.getElementById('fx-mic-gain').value);
+    micSource=audioCtx.createMediaStreamSource(micStream);
     micSource.connect(micGainNode); micGainNode.connect(preAnalyser); micGainNode.connect(volumeNode);
-    if (!animationId) draw();
+    if(!animationId) draw();
 }
+function stopMic(){micStream?.getTracks().forEach(t=>t.stop());micSource?.disconnect();micGainNode?.disconnect();micStream=micSource=micGainNode=null;}
 
-function stopMic() {
-    micStream?.getTracks().forEach(t=>t.stop());
-    micSource?.disconnect(); micGainNode?.disconnect();
-    micStream=micSource=micGainNode=null;
-}
-
-btnMic.addEventListener('click', async () => {
-    if (micStream) {
+btnMic.addEventListener('click',async()=>{
+    if(micStream){
         stopMic(); btnMic.classList.remove('active');
         btnMic.innerHTML='<span class="dot"></span>Enable microphone';
         micVolRow.style.display='none'; micDeviceRow.style.display='none';
         updateSourceBadge(); return;
     }
-    try {
+    try{
         await navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop()));
-        await populateMicDevices();
-        await startMic(micDeviceSel.value || undefined);
+        await populateMicDevices(); await startMic(micDeviceSel.value||undefined);
         btnMic.classList.add('active');
         btnMic.innerHTML='<span class="dot"></span>Stop microphone';
         micVolRow.style.display='flex'; updateSourceBadge();
-    } catch(err) { alert('Microphone access denied or unavailable.'); }
+    }catch(err){alert('Microphone access denied or unavailable.');}
 });
 
-micDeviceSel.addEventListener('change', async () => {
-    if (!micStream) return; stopMic(); await startMic(micDeviceSel.value); updateSourceBadge();
-});
-
-document.getElementById('fx-mic-gain').oninput = e => {
-    const v = parseFloat(e.target.value);
-    document.getElementById('val-mic-gain').innerText = v.toFixed(2);
-    if (micGainNode) micGainNode.gain.value = v;
+micDeviceSel.addEventListener('change',async()=>{if(!micStream)return;stopMic();await startMic(micDeviceSel.value);updateSourceBadge();});
+document.getElementById('fx-mic-gain').oninput=e=>{
+    const v=parseFloat(e.target.value);
+    document.getElementById('val-mic-gain').innerText=v.toFixed(2);
+    if(micGainNode) micGainNode.gain.value=v;
 };
 
-function bindSlider(id, cb) {
-    const el=document.getElementById('fx-'+id), dv=document.getElementById('val-'+id);
+function bindSlider(id,cb){
+    const el=document.getElementById('fx-'+id),dv=document.getElementById('val-'+id);
     if(!el) return;
-    el.oninput = e => {
-        const v=parseFloat(e.target.value), isInt=(id==='separation'||id==='liss-density');
-        dv.innerText = isInt ? Math.round(v) : v.toFixed(2); cb(v);
-    };
+    el.oninput=e=>{const v=parseFloat(e.target.value),isInt=(id==='separation'||id==='liss-density');dv.innerText=isInt?Math.round(v):v.toFixed(2);cb(v);};
 }
 
-document.getElementById('btn-reset-fx').onclick = () => {
+document.getElementById('btn-reset-fx').onclick=()=>{
     Object.entries(FX_DEFAULTS).forEach(([id,val])=>{
         const el=document.getElementById('fx-'+id),dv=document.getElementById('val-'+id);
-        if(!el) return; el.value=val; dv.innerText=val.toFixed(2); fxParams[id]=val;
+        if(!el)return;el.value=val;dv.innerText=val.toFixed(2);fxParams[id]=val;
     });
-    if(volumeNode) volumeNode.gain.value=1; if(bassNode) bassNode.gain.value=0;
-    if(crushNode) crushNode.curve=null; if(dryGain){dryGain.gain.value=1;wetGain.gain.value=0;}
-    audioPlayer.playbackRate=1; audioPlayer.preservesPitch=true;
+    if(volumeNode)volumeNode.gain.value=1;if(bassNode)bassNode.gain.value=0;
+    if(crushNode)crushNode.curve=null;if(dryGain){dryGain.gain.value=1;wetGain.gain.value=0;}
+    audioPlayer.playbackRate=1;audioPlayer.preservesPitch=true;
 };
 
-btnToggleEq.onclick = () => {
-    const open=eqPanel.classList.toggle('open');
-    btnToggleEq.innerHTML=open?'Audio FX &nbsp;▴':'Audio FX &nbsp;▾';
-};
+btnToggleEq.onclick=()=>{const open=eqPanel.classList.toggle('open');btnToggleEq.innerHTML=open?'Audio FX &nbsp;▴':'Audio FX &nbsp;▾';};
 
-// ── Helper: set which visual controls are visible ──
-function setVisualControls(mode) {
-    const isTorus     = mode === 'torus';
-    const isLiss      = mode === 'lissajous';
-    const isBurst     = mode === '2';
-    const isBeatFlash = mode === 'beatflash';
-
-    // sep group (line count)
-    sepGroup.classList.toggle('ctrl-disabled', !isBurst);
-    // liss density
-    lissDensityGroup.classList.toggle('hidden-ctrl', !isLiss);
-    // torus-only controls
-    torusSpacingGroup.classList.toggle('hidden-ctrl', !isTorus);
-    torusColorSpeedGroup.classList.toggle('hidden-ctrl', !isTorus);
-    btnTorusColorToggle.classList.toggle('hidden-ctrl', !isTorus);
-    // thickness — hidden in Beat Flash
-    thicknessGroup.classList.toggle('hidden-ctrl', isBeatFlash);
-    // rotation toggle — hidden in Beat Flash
-    btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash);
-}
-
-document.getElementById('mode-selector').onchange = e => {
-    const newMode = e.target.value;
-
-    if (newMode === 'torus') {
-        let skip = false;
-        try { skip = localStorage.getItem('torus-skip-warning') === '1'; } catch(ex) {}
-        if (skip) {
-            activateTorusMode();
-        } else {
-            showTorusWarning();
-        }
+document.getElementById('mode-selector').onchange=e=>{
+    const newMode=e.target.value;
+    if(newMode==='torus'){
+        let skip=false;try{skip=localStorage.getItem('torus-skip-warning')==='1';}catch(ex){}
+        if(skip){activateTorusMode();}else{showTorusWarning();}
         return;
     }
-
-    state.mode = newMode;
+    state.mode=newMode;
     setVisualControls(newMode);
-
-    if (newMode !== 'torus') torusHistory.length = 0;
-    if (newMode !== 'torus' && newMode !== 'ncs') gpuBadge.classList.remove('visible');
-
-    // Reset beat flash inversion when leaving/entering
-    if (newMode === 'beatflash') {
-        bfInverted   = false;
-        bfBeatCount  = 0;
-        bfBeatPulse  = 0;
-        bfEnergyHist.fill(0);
-        bfEHistIdx = 0;
+    if(newMode!=='torus') torusHistory.length=0;
+    if(newMode!=='torus'&&newMode!=='ncs') gpuBadge.classList.remove('visible');
+    if(newMode==='beatflash'){
+        bfInverted=false; bfBeatCount=0; bfBeatPulse=0; bfInvertFlash=0;
+        bfEnergyHist.fill(0); bfEHistIdx=0;
+        bfParticlePool.length=0;
     }
 };
 
-document.getElementById('color-picker').oninput = e => {
-    state.color=e.target.value;
-    document.documentElement.style.setProperty('--accent',state.color);
-};
-document.getElementById('bg-color-picker').oninput = e => {
-    state.bgColor=e.target.value;
-    document.documentElement.style.setProperty('--bg',state.bgColor);
-    document.body.style.background=state.bgColor;
-};
+document.getElementById('color-picker').oninput=e=>{state.color=e.target.value;document.documentElement.style.setProperty('--accent',state.color);};
+document.getElementById('bg-color-picker').oninput=e=>{state.bgColor=e.target.value;document.documentElement.style.setProperty('--bg',state.bgColor);document.body.style.background=state.bgColor;};
 
-bindSlider('thickness', v=>state.thickness=v);
-bindSlider('glow',      v=>state.glow=v);
+bindSlider('thickness',v=>state.thickness=v);
+bindSlider('glow',v=>state.glow=v);
+bindSlider('liss-density',v=>{
+    const vi=Math.round(v); state.lissOffset=vi; state.lissSpread=0.25+(vi/512)*1.75;
+    document.getElementById('val-liss-density').innerText=vi;
+});
+bindSlider('separation',v=>{state.lineCount=Math.round(v);document.getElementById('val-separation').innerText=Math.round(v);});
+bindSlider('torus-spacing',v=>state.torusSpacing=v);
+bindSlider('torus-color-speed',v=>state.torusColorSpeed=v);
+bindSlider('bf-particles',v=>state.bfParticleIntensity=v);
 
-bindSlider('liss-density', v => {
-    const vi = Math.round(v);
-    state.lissOffset = vi;
-    state.lissSpread = 0.25 + (vi / 512) * 1.75;
-    document.getElementById('val-liss-density').innerText = vi;
+btnTorusColorToggle.addEventListener('click',()=>{
+    state.torusColorEnabled=!state.torusColorEnabled;
+    btnTorusColorToggle.textContent='Toggle: Torus Color Change '+(state.torusColorEnabled?'✓':'✗');
+    btnTorusColorToggle.className='btn btn-square '+(state.torusColorEnabled?'btn-toggle-on':'btn-toggle-off');
+});
+btnRotationToggle.addEventListener('click',()=>{
+    state.rotationEnabled=!state.rotationEnabled;
+    btnRotationToggle.textContent='Toggle: Rotation '+(state.rotationEnabled?'✓':'✗');
+    btnRotationToggle.className='btn btn-square '+(state.rotationEnabled?'btn-toggle-on':'btn-toggle-off');
 });
 
-bindSlider('separation', v => {
-    state.lineCount = Math.round(v);
-    document.getElementById('val-separation').innerText = Math.round(v);
-});
+bindSlider('volume',v=>{fxParams.volume=v;if(volumeNode)volumeNode.gain.value=v;});
+bindSlider('bass',v=>{fxParams.bass=v;if(bassNode)bassNode.gain.value=(v-1)*15;});
+bindSlider('crush',v=>{fxParams.crush=v;if(crushNode)crushNode.curve=makeCrushCurve(v-1);});
+bindSlider('reverb',v=>{fxParams.reverb=v;if(dryGain&&wetGain){const w=(v-0.1)/4.9;wetGain.gain.value=w;dryGain.gain.value=1-w*0.5;}});
+bindSlider('speed',v=>{fxParams.speed=v;if(inputMode==='file'){audioPlayer.preservesPitch=true;audioPlayer.playbackRate=v;}});
 
-bindSlider('torus-spacing', v => {
-    state.torusSpacing = v;
-});
-
-bindSlider('torus-color-speed', v => {
-    state.torusColorSpeed = v;
-});
-
-btnTorusColorToggle.addEventListener('click', () => {
-    state.torusColorEnabled = !state.torusColorEnabled;
-    btnTorusColorToggle.textContent = 'Toggle: Torus Color Change ' + (state.torusColorEnabled ? '✓' : '✗');
-    btnTorusColorToggle.className = 'btn btn-square torus-only ' +
-        (state.torusColorEnabled ? 'btn-toggle-on' : 'btn-toggle-off');
-});
-
-btnRotationToggle.addEventListener('click', () => {
-    state.rotationEnabled = !state.rotationEnabled;
-    btnRotationToggle.textContent = 'Toggle: Rotation ' + (state.rotationEnabled ? '✓' : '✗');
-    btnRotationToggle.className = 'btn btn-square ' +
-        (state.rotationEnabled ? 'btn-toggle-on' : 'btn-toggle-off');
-});
-
-bindSlider('volume', v => { fxParams.volume=v; if(volumeNode) volumeNode.gain.value=v; });
-bindSlider('bass',   v => { fxParams.bass=v;   if(bassNode) bassNode.gain.value=(v-1)*15; });
-bindSlider('crush',  v => { fxParams.crush=v;  if(crushNode) crushNode.curve=makeCrushCurve(v-1); });
-bindSlider('reverb', v => {
-    fxParams.reverb=v;
-    if(dryGain&&wetGain){const w=(v-0.1)/4.9;wetGain.gain.value=w;dryGain.gain.value=1-w*0.5;}
-});
-bindSlider('speed', v => {
-    fxParams.speed=v;
-    if(inputMode==='file'){audioPlayer.preservesPitch=true;audioPlayer.playbackRate=v;}
-});
-
-document.getElementById('audio-upload').onchange = function(e) {
+document.getElementById('audio-upload').onchange=function(e){
     if(captureStream) stopCapture();
     initFileSource(); if(audioCtx.state==='suspended') audioCtx.resume();
     const file=e.target.files[0];
@@ -1280,86 +950,68 @@ document.getElementById('audio-upload').onchange = function(e) {
     if(!animationId) draw();
 };
 
-playBtn.onclick = () => {
+playBtn.onclick=()=>{
     if(inputMode==='capture') return;
     if(audioCtx?.state==='suspended') audioCtx.resume();
-    audioPlayer.paused ? audioPlayer.play() : audioPlayer.pause();
-    playBtn.textContent = audioPlayer.paused ? '▶' : '⏸';
+    audioPlayer.paused?audioPlayer.play():audioPlayer.pause();
+    playBtn.textContent=audioPlayer.paused?'▶':'⏸';
 };
-restartBtn.onclick = () => {
+restartBtn.onclick=()=>{
     if(inputMode==='capture') return;
     audioPlayer.currentTime=0;
     if(audioPlayer.paused){audioPlayer.play();playBtn.textContent='⏸';}
 };
-function formatTime(s){ if(!isFinite(s)) return '0:00'; return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
-function setProgress(p){ progressFill.style.width=p*100+'%'; progressThumb.style.left=p*100+'%'; }
-audioPlayer.ontimeupdate = () => {
+function formatTime(s){if(!isFinite(s))return'0:00';return`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
+function setProgress(p){progressFill.style.width=p*100+'%';progressThumb.style.left=p*100+'%';}
+audioPlayer.ontimeupdate=()=>{
     if(inputMode==='capture'||isScrubbing||isNaN(audioPlayer.duration)) return;
     setProgress(audioPlayer.currentTime/audioPlayer.duration);
     timeDisplay.textContent=`${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`;
 };
-audioPlayer.onended = ()=>{playBtn.textContent='▶';};
+audioPlayer.onended=()=>{playBtn.textContent='▶';};
 progressWrap.addEventListener('mousedown',e=>{if(inputMode==='capture')return;isScrubbing=true;scrubTo(e);});
 window.addEventListener('mousemove',e=>{if(isScrubbing)scrubTo(e);});
 window.addEventListener('mouseup',()=>{isScrubbing=false;});
 function scrubTo(e){
-    const r=progressWrap.getBoundingClientRect(), p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+    const r=progressWrap.getBoundingClientRect(),p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
     setProgress(p);
-    if(!isNaN(audioPlayer.duration)){ audioPlayer.currentTime=p*audioPlayer.duration; timeDisplay.textContent=`${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`; }
+    if(!isNaN(audioPlayer.duration)){audioPlayer.currentTime=p*audioPlayer.duration;timeDisplay.textContent=`${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`;}
 }
 
 document.getElementById('btn-fullscreen').addEventListener('click',()=>{
-    document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(()=>{});
+    document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});
 });
-document.addEventListener('fullscreenchange',()=>{
-    document.getElementById('btn-fullscreen').textContent=document.fullscreenElement?'✕':'⛶';
-});
+document.addEventListener('fullscreenchange',()=>{document.getElementById('btn-fullscreen').textContent=document.fullscreenElement?'✕':'⛶';});
 
 let guiVisible=true;
-hamburger.onclick=()=>{
-    guiVisible=!guiVisible;
-    controls.classList.toggle('hidden',!guiVisible);
-    transport.classList.toggle('hidden',!guiVisible);
-};
+hamburger.onclick=()=>{guiVisible=!guiVisible;controls.classList.toggle('hidden',!guiVisible);transport.classList.toggle('hidden',!guiVisible);};
 
 function makeDraggable(panel,handle){
     let sx,sy,ox,oy,drag=false;
-    handle.addEventListener('mousedown',e=>{
-        if(e.button) return; drag=true; sx=e.clientX; sy=e.clientY;
-        const r=panel.getBoundingClientRect(); ox=r.left; oy=r.top;
-        panel.style.transition='none'; e.preventDefault();
-    });
-    window.addEventListener('mousemove',e=>{ if(!drag) return; panel.style.left=Math.max(0,ox+e.clientX-sx)+'px'; panel.style.top=Math.max(0,oy+e.clientY-sy)+'px'; });
+    handle.addEventListener('mousedown',e=>{if(e.button)return;drag=true;sx=e.clientX;sy=e.clientY;const r=panel.getBoundingClientRect();ox=r.left;oy=r.top;panel.style.transition='none';e.preventDefault();});
+    window.addEventListener('mousemove',e=>{if(!drag)return;panel.style.left=Math.max(0,ox+e.clientX-sx)+'px';panel.style.top=Math.max(0,oy+e.clientY-sy)+'px';});
     window.addEventListener('mouseup',()=>{if(!drag)return;drag=false;panel.style.transition='';});
 }
-makeDraggable(controls, document.getElementById('controls-handle'));
+makeDraggable(controls,document.getElementById('controls-handle'));
 makeDraggable(transport,document.getElementById('transport-handle'));
 makeDraggable(hamburger,hamburger);
 
-// ── Torus camera drag ──
-mainCanvas.addEventListener('mousedown', e => {
-    if (state.mode !== 'torus') return;
-    torusDragging = true;
-    torusDragLastX = e.clientX;
-    torusDragLastY = e.clientY;
-    mainCanvas.style.cursor = 'grabbing';
+// Torus camera drag
+mainCanvas.addEventListener('mousedown',e=>{
+    if(state.mode!=='torus')return;
+    torusDragging=true;torusDragLastX=e.clientX;torusDragLastY=e.clientY;mainCanvas.style.cursor='grabbing';
 });
-window.addEventListener('mousemove', e => {
-    if (!torusDragging) return;
-    const dx = e.clientX - torusDragLastX;
-    const dy = e.clientY - torusDragLastY;
-    torusCamRotY += dx * 0.009;
-    torusCamRotX += dy * 0.009;
-    torusCamRotX = Math.max(0.08, Math.min(Math.PI - 0.08, torusCamRotX));
-    torusDragLastX = e.clientX;
-    torusDragLastY = e.clientY;
+window.addEventListener('mousemove',e=>{
+    if(!torusDragging)return;
+    const dx=e.clientX-torusDragLastX,dy=e.clientY-torusDragLastY;
+    torusCamRotY+=dx*0.009;torusCamRotX+=dy*0.009;
+    torusCamRotX=Math.max(0.08,Math.min(Math.PI-0.08,torusCamRotX));
+    torusDragLastX=e.clientX;torusDragLastY=e.clientY;
 });
-window.addEventListener('mouseup', () => {
-    if (torusDragging) { torusDragging = false; mainCanvas.style.cursor = ''; }
-});
-mainCanvas.addEventListener('mousemove', () => {
-    if (state.mode === 'torus' && !torusDragging) mainCanvas.style.cursor = 'grab';
-    else if (state.mode !== 'torus') mainCanvas.style.cursor = '';
+window.addEventListener('mouseup',()=>{if(torusDragging){torusDragging=false;mainCanvas.style.cursor='';}});
+mainCanvas.addEventListener('mousemove',()=>{
+    if(state.mode==='torus'&&!torusDragging)mainCanvas.style.cursor='grab';
+    else if(state.mode!=='torus')mainCanvas.style.cursor='';
 });
 
 // Welcome
@@ -1373,9 +1025,9 @@ let wt=0;
 function drawWelcome(){
     welcomeAnimId=requestAnimationFrame(drawWelcome);
     const w=welcomeCanvas.width,h=welcomeCanvas.height;
-    welcomeCtx.fillStyle='rgba(5,5,5,0.16)'; welcomeCtx.fillRect(0,0,w,h);
-    welcomeCtx.beginPath(); welcomeCtx.strokeStyle='#ffffff'; welcomeCtx.lineWidth=1.2;
-    welcomeCtx.shadowBlur=22; welcomeCtx.shadowColor='#ffffff';
+    welcomeCtx.fillStyle='rgba(5,5,5,0.16)';welcomeCtx.fillRect(0,0,w,h);
+    welcomeCtx.beginPath();welcomeCtx.strokeStyle='#ffffff';welcomeCtx.lineWidth=1.2;
+    welcomeCtx.shadowBlur=22;welcomeCtx.shadowColor='#ffffff';
     const pts=2400;
     for(let i=0;i<pts;i++){
         const a=(i/pts)*Math.PI*2;
@@ -1383,161 +1035,84 @@ function drawWelcome(){
         const y=h/2+h*0.38*Math.sin(2*a+wt*0.22);
         i===0?welcomeCtx.moveTo(x,y):welcomeCtx.lineTo(x,y);
     }
-    welcomeCtx.stroke(); welcomeCtx.shadowBlur=0; wt+=0.011;
+    welcomeCtx.stroke();welcomeCtx.shadowBlur=0;wt+=0.011;
 }
 drawWelcome();
 
 function enterApp(){
     document.documentElement.requestFullscreen().catch(()=>{});
     welcome.classList.add('fade-out');
-    welcome.addEventListener('transitionend',()=>{ welcome.style.display='none'; cancelAnimationFrame(welcomeAnimId); },{once:true});
+    welcome.addEventListener('transitionend',()=>{welcome.style.display='none';cancelAnimationFrame(welcomeAnimId);},{once:true});
     initWebGPU();
     if(!animationId) draw();
 }
 document.getElementById('welcome-enter').addEventListener('click',e=>{e.stopPropagation();enterApp();});
 welcome.addEventListener('click',enterApp);
 
+// Apply initial control visibility
+setVisualControls(state.mode);
+
 // ══ MAIN DRAW ══
-let drawPhase = 0;
+let drawPhase=0;
 
-function quantizeData(data, crushAmt) {
-    if (crushAmt <= 1.05) return data;
-    const steps = Math.max(2, Math.round(256 / (crushAmt * crushAmt * 4)));
-    const out = new Uint8Array(data.length);
-    for (let i=0; i<data.length; i++) {
-        out[i] = Math.round(data[i] / (256/steps)) * (256/steps);
-    }
+function quantizeData(data,crushAmt){
+    if(crushAmt<=1.05) return data;
+    const steps=Math.max(2,Math.round(256/(crushAmt*crushAmt*4)));
+    const out=new Uint8Array(data.length);
+    for(let i=0;i<data.length;i++) out[i]=Math.round(data[i]/(256/steps))*(256/steps);
     return out;
 }
+function getAvgVolume(freqData){let s=0;for(let i=0;i<freqData.length;i++)s+=freqData[i];return s/freqData.length/255;}
+function getBassEnergy(freqData){const end=Math.floor(freqData.length*0.08);let s=0;for(let i=0;i<end;i++)s+=freqData[i];return s/end/255;}
+function toF32(u8arr){const out=new Float32Array(1024);const len=Math.min(u8arr.length,1024);for(let i=0;i<len;i++)out[i]=u8arr[i]/255;return out;}
 
-function getAvgVolume(freqData) {
-    let sum = 0;
-    for (let i = 0; i < freqData.length; i++) sum += freqData[i];
-    return sum / freqData.length / 255;
-}
-
-function getBassEnergy(freqData) {
-    const end = Math.floor(freqData.length * 0.08);
-    let sum = 0;
-    for (let i = 0; i < end; i++) sum += freqData[i];
-    return sum / end / 255;
-}
-
-function toF32(u8arr) {
-    const out = new Float32Array(1024);
-    const len = Math.min(u8arr.length, 1024);
-    for (let i = 0; i < len; i++) out[i] = u8arr[i] / 255;
-    return out;
-}
-
-function drawTorusGPU(vFreq, vTime, w, h) {
+function drawTorusGPU(vFreq,vTime,w,h){
     ensureGPUPipeline();
-    if (!gpuPipeline) return false;
-
-    const bg = hexToRgb(state.bgColor);
-    const trailAlpha = 0.12;
-    mainCtx.fillStyle = `rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
-    mainCtx.fillRect(0, 0, w, h);
-
-    const freqF32 = toF32(vFreq);
-    gpuDevice.queue.writeBuffer(gpuFreqBuf, 0, freqF32);
-    const timeF32 = toF32(vTime);
-    gpuDevice.queue.writeBuffer(gpuTimeBuf, 0, timeF32);
-
-    const col = hexToRgb(state.color);
-    const uniforms = new Float32Array(16);
-    uniforms[0]  = drawPhase;
-    uniforms[1]  = fxParams.bass;
-    uniforms[2]  = fxParams.volume;
-    uniforms[3]  = fxParams.reverb;
-    uniforms[4]  = state.thickness;
-    uniforms[5]  = state.glow;
-    uniforms[6]  = state.torusSpacing;
-    uniforms[7]  = torusCamRotX;
-    uniforms[8]  = torusCamRotY + drawPhase * 0.09 * fxParams.speed;
-    uniforms[9]  = w;
-    uniforms[10] = h;
-    uniforms[11] = fxParams.crush;
-    uniforms[12] = state.torusColorEnabled ? state.torusColorSpeed : 0;
-    uniforms[13] = col.r / 255;
-    uniforms[14] = col.g / 255;
-    uniforms[15] = col.b / 255;
-    gpuDevice.queue.writeBuffer(gpuUniformBuf, 0, uniforms);
-
-    try {
-        const cmdEncoder = gpuDevice.createCommandEncoder();
-        const tex = gpuContext.getCurrentTexture();
-        const pass = cmdEncoder.beginRenderPass({
-            colorAttachments: [{
-                view: tex.createView(),
-                clearValue: { r: bg.r/255, g: bg.g/255, b: bg.b/255, a: 1 },
-                loadOp: 'clear',
-                storeOp: 'store'
-            }]
-        });
-        pass.setPipeline(gpuPipeline);
-        pass.setBindGroup(0, gpuBindGroup);
-        pass.draw(6);
-        pass.end();
-        gpuDevice.queue.submit([cmdEncoder.finish()]);
-    } catch(e) {
-        console.warn('WebGPU draw failed, falling back:', e);
-        gpuPipeline = null; gpuSpherePipeline = null;
-        gpuReady = false;
-        return false;
-    }
+    if(!gpuPipeline) return false;
+    const bg=hexToRgb(state.bgColor);
+    mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},0.12)`;mainCtx.fillRect(0,0,w,h);
+    gpuDevice.queue.writeBuffer(gpuFreqBuf,0,toF32(vFreq));
+    gpuDevice.queue.writeBuffer(gpuTimeBuf,0,toF32(vTime));
+    const col=hexToRgb(state.color);
+    const u=new Float32Array(16);
+    u[0]=drawPhase;u[1]=fxParams.bass;u[2]=fxParams.volume;u[3]=fxParams.reverb;
+    u[4]=state.thickness;u[5]=state.glow;u[6]=state.torusSpacing;u[7]=torusCamRotX;
+    u[8]=torusCamRotY+drawPhase*0.09*fxParams.speed;u[9]=w;u[10]=h;u[11]=fxParams.crush;
+    u[12]=state.torusColorEnabled?state.torusColorSpeed:0;
+    u[13]=col.r/255;u[14]=col.g/255;u[15]=col.b/255;
+    gpuDevice.queue.writeBuffer(gpuUniformBuf,0,u);
+    try{
+        const cmd=gpuDevice.createCommandEncoder();
+        const pass=cmd.beginRenderPass({colorAttachments:[{
+            view:gpuContext.getCurrentTexture().createView(),
+            clearValue:{r:bg.r/255,g:bg.g/255,b:bg.b/255,a:1},loadOp:'clear',storeOp:'store'
+        }]});
+        pass.setPipeline(gpuPipeline);pass.setBindGroup(0,gpuBindGroup);pass.draw(6);pass.end();
+        gpuDevice.queue.submit([cmd.finish()]);
+    }catch(e){console.warn('WebGPU draw failed:',e);gpuPipeline=null;gpuReady=false;return false;}
     return true;
 }
 
-function drawSphereGPU(vFreq, w, h) {
+function drawSphereGPU(vFreq,w,h){
     ensureGPUSpherePipeline();
-    if (!gpuSpherePipeline) return false;
-
-    const freqF32 = toF32(vFreq);
-    gpuDevice.queue.writeBuffer(gpuSphereFreqBuf, 0, freqF32);
-
-    const bassE = getBassEnergy(vFreq);
-    const baseR = Math.min(w, h) * 0.36;
-    const R = baseR * (1 + bassE * 0.13 * fxParams.bass);
-
-    const uniforms = new Float32Array(12);
-    uniforms[0]  = drawPhase;
-    uniforms[1]  = fxParams.bass;
-    uniforms[2]  = fxParams.volume;
-    uniforms[3]  = fxParams.reverb;
-    uniforms[4]  = state.thickness;
-    uniforms[5]  = state.glow;
-    uniforms[6]  = w / 2;
-    uniforms[7]  = h / 2;
-    uniforms[8]  = R;
-    uniforms[9]  = w;
-    uniforms[10] = h;
-    uniforms[11] = 0;
-    gpuDevice.queue.writeBuffer(gpuSphereUniformBuf, 0, uniforms);
-
-    const bg = hexToRgb(state.bgColor);
-    try {
-        const cmdEncoder = gpuDevice.createCommandEncoder();
-        const tex = gpuContext.getCurrentTexture();
-        const pass = cmdEncoder.beginRenderPass({
-            colorAttachments: [{
-                view: tex.createView(),
-                clearValue: { r: bg.r/255, g: bg.g/255, b: bg.b/255, a: 1 },
-                loadOp: 'clear',
-                storeOp: 'store'
-            }]
-        });
-        pass.setPipeline(gpuSpherePipeline);
-        pass.setBindGroup(0, gpuSphereBindGroup);
-        pass.draw(6);
-        pass.end();
-        gpuDevice.queue.submit([cmdEncoder.finish()]);
-    } catch(e) {
-        console.warn('WebGPU sphere draw failed:', e);
-        gpuSpherePipeline = null;
-        gpuReady = false;
-        return false;
-    }
+    if(!gpuSpherePipeline) return false;
+    gpuDevice.queue.writeBuffer(gpuSphereFreqBuf,0,toF32(vFreq));
+    const bassE=getBassEnergy(vFreq),baseR=Math.min(w,h)*0.36;
+    const R=baseR*(1+bassE*0.13*fxParams.bass);
+    const u=new Float32Array(12);
+    u[0]=drawPhase;u[1]=fxParams.bass;u[2]=fxParams.volume;u[3]=fxParams.reverb;
+    u[4]=state.thickness;u[5]=state.glow;u[6]=w/2;u[7]=h/2;u[8]=R;u[9]=w;u[10]=h;u[11]=0;
+    gpuDevice.queue.writeBuffer(gpuSphereUniformBuf,0,u);
+    const bg=hexToRgb(state.bgColor);
+    try{
+        const cmd=gpuDevice.createCommandEncoder();
+        const pass=cmd.beginRenderPass({colorAttachments:[{
+            view:gpuContext.getCurrentTexture().createView(),
+            clearValue:{r:bg.r/255,g:bg.g/255,b:bg.b/255,a:1},loadOp:'clear',storeOp:'store'
+        }]});
+        pass.setPipeline(gpuSpherePipeline);pass.setBindGroup(0,gpuSphereBindGroup);pass.draw(6);pass.end();
+        gpuDevice.queue.submit([cmd.finish()]);
+    }catch(e){console.warn('WebGPU sphere failed:',e);gpuSpherePipeline=null;gpuReady=false;return false;}
     return true;
 }
 
@@ -1545,591 +1120,440 @@ function draw(){
     animationId=requestAnimationFrame(draw);
     updateFps();
     if(!analyser) return;
-
-    if (state.rotationEnabled) drawPhase += 0.012 * fxParams.speed;
+    if(state.rotationEnabled) drawPhase+=0.012*fxParams.speed;
 
     const bufLen=analyser.frequencyBinCount;
-    const dataFreq=new Uint8Array(bufLen), dataTime=new Uint8Array(bufLen);
+    const dataFreq=new Uint8Array(bufLen),dataTime=new Uint8Array(bufLen);
     analyser.getByteFrequencyData(dataFreq); analyser.getByteTimeDomainData(dataTime);
     const preBufLen=preAnalyser?preAnalyser.frequencyBinCount:bufLen;
     const rawTime=new Uint8Array(preBufLen);
     if(preAnalyser) preAnalyser.getByteTimeDomainData(rawTime);
 
-    const vTime = quantizeData(dataTime, fxParams.crush);
-    const vFreq = quantizeData(dataFreq, fxParams.crush);
-    const vRaw  = quantizeData(rawTime,  fxParams.crush);
+    const vTime=quantizeData(dataTime,fxParams.crush);
+    const vFreq=quantizeData(dataFreq,fxParams.crush);
+    const vRaw =quantizeData(rawTime, fxParams.crush);
+    const w=mainCanvas.width,h=mainCanvas.height;
 
-    const w=mainCanvas.width, h=mainCanvas.height;
-
-    // ── Torus: try WebGPU first ──
-    if (state.mode === 'torus') {
-        if (gpuReady) {
-            const ok = drawTorusGPU(vFreq, vTime, w, h);
-            if (ok) { gpuBadge.classList.add('visible'); return; }
-        }
+    if(state.mode==='torus'){
+        if(gpuReady){const ok=drawTorusGPU(vFreq,vTime,w,h);if(ok){gpuBadge.classList.add('visible');return;}}
+        gpuBadge.classList.remove('visible');
+    }
+    if(state.mode==='ncs'){
+        if(gpuReady){const ok=drawSphereGPU(vFreq,w,h);if(ok){gpuBadge.classList.add('visible');return;}}
         gpuBadge.classList.remove('visible');
     }
 
-    // Particle Sphere: try WebGPU first
-    if (state.mode === 'ncs') {
-        if (gpuReady) {
-            const ok = drawSphereGPU(vFreq, w, h);
-            if (ok) { gpuBadge.classList.add('visible'); return; }
-        }
-        gpuBadge.classList.remove('visible');
-    }
-
-    // CPU 2D canvas render
-    const bg = hexToRgb(state.bgColor);
-    const trailAlpha = state.mode === 'beatflash'
-        ? 1.0  // Beat Flash uses solid fill for hard inversion
-        : 0.08 + (1 - Math.min((fxParams.reverb-0.1)/4.9, 1)) * 0.32;
+    const bg=hexToRgb(state.bgColor);
+    const trailAlpha=state.mode==='beatflash'?1.0:0.08+(1-Math.min((fxParams.reverb-0.1)/4.9,1))*0.32;
     mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
     mainCtx.fillRect(0,0,w,h);
 
-    const reverbGlow  = 1 + (fxParams.reverb - 0.1) * 0.4;
-    const crushJitter = Math.max(0, (fxParams.crush - 1) * 2);
-    const speedOsc    = drawPhase;
-    const volScaleWave = fxParams.volume;
-    const bassWarp     = 1 + (fxParams.bass - 1) * 0.6;
+    const reverbGlow=1+(fxParams.reverb-0.1)*0.4;
+    const crushJitter=Math.max(0,(fxParams.crush-1)*2);
+    const speedOsc=drawPhase;
+    const volScaleWave=fxParams.volume;
+    const bassWarp=1+(fxParams.bass-1)*0.6;
 
-    mainCtx.shadowBlur  = (10 + reverbGlow * 8) * state.glow;
-    mainCtx.shadowColor = state.color;
-    mainCtx.strokeStyle = state.color;
-    mainCtx.fillStyle   = state.color;
-    mainCtx.lineWidth   = 3 * state.thickness;
-    mainCtx.lineCap='round'; mainCtx.lineJoin='round';
+    mainCtx.shadowBlur=(10+reverbGlow*8)*state.glow;
+    mainCtx.shadowColor=state.color;
+    mainCtx.strokeStyle=state.color;
+    mainCtx.fillStyle=state.color;
+    mainCtx.lineWidth=3*state.thickness;
+    mainCtx.lineCap='round';mainCtx.lineJoin='round';
     mainCtx.beginPath();
 
-    function jitter(v) {
-        if (crushJitter === 0) return v;
-        return v + (Math.random() - 0.5) * crushJitter * 12;
-    }
-    function bassY(n) {
-        return n < 0 ? n * bassWarp * (1 + Math.abs(n) * 0.5) : n * bassWarp;
-    }
+    function jitter(v){if(crushJitter===0)return v;return v+(Math.random()-0.5)*crushJitter*12;}
+    function bassY(n){return n<0?n*bassWarp*(1+Math.abs(n)*0.5):n*bassWarp;}
 
-    // Lissajous / XY
     if(state.mode==='lissajous'){
-        const lissLen=Math.min(vRaw.length,1024), offset=Math.min(state.lissOffset,lissLen-1);
-        const scl = volScaleWave * 0.5 * state.lissSpread;
-        const cosR = Math.cos(speedOsc * 0.05), sinR = Math.sin(speedOsc * 0.05);
+        const lissLen=Math.min(vRaw.length,1024),offset=Math.min(state.lissOffset,lissLen-1);
+        const scl=volScaleWave*0.5*state.lissSpread;
+        const cosR=Math.cos(speedOsc*0.05),sinR=Math.sin(speedOsc*0.05);
         for(let i=0;i<lissLen;i++){
-            const nx=(vRaw[i]-128)/128;
-            const ny=(vRaw[(i+offset)%lissLen]-128)/128;
-            const rx=nx * scl, ry=bassY(ny) * scl;
-            const px = w/2 + jitter(rx*cosR - ry*sinR) * w/2;
-            const py = h/2 + jitter(rx*sinR + ry*cosR) * h/2;
+            const nx=(vRaw[i]-128)/128,ny=(vRaw[(i+offset)%lissLen]-128)/128;
+            const rx=nx*scl,ry=bassY(ny)*scl;
+            const px=w/2+jitter(rx*cosR-ry*sinR)*w/2;
+            const py=h/2+jitter(rx*sinR+ry*cosR)*h/2;
             i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
         }
         mainCtx.stroke();
 
-    // Chaotic Waveform
-    } else if(state.mode==='0'){
-        const slice=w/bufLen; let x=0;
+    }else if(state.mode==='0'){
+        const slice=w/bufLen;let x=0;
         for(let i=0;i<bufLen;i++){
-            const nx=(vTime[i]/255)-0.5;
-            const drift=Math.sin(speedOsc*0.7+i*0.04)*0.04;
+            const nx=(vTime[i]/255)-0.5,drift=Math.sin(speedOsc*0.7+i*0.04)*0.04;
             const finalY=h/2+jitter(bassY(nx+drift)*h*volScaleWave);
             i===0?mainCtx.moveTo(jitter(x),finalY):mainCtx.lineTo(jitter(x),finalY);
             x+=slice;
         }
         mainCtx.stroke();
 
-    // Frequency Circles
-    } else if(state.mode==='1'){
-        const baseR=(w/bufLen)*3*state.thickness; let x=0;
+    }else if(state.mode==='1'){
+        const baseR=(w/bufLen)*3*state.thickness;let x=0;
         for(let i=0;i<bufLen;i+=2){
-            const v=vFreq[i]/255;
-            const r = baseR + v*40*state.thickness;
+            const v=vFreq[i]/255,r=baseR+v*40*state.thickness;
             const yDrift=Math.sin(speedOsc*0.4+i*0.02)*20*fxParams.speed;
             const y=h-v*h*0.7-50+yDrift;
-            mainCtx.beginPath();
-            mainCtx.arc(jitter(x),jitter(y),Math.max(0.5,r/2),0,Math.PI*2);
-            mainCtx.fill();
-            x+=baseR*2+5; if(x>w) break;
+            mainCtx.beginPath();mainCtx.arc(jitter(x),jitter(y),Math.max(0.5,r/2),0,Math.PI*2);mainCtx.fill();
+            x+=baseR*2+5;if(x>w)break;
         }
 
-    // Circular Burst
-    } else if(state.mode==='2'){
-        const radius = Math.min(w,h)*0.25;
-        const step=Math.max(1,Math.round(bufLen/state.lineCount));
-        const cx=w/2, cy=h/2;
+    }else if(state.mode==='2'){
+        const radius=Math.min(w,h)*0.25,step=Math.max(1,Math.round(bufLen/state.lineCount));
+        const cx=w/2,cy=h/2;
         for(let i=0;i<bufLen;i+=step){
-            const barH=vFreq[i]*0.8*state.thickness;
-            const rads=Math.PI*2*(i/bufLen)+speedOsc*0.08;
-            const cosA=Math.cos(rads), sinA=Math.sin(rads);
-            const x1=cx+cosA*radius, y1=cy+sinA*radius;
-            const x2=cx+cosA*(radius+barH), y2=cy+sinA*(radius+barH);
-            mainCtx.moveTo(jitter(x1),jitter(y1));
-            mainCtx.lineTo(jitter(x2),jitter(y2));
+            const barH=vFreq[i]*0.8*state.thickness,rads=Math.PI*2*(i/bufLen)+speedOsc*0.08;
+            const cosA=Math.cos(rads),sinA=Math.sin(rads);
+            const x1=cx+cosA*radius,y1=cy+sinA*radius;
+            const x2=cx+cosA*(radius+barH),y2=cy+sinA*(radius+barH);
+            mainCtx.moveTo(jitter(x1),jitter(y1));mainCtx.lineTo(jitter(x2),jitter(y2));
         }
         mainCtx.stroke();
 
-    // Symmetrical Wave
-    } else if(state.mode==='3'){
-        const slice=w/bufLen; let x=0;
+    }else if(state.mode==='3'){
+        const slice=w/bufLen;let x=0;
         for(let i=0;i<bufLen;i++){
-            const nx=(vTime[i]-128)/128, nx2=(vTime[(i+1)%bufLen]-128)/128;
+            const nx=(vTime[i]-128)/128,nx2=(vTime[(i+1)%bufLen]-128)/128;
             const phase=Math.sin(speedOsc*0.5+i*0.02)*0.05*fxParams.speed;
-            const off =bassY((nx +phase)*volScaleWave)*(h/2)*state.thickness;
+            const off=bassY((nx+phase)*volScaleWave)*(h/2)*state.thickness;
             const offN=bassY((nx2+phase)*volScaleWave)*(h/2)*state.thickness;
-            mainCtx.moveTo(jitter(x),      jitter(h/2-off));
-            mainCtx.lineTo(jitter(x+slice),jitter(h/2-offN));
-            mainCtx.moveTo(jitter(x),      jitter(h/2+off));
-            mainCtx.lineTo(jitter(x+slice),jitter(h/2+offN));
+            mainCtx.moveTo(jitter(x),jitter(h/2-off));mainCtx.lineTo(jitter(x+slice),jitter(h/2-offN));
+            mainCtx.moveTo(jitter(x),jitter(h/2+off));mainCtx.lineTo(jitter(x+slice),jitter(h/2+offN));
             x+=slice;
         }
         mainCtx.stroke();
 
-    // Particle Sphere (CPU fallback)
-    } else if(state.mode==='ncs'){
-        const col = hexToRgb(state.color);
-        const cx = w/2, cy = h/2;
-        const bassE = getBassEnergy(vFreq);
-        const avgV  = getAvgVolume(vFreq);
-
-        const baseR = Math.min(w,h) * 0.36;
-        const R = baseR * (1 + bassE * 0.13 * fxParams.bass);
-        const rotAngle = drawPhase * 0.28;
-
-        const tiltAngle = 0.32;
-        const cosTilt = Math.cos(tiltAngle);
-        const sinTilt = Math.sin(tiltAngle);
-
-        const latLines = 26;
-        const lonLines = 52;
-
-        for(let lat = 0; lat <= latLines; lat++){
-            const phi = (lat / latLines) * Math.PI;
-            const sinPhi = Math.sin(phi);
-            const cosPhi = Math.cos(phi);
-
-            for(let lon = 0; lon <= lonLines; lon++){
-                const theta = (lon / lonLines) * Math.PI * 2 + rotAngle;
-
-                const binI = Math.min(Math.floor((lon / lonLines) * bufLen * 0.65), bufLen - 1);
-                const freq = vFreq[binI] / 255;
-
-                const deformAmt = 1 + freq * 0.32 * fxParams.bass;
-                const deformR = R * deformAmt;
-
-                const sx = sinPhi * Math.cos(theta);
-                const sy_raw = sinPhi * Math.sin(theta);
-                const sz_raw = cosPhi;
-
-                const sy = sy_raw * cosTilt - sz_raw * sinTilt;
-                const sz = sy_raw * sinTilt + sz_raw * cosTilt;
-
-                const fov = 2.6;
-                const persp = fov / (fov + sz * 0.9);
-
-                const px = cx + sx * deformR * persp;
-                const py = cy + sy * deformR * persp * 0.88;
-
-                const depth = (sz + 1.4) / 2.8;
-                const alpha = Math.max(0, (0.05 + depth * 0.55) * (0.12 + freq * 0.88));
-                const dotR  = Math.max(0.3, (0.65 + freq * 2.2) * state.thickness * persp * 0.75);
-
-                if(alpha < 0.015) continue;
-
-                mainCtx.shadowBlur = (freq > 0.5 ? freq * 10 * state.glow : 0);
-                mainCtx.shadowColor = state.color;
-                mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
-                mainCtx.beginPath();
-                mainCtx.arc(px, py, dotR, 0, Math.PI * 2);
-                mainCtx.fill();
+    }else if(state.mode==='ncs'){
+        const col=hexToRgb(state.color),cx=w/2,cy=h/2;
+        const bassE=getBassEnergy(vFreq),avgV=getAvgVolume(vFreq);
+        const baseR=Math.min(w,h)*0.36,R=baseR*(1+bassE*0.13*fxParams.bass);
+        const rotAngle=drawPhase*0.28,tiltAngle=0.32;
+        const cosTilt=Math.cos(tiltAngle),sinTilt=Math.sin(tiltAngle);
+        const latLines=26,lonLines=52;
+        for(let lat=0;lat<=latLines;lat++){
+            const phi=(lat/latLines)*Math.PI,sinPhi=Math.sin(phi),cosPhi=Math.cos(phi);
+            for(let lon=0;lon<=lonLines;lon++){
+                const theta=(lon/lonLines)*Math.PI*2+rotAngle;
+                const binI=Math.min(Math.floor((lon/lonLines)*bufLen*0.65),bufLen-1);
+                const freq=vFreq[binI]/255,deformR=R*(1+freq*0.32*fxParams.bass);
+                const sx=sinPhi*Math.cos(theta),sy_raw=sinPhi*Math.sin(theta),sz_raw=cosPhi;
+                const sy=sy_raw*cosTilt-sz_raw*sinTilt,sz=sy_raw*sinTilt+sz_raw*cosTilt;
+                const fov=2.6,persp=fov/(fov+sz*0.9);
+                const px=cx+sx*deformR*persp,py=cy+sy*deformR*persp*0.88;
+                const depth=(sz+1.4)/2.8,alpha=Math.max(0,(0.05+depth*0.55)*(0.12+freq*0.88));
+                const dotR=Math.max(0.3,(0.65+freq*2.2)*state.thickness*persp*0.75);
+                if(alpha<0.015) continue;
+                mainCtx.shadowBlur=freq>0.5?freq*10*state.glow:0;
+                mainCtx.shadowColor=state.color;
+                mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${alpha})`;
+                mainCtx.beginPath();mainCtx.arc(px,py,dotR,0,Math.PI*2);mainCtx.fill();
             }
         }
+        mainCtx.shadowBlur=0;
+        const innerGrad=mainCtx.createRadialGradient(cx,cy,0,cx,cy,R*0.55);
+        innerGrad.addColorStop(0,`rgba(${col.r},${col.g},${col.b},${avgV*0.08})`);
+        innerGrad.addColorStop(1,`rgba(${col.r},${col.g},${col.b},0)`);
+        mainCtx.fillStyle=innerGrad;mainCtx.beginPath();mainCtx.arc(cx,cy,R*0.55,0,Math.PI*2);mainCtx.fill();
 
-        mainCtx.shadowBlur = 0;
-        const innerGrad = mainCtx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
-        innerGrad.addColorStop(0, `rgba(${col.r},${col.g},${col.b},${avgV * 0.08})`);
-        innerGrad.addColorStop(1, `rgba(${col.r},${col.g},${col.b},0)`);
-        mainCtx.fillStyle = innerGrad;
-        mainCtx.beginPath();
-        mainCtx.arc(cx, cy, R * 0.55, 0, Math.PI * 2);
-        mainCtx.fill();
-
-    // Rain Lines
-    } else if(state.mode==='rainlines'){
-        const col      = hexToRgb(state.color);
-        const avgVol   = getAvgVolume(vFreq);
-        const bassE    = getBassEnergy(vFreq);
-
-        const particleSpeed = 0.5 + avgVol * 4.0 * fxParams.volume;
-        mainCtx.shadowBlur = 0;
+    }else if(state.mode==='rainlines'){
+        const col=hexToRgb(state.color),avgVol=getAvgVolume(vFreq),bassE=getBassEnergy(vFreq);
+        const particleSpeed=0.5+avgVol*4.0*fxParams.volume;
+        mainCtx.shadowBlur=0;
         for(let p of rainParticles){
-            p.y += p.baseSpeed * particleSpeed * fxParams.speed;
-            if(p.y > h + 4) p.y = -4;
-            p.x += Math.sin(drawPhase * 0.25 + p.y * 0.008) * 0.25;
-            if(p.x > w) p.x -= w; if(p.x < 0) p.x += w;
-            const a = p.opacity * (0.2 + avgVol * 0.8);
-            mainCtx.fillStyle = `rgba(${col.r},${col.g},${col.b},${a})`;
-            mainCtx.beginPath();
-            mainCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            mainCtx.fill();
+            p.y+=p.baseSpeed*particleSpeed*fxParams.speed;
+            if(p.y>h+4) p.y=-4;
+            p.x+=Math.sin(drawPhase*0.25+p.y*0.008)*0.25;
+            if(p.x>w)p.x-=w;if(p.x<0)p.x+=w;
+            const a=p.opacity*(0.2+avgVol*0.8);
+            mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${a})`;
+            mainCtx.beginPath();mainCtx.arc(p.x,p.y,p.size,0,Math.PI*2);mainCtx.fill();
         }
-
-        const barCount = Math.min(bufLen, 128);
-        const totalW   = w * 0.88;
-        const barW     = (totalW / barCount) * 0.7;
-        const gap      = (totalW / barCount) * 0.3;
-        const startX   = (w - totalW) / 2;
-        const edgePad  = 4;
-
-        for(let i = 0; i < barCount; i++){
-            const half = Math.floor(barCount / 2);
-            const binI = i < half ? (half - 1 - i) : (i - half);
-            const raw  = vFreq[binI] / 255;
-            const barH = raw * h * 0.42 * state.thickness;
-            const x    = startX + i * (barW + gap);
-            const capH = Math.max(2, barW * 0.4);
-            const glowMul = 0.4 + raw * 2.8;
-
-            mainCtx.shadowBlur  = 16 * state.glow * glowMul;
-            mainCtx.shadowColor = state.color;
-            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
-            mainCtx.fillRect(jitter(x), h - edgePad - barH, barW, barH);
-            mainCtx.shadowBlur  = 28 * state.glow;
-            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.6 + raw * 0.4})`;
-            mainCtx.fillRect(jitter(x), h - edgePad - barH - capH, barW, capH);
-
-            mainCtx.shadowBlur  = 16 * state.glow * glowMul;
-            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.5 + raw * 0.5})`;
-            mainCtx.fillRect(jitter(x), edgePad, barW, barH);
-            mainCtx.shadowBlur  = 28 * state.glow;
-            mainCtx.fillStyle   = `rgba(${col.r},${col.g},${col.b},${0.6 + raw * 0.4})`;
-            mainCtx.fillRect(jitter(x), edgePad + barH, barW, capH);
-
-            mainCtx.shadowBlur = 0;
+        const barCount=Math.min(bufLen,128),totalW=w*0.88,barW=(totalW/barCount)*0.7;
+        const gap=(totalW/barCount)*0.3,startX=(w-totalW)/2,edgePad=4;
+        for(let i=0;i<barCount;i++){
+            const half=Math.floor(barCount/2),binI=i<half?(half-1-i):(i-half);
+            const raw=vFreq[binI]/255,barH=raw*h*0.42*state.thickness;
+            const x=startX+i*(barW+gap),capH=Math.max(2,barW*0.4),glowMul=0.4+raw*2.8;
+            mainCtx.shadowBlur=16*state.glow*glowMul;mainCtx.shadowColor=state.color;
+            mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.5+raw*0.5})`;
+            mainCtx.fillRect(jitter(x),h-edgePad-barH,barW,barH);
+            mainCtx.shadowBlur=28*state.glow;
+            mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.6+raw*0.4})`;
+            mainCtx.fillRect(jitter(x),h-edgePad-barH-capH,barW,capH);
+            mainCtx.shadowBlur=16*state.glow*glowMul;
+            mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.5+raw*0.5})`;
+            mainCtx.fillRect(jitter(x),edgePad,barW,barH);
+            mainCtx.shadowBlur=28*state.glow;
+            mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.6+raw*0.4})`;
+            mainCtx.fillRect(jitter(x),edgePad+barH,barW,capH);
+            mainCtx.shadowBlur=0;
         }
-
-        mainCtx.shadowBlur  = 10 * state.glow;
-        mainCtx.shadowColor = state.color;
-        mainCtx.strokeStyle = `rgba(${col.r},${col.g},${col.b},0.28)`;
-        mainCtx.lineWidth   = 1;
+        mainCtx.shadowBlur=10*state.glow;mainCtx.shadowColor=state.color;
+        mainCtx.strokeStyle=`rgba(${col.r},${col.g},${col.b},0.28)`;mainCtx.lineWidth=1;
         mainCtx.beginPath();
-        mainCtx.moveTo(startX, h - edgePad);
-        mainCtx.lineTo(startX + totalW, h - edgePad);
-        mainCtx.moveTo(startX, edgePad);
-        mainCtx.lineTo(startX + totalW, edgePad);
+        mainCtx.moveTo(startX,h-edgePad);mainCtx.lineTo(startX+totalW,h-edgePad);
+        mainCtx.moveTo(startX,edgePad);mainCtx.lineTo(startX+totalW,edgePad);
         mainCtx.stroke();
-
-        mainCtx.shadowBlur  = (8 + reverbGlow * 7) * state.glow;
-        mainCtx.shadowColor = state.color;
-        mainCtx.strokeStyle = state.color;
-        mainCtx.lineWidth   = 2.5 * state.thickness;
-        mainCtx.lineCap     = 'round';
-        const slice = w / bufLen;
-        let x = 0;
-        mainCtx.beginPath();
-        for(let i = 0; i < bufLen; i++){
-            const nx  = (vTime[i] - 128) / 128;
-            const nx2 = (vTime[(i + 1) % bufLen] - 128) / 128;
-            const phase = Math.sin(speedOsc * 0.5 + i * 0.02) * 0.05 * fxParams.speed;
-            const off  = bassY((nx  + phase) * volScaleWave) * (h * 0.18) * state.thickness;
-            const offN = bassY((nx2 + phase) * volScaleWave) * (h * 0.18) * state.thickness;
-            mainCtx.moveTo(jitter(x),         jitter(h / 2 - off));
-            mainCtx.lineTo(jitter(x + slice), jitter(h / 2 - offN));
-            mainCtx.moveTo(jitter(x),         jitter(h / 2 + off));
-            mainCtx.lineTo(jitter(x + slice), jitter(h / 2 + offN));
-            x += slice;
+        mainCtx.shadowBlur=(8+reverbGlow*7)*state.glow;mainCtx.shadowColor=state.color;
+        mainCtx.strokeStyle=state.color;mainCtx.lineWidth=2.5*state.thickness;mainCtx.lineCap='round';
+        const slice=w/bufLen;let x=0;mainCtx.beginPath();
+        for(let i=0;i<bufLen;i++){
+            const nx=(vTime[i]-128)/128,nx2=(vTime[(i+1)%bufLen]-128)/128;
+            const phase=Math.sin(speedOsc*0.5+i*0.02)*0.05*fxParams.speed;
+            const off=bassY((nx+phase)*volScaleWave)*(h*0.18)*state.thickness;
+            const offN=bassY((nx2+phase)*volScaleWave)*(h*0.18)*state.thickness;
+            mainCtx.moveTo(jitter(x),jitter(h/2-off));mainCtx.lineTo(jitter(x+slice),jitter(h/2-offN));
+            mainCtx.moveTo(jitter(x),jitter(h/2+off));mainCtx.lineTo(jitter(x+slice),jitter(h/2+offN));
+            x+=slice;
         }
         mainCtx.stroke();
 
-    // Spectrum Torus (CPU fallback)
-    } else if(state.mode==='torus'){
+    }else if(state.mode==='torus'){
         torusHistory.unshift(new Uint8Array(vFreq));
-        while(torusHistory.length > TORUS_HIST_MAX) torusHistory.pop();
-
-        const cx = w / 2;
-        const cy = h * 0.52;
-        const baseRingR = Math.min(w, h) * 0.20;
-
-        const cosTX = Math.cos(torusCamRotX);
-        const sinTX = Math.sin(torusCamRotX);
-        const rotOffset = drawPhase * 0.09 * fxParams.speed + torusCamRotY;
-
-        const BANDS = [
-            { startFrac: 0.0,  endFrac: 0.05, radiusMul: 0.50 * state.torusSpacing, spikeScale: 1.5 },
-            { startFrac: 0.05, endFrac: 0.15, radiusMul: 0.73 * state.torusSpacing, spikeScale: 1.2 },
-            { startFrac: 0.15, endFrac: 0.45, radiusMul: 1.0  * state.torusSpacing, spikeScale: 1.0 },
-            { startFrac: 0.45, endFrac: 1.0,  radiusMul: 1.30 * state.torusSpacing, spikeScale: 0.75},
+        while(torusHistory.length>TORUS_HIST_MAX) torusHistory.pop();
+        const cx=w/2,cy=h*0.52,baseRingR=Math.min(w,h)*0.20;
+        const cosTX=Math.cos(torusCamRotX),sinTX=Math.sin(torusCamRotX);
+        const rotOffset=drawPhase*0.09*fxParams.speed+torusCamRotY;
+        const BANDS=[
+            {startFrac:0,   endFrac:0.05,radiusMul:0.50*state.torusSpacing,spikeScale:1.5},
+            {startFrac:0.05,endFrac:0.15,radiusMul:0.73*state.torusSpacing,spikeScale:1.2},
+            {startFrac:0.15,endFrac:0.45,radiusMul:1.0 *state.torusSpacing,spikeScale:1.0},
+            {startFrac:0.45,endFrac:1.0, radiusMul:1.30*state.torusSpacing,spikeScale:0.75},
         ];
-
-        const segments = 88;
-        const col2 = hexToRgb(state.color);
-
-        for(let hi = torusHistory.length - 1; hi >= 0; hi--){
-            const frame = torusHistory[hi];
-            const histT = hi / Math.max(1, TORUS_HIST_MAX - 1);
-            const alpha = (1 - histT * 0.9) * 0.88;
-            if(alpha < 0.018) continue;
-
-            for(let bi = 0; bi < BANDS.length; bi++){
-                const band   = BANDS[bi];
-                const ringR  = baseRingR * band.radiusMul;
-
-                const hue = ((bi * 70) + hi * (300 / TORUS_HIST_MAX) + drawPhase * 20 * state.torusColorSpeed) % 360;
-                const lw  = Math.max(0.3, (1.7 * state.thickness) * (1 - histT * 0.5));
-
-                if (state.torusColorEnabled) {
-                    mainCtx.strokeStyle = `hsla(${hue}, 100%, 63%, ${alpha})`;
-                    mainCtx.shadowColor = `hsl(${hue}, 100%, 63%)`;
-                } else {
-                    mainCtx.strokeStyle = `rgba(${col2.r},${col2.g},${col2.b},${alpha})`;
-                    mainCtx.shadowColor = state.color;
-                }
-                mainCtx.shadowBlur  = state.glow * 8 * (1 - histT * 0.7);
-                mainCtx.lineWidth   = lw;
-                mainCtx.lineCap     = 'round';
-
-                const binStart = Math.floor(band.startFrac * bufLen);
-                const binEnd   = Math.max(binStart + 1, Math.floor(band.endFrac * bufLen));
-                const binRange = binEnd - binStart;
-
+        const segments=88,col2=hexToRgb(state.color);
+        for(let hi=torusHistory.length-1;hi>=0;hi--){
+            const frame=torusHistory[hi],histT=hi/Math.max(1,TORUS_HIST_MAX-1);
+            const alpha=(1-histT*0.9)*0.88;if(alpha<0.018) continue;
+            for(let bi=0;bi<BANDS.length;bi++){
+                const band=BANDS[bi],ringR=baseRingR*band.radiusMul;
+                const hue=((bi*70)+hi*(300/TORUS_HIST_MAX)+drawPhase*20*state.torusColorSpeed)%360;
+                const lw=Math.max(0.3,(1.7*state.thickness)*(1-histT*0.5));
+                if(state.torusColorEnabled){mainCtx.strokeStyle=`hsla(${hue},100%,63%,${alpha})`;mainCtx.shadowColor=`hsl(${hue},100%,63%)`;}
+                else{mainCtx.strokeStyle=`rgba(${col2.r},${col2.g},${col2.b},${alpha})`;mainCtx.shadowColor=state.color;}
+                mainCtx.shadowBlur=state.glow*8*(1-histT*0.7);mainCtx.lineWidth=lw;mainCtx.lineCap='round';
+                const binStart=Math.floor(band.startFrac*bufLen),binEnd=Math.max(binStart+1,Math.floor(band.endFrac*bufLen));
+                const binRange=binEnd-binStart;
                 mainCtx.beginPath();
-                for(let seg = 0; seg <= segments; seg++){
-                    const theta    = (seg / segments) * Math.PI * 2 + rotOffset;
-                    const cosTheta = Math.cos(theta);
-                    const sinTheta = Math.sin(theta);
-
-                    const binI = binStart + Math.min(Math.floor((seg / segments) * binRange), binRange - 1);
-                    const freq = frame[binI] / 255;
-
-                    const ageScale = 1 - histT * 0.38;
-
-                    const r = ringR;
-                    const rx     = r * cosTheta;
-                    const ry_raw = -freq * 80 * state.thickness * band.spikeScale * ageScale;
-                    const rz     = r * sinTheta;
-
-                    const ry  = ry_raw * cosTX - rz * sinTX;
-                    const rz2 = ry_raw * sinTX + rz * cosTX;
-
-                    const fov   = 4.5;
-                    const safeR = Math.abs(ringR) < 0.001 ? 0.001 : ringR;
-                    const persp = fov / (fov + rz2 / safeR);
-
-                    const px = cx + rx * persp;
-                    const py = cy + ry * persp;
-
-                    seg === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+                for(let seg=0;seg<=segments;seg++){
+                    const theta=(seg/segments)*Math.PI*2+rotOffset;
+                    const cosTheta=Math.cos(theta),sinTheta=Math.sin(theta);
+                    const binI=binStart+Math.min(Math.floor((seg/segments)*binRange),binRange-1);
+                    const freq=frame[binI]/255,ageScale=1-histT*0.38;
+                    const r=ringR,rx=r*cosTheta;
+                    const ry_raw=-freq*80*state.thickness*band.spikeScale*ageScale;
+                    const rz=r*sinTheta,ry=ry_raw*cosTX-rz*sinTX,rz2=ry_raw*sinTX+rz*cosTX;
+                    const fov=4.5,safeR=Math.abs(ringR)<0.001?0.001:ringR;
+                    const persp=fov/(fov+rz2/safeR);
+                    const px=cx+rx*persp,py=cy+ry*persp;
+                    seg===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
                 }
                 mainCtx.stroke();
             }
         }
-
-        if (state.rotationEnabled) triangleHue = (triangleHue + 8 * state.torusColorSpeed) % 360;
-        const triSize = baseRingR * 0.20;
-        const triSpin = drawPhase * 0.6;
-
-        mainCtx.lineWidth = 2.5 * state.thickness;
-        mainCtx.lineCap   = 'round';
-        mainCtx.lineJoin  = 'round';
-
-        const triPts = [];
-        for(let ti = 0; ti < 3; ti++){
-            const ta = (ti / 3) * Math.PI * 2 + triSpin - Math.PI / 2;
-            triPts.push({ x: cx + Math.cos(ta) * triSize, y: cy + Math.sin(ta) * triSize });
+        if(state.rotationEnabled) triangleHue=(triangleHue+8*state.torusColorSpeed)%360;
+        const triSize=baseRingR*0.20,triSpin=drawPhase*0.6;
+        mainCtx.lineWidth=2.5*state.thickness;mainCtx.lineCap='round';mainCtx.lineJoin='round';
+        const triPts=[];
+        for(let ti=0;ti<3;ti++){
+            const ta=(ti/3)*Math.PI*2+triSpin-Math.PI/2;
+            triPts.push({x:cx+Math.cos(ta)*triSize,y:cy+Math.sin(ta)*triSize});
         }
-        for(let ti = 0; ti < 3; ti++){
-            const sideHue = (triangleHue + ti * 120) % 360;
-            const a = triPts[ti], b = triPts[(ti + 1) % 3];
-            const triColor = state.torusColorEnabled ? `hsl(${sideHue}, 100%, 68%)` : state.color;
-            mainCtx.strokeStyle = triColor;
-            mainCtx.shadowColor = triColor;
-            mainCtx.shadowBlur  = state.glow * 12;
-            mainCtx.beginPath();
-            mainCtx.moveTo(a.x, a.y);
-            mainCtx.lineTo(b.x, b.y);
-            mainCtx.stroke();
+        for(let ti=0;ti<3;ti++){
+            const sideHue=(triangleHue+ti*120)%360,a=triPts[ti],b=triPts[(ti+1)%3];
+            const triColor=state.torusColorEnabled?`hsl(${sideHue},100%,68%)`:state.color;
+            mainCtx.strokeStyle=triColor;mainCtx.shadowColor=triColor;mainCtx.shadowBlur=state.glow*12;
+            mainCtx.beginPath();mainCtx.moveTo(a.x,a.y);mainCtx.lineTo(b.x,b.y);mainCtx.stroke();
         }
-
-        mainCtx.shadowBlur = 0;
+        mainCtx.shadowBlur=0;
 
     // ══ BEAT FLASH ══
-    } else if (state.mode === 'beatflash') {
+    }else if(state.mode==='beatflash'){
 
-        // ── Beat detection (RMS energy on bass band vs. running average) ──
+        // ── Beat detection ──
         {
-            const bassEnd = Math.max(2, Math.floor(bufLen * 0.09));
-            let instantE  = 0;
-            for (let i = 1; i < bassEnd; i++) {
-                const v = vFreq[i] / 255;
-                instantE += v * v;
-            }
-            instantE = Math.sqrt(instantE / (bassEnd - 1));
+            const bassEnd=Math.max(2,Math.floor(bufLen*0.09));
+            let instantE=0;
+            for(let i=1;i<bassEnd;i++){const v=vFreq[i]/255;instantE+=v*v;}
+            instantE=Math.sqrt(instantE/(bassEnd-1));
 
-            bfEnergyHist[bfEHistIdx] = instantE;
-            bfEHistIdx = (bfEHistIdx + 1) % bfEnergyHist.length;
+            bfEnergyHist[bfEHistIdx]=instantE;
+            bfEHistIdx=(bfEHistIdx+1)%bfEnergyHist.length;
 
-            let avgE = 0;
-            for (let i = 0; i < bfEnergyHist.length; i++) avgE += bfEnergyHist[i];
-            avgE /= bfEnergyHist.length;
+            let avgE=0;
+            for(let i=0;i<bfEnergyHist.length;i++) avgE+=bfEnergyHist[i];
+            avgE/=bfEnergyHist.length;
 
-            const now      = performance.now();
-            // Beat fires when instant energy is notably above the rolling average
-            // and enough time has passed since last beat (prevents double-triggers)
-            const isBeat   = instantE > avgE * 1.38 && instantE > 0.07 && now - bfLastBeatTime > 195;
+            const now=performance.now();
+            // Slightly more sensitive detection: 1.28x avg, min 0.05, 180ms cooldown
+            const isBeat=instantE>avgE*1.28&&instantE>0.05&&now-bfLastBeatTime>180;
 
-            if (isBeat) {
-                bfLastBeatTime = now;
-                bfBeatPulse    = 1.0;
+            if(isBeat){
+                bfLastBeatTime=now;
+                bfBeatPulse=1.0;
                 bfBeatCount++;
-                // Toggle color inversion every 4th beat
-                if (bfBeatCount % 4 === 0) {
-                    bfInverted = !bfInverted;
+                // Invert every 4th beat (beats 4, 8, 12, ...)
+                if(bfBeatCount%4===0){
+                    bfInverted=!bfInverted;
+                    bfInvertFlash=1.0; // trigger snap flash
                 }
-            } else {
-                // Smooth exponential decay — fast enough to feel punchy
-                bfBeatPulse *= 0.80;
+            }else{
+                bfBeatPulse*=0.80;
+                bfInvertFlash*=0.72; // fast flash decay
             }
         }
 
-        // ── Derive fg / bg from glow color and background color ──
-        // When inverted: swap them so bg becomes the drawing color and vice versa
+        // Derive fg/bg from current inversion state
         const fgHex  = bfInverted ? state.bgColor : state.color;
         const bgHex  = bfInverted ? state.color   : state.bgColor;
         const fgRgb  = hexToRgb(fgHex);
-        const bgRgb2 = hexToRgb(bgHex);
 
-        // Hard solid background fill (no trail — enables crisp inversion snap)
-        mainCtx.fillStyle = bgHex;
-        mainCtx.fillRect(0, 0, w, h);
+        // Hard solid fill
+        mainCtx.fillStyle=bgHex;
+        mainCtx.fillRect(0,0,w,h);
 
-        const cx    = w / 2;
-        const cy    = h / 2;
-        const maxR  = Math.min(w, h) * 0.44;
-        const bassE2 = getBassEnergy(vFreq);
-        const avgV2  = getAvgVolume(vFreq);
+        const cx=w/2,cy=h/2;
+        const maxR=Math.min(w,h)*0.44;
+        const bassE2=getBassEnergy(vFreq);
+        const avgV2=getAvgVolume(vFreq);
 
-        mainCtx.lineCap  = 'round';
-        mainCtx.lineJoin = 'round';
+        mainCtx.lineCap='round';mainCtx.lineJoin='round';
 
         // ── 8 concentric polar waveform rings ──
-        // Each ring covers a different frequency band and rotates at its own speed.
-        // Audio modulates the radius outward, creating complex organic interference
-        // patterns that look exactly like TD vectorscope / oscilloscope feedback.
-        for (let ring = 0; ring < BF_RINGS; ring++) {
-            const t      = ring / (BF_RINGS - 1);              // 0 (innermost) → 1 (outermost)
-            const baseR  = maxR * (0.08 + t * 0.92);
-            // Alternating rotation directions for interference-pattern aesthetics
-            const dir    = ring % 2 === 0 ? 1 : -1;
-            const speed  = (0.018 + ring * 0.007) * dir;
-            const phase  = drawPhase * speed;
+        for(let ring=0;ring<BF_RINGS;ring++){
+            const t=ring/(BF_RINGS-1);
+            const baseR=maxR*(0.08+t*0.92);
+            const dir=ring%2===0?1:-1;
+            const speed=(0.018+ring*0.007)*dir;
+            const phase=drawPhase*speed;
 
-            // Frequency band: inner rings → low freqs, outer rings → high freqs
-            const bandFrac  = t;
-            const bandStart = Math.floor(bandFrac * bufLen * 0.62);
-            const bandRange = Math.max(1, Math.floor(bufLen * 0.10));
-            const bandEnd   = Math.min(bufLen - 1, bandStart + bandRange);
+            const bandFrac=t;
+            const bandStart=Math.floor(bandFrac*bufLen*0.62);
+            const bandRange=Math.max(1,Math.floor(bufLen*0.10));
+            const bandEnd=Math.min(bufLen-1,bandStart+bandRange);
 
-            // Line width and glow taper from inner (thick/bright) to outer (thin/dim)
-            const lw      = Math.max(0.25, (1.6 - t * 1.0) * (0.8 + bassE2 * 0.8));
-            // Beat pulse amplifies glow; inner rings glow more than outer ones
-            const glowAmt = state.glow * (7 + bassE2 * 22 + bfBeatPulse * 28) * (0.55 + (1 - t) * 0.45);
+            const lw=Math.max(0.25,(1.6-t*1.0)*(0.8+bassE2*0.8));
+            const glowAmt=state.glow*(7+bassE2*22+bfBeatPulse*28)*(0.55+(1-t)*0.45);
 
-            mainCtx.lineWidth  = lw;
-            mainCtx.shadowBlur = glowAmt;
-            mainCtx.shadowColor = fgHex;
-            mainCtx.strokeStyle = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${0.55 + (1 - t) * 0.45})`;
+            mainCtx.lineWidth=lw;
+            mainCtx.shadowBlur=glowAmt;
+            mainCtx.shadowColor=fgHex;
+            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${0.55+(1-t)*0.45})`;
 
             mainCtx.beginPath();
-            for (let i = 0; i <= BF_PTS; i++) {
-                const angle = (i / BF_PTS) * Math.PI * 2 + phase;
+            for(let i=0;i<=BF_PTS;i++){
+                const angle=(i/BF_PTS)*Math.PI*2+phase;
+                const binI=bandStart+Math.min(Math.floor((i/BF_PTS)*bandRange),bandRange-1);
+                const freq=vFreq[Math.max(0,Math.min(bufLen-1,binI))]/255;
+                const timeI=Math.floor((i/BF_PTS)*bufLen);
+                const ts=(vTime[Math.min(timeI,bufLen-1)]-128)/128;
 
-                // Mix frequency energy into radius
-                const binI  = bandStart + Math.min(Math.floor((i / BF_PTS) * bandRange), bandRange - 1);
-                const freq  = vFreq[Math.max(0, Math.min(bufLen - 1, binI))] / 255;
+                const rMod=baseR*(1.0+freq*0.42*fxParams.bass+ts*0.09*fxParams.volume);
 
-                // Mix time-domain oscillation into radius (creates the wobbly texture)
-                const timeI = Math.floor((i / BF_PTS) * bufLen);
-                const ts    = (vTime[Math.min(timeI, bufLen - 1)] - 128) / 128;
+                const px=cx+Math.cos(angle)*rMod;
+                const py=cy+Math.sin(angle)*rMod;
+                i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
 
-                // Composed radius: base ring + frequency expansion + time-domain flutter
-                const rMod = baseR * (
-                    1.0
-                    + freq * 0.42 * fxParams.bass
-                    + ts   * 0.09 * fxParams.volume
-                );
-
-                const px = cx + Math.cos(angle) * rMod;
-                const py = cy + Math.sin(angle) * rMod;
-                i === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+                // ── Particle spawn on expansion ──
+                // Every ~4 points to keep GPU load manageable
+                if(i%4===0 && state.bfParticleIntensity > 0 && bfParticlePool.length < BF_MAX_PARTICLES){
+                    const expansion=Math.max(0,rMod/baseR-1.0);
+                    if(expansion>0.05){
+                        // Spawn probability proportional to expansion × intensity
+                        const spawnP=expansion*0.18*state.bfParticleIntensity*(1+bfBeatPulse*1.8);
+                        if(Math.random()<spawnP){
+                            const outAngle=Math.atan2(py-cy,px-cx);
+                            // More expansion → faster, bigger particles
+                            const spd=1.2+expansion*5.5*state.bfParticleIntensity+Math.random()*1.2;
+                            const life=14+Math.random()*22|0;
+                            bfParticlePool.push({
+                                x:px, y:py,
+                                vx:Math.cos(outAngle)*spd,
+                                vy:Math.sin(outAngle)*spd,
+                                life:0, maxLife:life,
+                                size:0.6+expansion*3.0*state.bfParticleIntensity+Math.random()*0.8,
+                                alpha0:0.6+expansion*0.4,
+                            });
+                        }
+                    }
+                }
             }
             mainCtx.closePath();
             mainCtx.stroke();
         }
 
-        // ── Radial burst spokes on every detected beat ──
-        // Short lines pointing outward from a mid-radius circle — highly TD-like.
-        if (bfBeatPulse > 0.18) {
-            const spokeCount = 32;
-            const innerR     = maxR * 0.50;
-            const outerR     = maxR * (0.52 + bfBeatPulse * 0.12);
-            mainCtx.lineWidth  = Math.max(0.3, 0.9 * bfBeatPulse);
-            mainCtx.shadowBlur = state.glow * 18 * bfBeatPulse;
-            mainCtx.shadowColor = fgHex;
-            mainCtx.strokeStyle = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${bfBeatPulse * 0.75})`;
+        // ── Update & render beat flash particles ──
+        // Process in reverse so splicing doesn't skip entries
+        for(let i=bfParticlePool.length-1;i>=0;i--){
+            const p=bfParticlePool[i];
+            p.x+=p.vx; p.y+=p.vy;
+            p.vx*=0.90; p.vy*=0.90; // friction
+            p.life++;
+            const lifeT=p.life/p.maxLife;
+            const a=p.alpha0*(1-lifeT*lifeT); // quadratic fade
+            if(p.life>=p.maxLife||a<0.012){bfParticlePool.splice(i,1);continue;}
+            const r=Math.max(0.2,p.size*(1-lifeT*0.55));
+            mainCtx.shadowBlur=state.glow*6*(1-lifeT);
+            mainCtx.shadowColor=fgHex;
+            mainCtx.fillStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${a})`;
             mainCtx.beginPath();
-            for (let i = 0; i < spokeCount; i++) {
-                const angle = (i / spokeCount) * Math.PI * 2 + drawPhase * 0.04;
-                mainCtx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
-                mainCtx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+            mainCtx.arc(p.x,p.y,r,0,Math.PI*2);
+            mainCtx.fill();
+        }
+
+        // ── Radial burst spokes on beat ──
+        if(bfBeatPulse>0.18){
+            const spokeCount=32,innerR=maxR*0.50,outerR=maxR*(0.52+bfBeatPulse*0.12);
+            mainCtx.lineWidth=Math.max(0.3,0.9*bfBeatPulse);
+            mainCtx.shadowBlur=state.glow*18*bfBeatPulse;
+            mainCtx.shadowColor=fgHex;
+            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${bfBeatPulse*0.75})`;
+            mainCtx.beginPath();
+            for(let i=0;i<spokeCount;i++){
+                const angle=(i/spokeCount)*Math.PI*2+drawPhase*0.04;
+                mainCtx.moveTo(cx+Math.cos(angle)*innerR,cy+Math.sin(angle)*innerR);
+                mainCtx.lineTo(cx+Math.cos(angle)*outerR,cy+Math.sin(angle)*outerR);
             }
             mainCtx.stroke();
         }
 
         // ── Centre XY-scope (Lissajous mini) ──
-        // The tiny XY scope in the centre mirrors the original Lissajous mode
-        // but scaled down — it creates the "eye" that's characteristic of TD visuals.
         {
-            const lissR   = maxR * 0.10;
-            const lissScl = lissR * 1.85;
-            // Use a small offset so it doesn't just draw a straight line
-            const lissOff = Math.max(1, Math.floor(bufLen * 0.013));
-            const lissLen = Math.min(vRaw.length, 1024);
-
-            mainCtx.lineWidth   = Math.max(0.4, 1.1 * (0.7 + bassE2));
-            mainCtx.shadowBlur  = state.glow * (14 + bfBeatPulse * 24);
-            mainCtx.shadowColor  = fgHex;
-            mainCtx.strokeStyle  = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},0.92)`;
-
+            const lissR=maxR*0.10,lissScl=lissR*1.85;
+            const lissOff=Math.max(1,Math.floor(bufLen*0.013));
+            const lissLen=Math.min(vRaw.length,1024);
+            mainCtx.lineWidth=Math.max(0.4,1.1*(0.7+bassE2));
+            mainCtx.shadowBlur=state.glow*(14+bfBeatPulse*24);
+            mainCtx.shadowColor=fgHex;
+            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},0.92)`;
             mainCtx.beginPath();
-            for (let i = 0; i < lissLen; i++) {
-                const nx  = (vRaw[i] - 128) / 128;
-                const ny  = (vRaw[(i + lissOff) % lissLen] - 128) / 128;
-                const px  = cx + nx * lissScl;
-                const py  = cy + ny * lissScl;
-                i === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+            for(let i=0;i<lissLen;i++){
+                const nx=(vRaw[i]-128)/128,ny=(vRaw[(i+lissOff)%lissLen]-128)/128;
+                const px=cx+nx*lissScl,py=cy+ny*lissScl;
+                i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
             }
             mainCtx.stroke();
         }
 
-        // ── Subtle hairline grid (adds depth, very low cost) ──
-        // Only drawn when there is audio energy; fades with the beat pulse.
-        if (avgV2 > 0.02) {
-            const gridAlpha = Math.min(0.06, avgV2 * 0.14) * (1 + bfBeatPulse * 0.4);
-            mainCtx.lineWidth   = 0.4;
-            mainCtx.shadowBlur  = 0;
-            mainCtx.strokeStyle = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${gridAlpha})`;
-
-            const gridStep = Math.round(Math.min(w, h) / 12);
+        // ── Hairline grid ──
+        if(avgV2>0.02){
+            const gridAlpha=Math.min(0.06,avgV2*0.14)*(1+bfBeatPulse*0.4);
+            mainCtx.lineWidth=0.4;mainCtx.shadowBlur=0;
+            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${gridAlpha})`;
+            const gridStep=Math.round(Math.min(w,h)/12);
             mainCtx.beginPath();
-            // Vertical lines
-            for (let gx = cx % gridStep; gx < w; gx += gridStep) {
-                mainCtx.moveTo(gx, 0); mainCtx.lineTo(gx, h);
-            }
-            // Horizontal lines
-            for (let gy = cy % gridStep; gy < h; gy += gridStep) {
-                mainCtx.moveTo(0, gy); mainCtx.lineTo(w, gy);
-            }
+            for(let gx=cx%gridStep;gx<w;gx+=gridStep){mainCtx.moveTo(gx,0);mainCtx.lineTo(gx,h);}
+            for(let gy=cy%gridStep;gy<h;gy+=gridStep){mainCtx.moveTo(0,gy);mainCtx.lineTo(w,gy);}
             mainCtx.stroke();
         }
 
-        mainCtx.shadowBlur = 0;
+        // ── Inversion flash overlay ──
+        // Brief white/color pop that makes the color-flip feel physical
+        if(bfInvertFlash>0.01){
+            mainCtx.fillStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${bfInvertFlash*0.22})`;
+            mainCtx.fillRect(0,0,w,h);
+        }
+
+        mainCtx.shadowBlur=0;
     }
 
     mainCtx.shadowBlur=0;
