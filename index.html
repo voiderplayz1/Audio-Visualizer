@@ -183,6 +183,7 @@ input[type="file"] { display:none; }
 <body>
 
 <canvas id="main-canvas"></canvas>
+<canvas id="bf-gl-canvas" style="display:none;position:absolute;pointer-events:none"></canvas>
 
 <div id="torus-warning">
     <div id="torus-blur-bg"></div>
@@ -664,6 +665,156 @@ function hexToRgb(hex) {
     return { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
 }
 
+// ══ WebGL Beat Flash renderer ══
+let bfGlCanvas=null, bfGl=null, bfProgram=null;
+let bfFreqTex=null, bfTimeTex=null;
+let bfUniforms={}, bfGlReady=false;
+const bfFreqBuf=new Uint8Array(1024), bfTimeBuf=new Uint8Array(1024);
+
+function initBeatFlashGL() {
+    if (bfGlReady) return;
+    bfGlCanvas = document.getElementById('bf-gl-canvas');
+    bfGl = bfGlCanvas.getContext('webgl2', {antialias:false,alpha:false,depth:false,stencil:false});
+    if (!bfGl) { console.warn('WebGL2 unavailable — Beat Flash falls back to 2D'); return; }
+    const gl = bfGl;
+
+    const VSRC = `#version 300 es
+void main(){
+    vec2 p[6];
+    p[0]=vec2(-1,-1);p[1]=vec2(1,-1);p[2]=vec2(-1,1);
+    p[3]=vec2(-1,1); p[4]=vec2(1,-1); p[5]=vec2(1,1);
+    gl_Position=vec4(p[gl_VertexID],0,1);
+}`;
+
+    const FSRC = `#version 300 es
+precision highp float;
+uniform float uTime,uBass,uVolume,uGlow,uBeatPulse,uWidth,uHeight;
+uniform vec3  uFgColor,uBgColor;
+uniform sampler2D uFreqTex,uTimeTex;
+out vec4 fragColor;
+const float TAU=6.28318530;
+
+float ringContrib(float pixR,float pixA,float baseR,float phase,
+                  float bStart,float bRange,float t){
+    float normA = mod(pixA - phase + TAU*8.0, TAU) / TAU;
+    float freqU = clamp(bStart + normA*bRange, 0.0, 1.0);
+    float fv    = texture(uFreqTex, vec2(freqU, 0.5)).r;
+    float tv    = texture(uTimeTex, vec2(normA,  0.5)).r * 2.0 - 1.0;
+    float rMod  = baseR*(1.0 + fv*0.42*uBass + tv*0.09*uVolume);
+    float dist  = abs(pixR - rMod);
+    float lw    = max(0.5,(1.6-t)*(0.8+fv*0.8));
+    float alpha = 0.55+(1.0-t)*0.45;
+    float boost = 1.0 + uBeatPulse*alpha*2.2;
+    float core  = exp(-dist*dist/(lw*lw*0.12));
+    float halo  = exp(-dist*dist/(lw*lw*uGlow*1.8))*0.5;
+    return (core+halo)*alpha*boost;
+}
+
+void main(){
+    vec2 px  = vec2(gl_FragCoord.x, uHeight-gl_FragCoord.y);
+    vec2 cen = vec2(uWidth*0.5, uHeight*0.5);
+    vec2 d   = px-cen;
+    float pixR=length(d), pixA=atan(d.y,d.x);
+    float maxR=min(uWidth,uHeight)*0.44;
+    float total=0.0;
+
+    for(int ring=0;ring<8;ring++){
+        float t     = float(ring)/7.0;
+        float baseR = maxR*(0.08+t*0.92);
+        float dir   = float((ring%2)==0 ? 1 : -1);
+        float speed = (0.018+float(ring)*0.007)*dir;
+        total += ringContrib(pixR,pixA,baseR,uTime*speed,t*0.62,0.10,t);
+    }
+
+    if(uBeatPulse>0.05){
+        float innerR=maxR*0.50, outerR=maxR*(0.52+uBeatPulse*0.12);
+        if(pixR>=innerR && pixR<=outerR){
+            float normA=mod(pixA+TAU,TAU);
+            float minDA=TAU;
+            for(int i=0;i<32;i++){
+                float sa=mod(float(i)/32.0*TAU+uTime*0.04, TAU);
+                float da=abs(mod(normA-sa+TAU*2.0,TAU)-TAU*0.5);
+                da=min(da,TAU-da);
+                minDA=min(minDA,da);
+            }
+            float spokeDist=minDA*pixR;
+            total+=exp(-spokeDist*spokeDist*0.06)*uBeatPulse*uGlow*0.9;
+        }
+    }
+
+    total=clamp(total,0.0,1.0);
+    fragColor=vec4(mix(uBgColor,uFgColor,total),1.0);
+}`;
+
+    function compile(type,src){
+        const s=gl.createShader(type);
+        gl.shaderSource(s,src); gl.compileShader(s);
+        if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+            console.warn('BF shader:',gl.getShaderInfoLog(s)); return null;
+        }
+        return s;
+    }
+    const vs=compile(gl.VERTEX_SHADER,VSRC), fs=compile(gl.FRAGMENT_SHADER,FSRC);
+    if(!vs||!fs) return;
+    bfProgram=gl.createProgram();
+    gl.attachShader(bfProgram,vs); gl.attachShader(bfProgram,fs); gl.linkProgram(bfProgram);
+    if(!gl.getProgramParameter(bfProgram,gl.LINK_STATUS)){
+        console.warn('BF link:',gl.getProgramInfoLog(bfProgram)); return;
+    }
+    const unames=['uTime','uBass','uVolume','uGlow','uBeatPulse',
+                  'uWidth','uHeight','uFgColor','uBgColor','uFreqTex','uTimeTex'];
+    for(const n of unames) bfUniforms[n]=gl.getUniformLocation(bfProgram,n);
+
+    function makeTex(){
+        const t=gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D,t);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.R8,1024,1,0,gl.RED,gl.UNSIGNED_BYTE,null);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+        return t;
+    }
+    bfFreqTex=makeTex(); bfTimeTex=makeTex();
+    gl.bindVertexArray(gl.createVertexArray());
+    bfGlReady=true;
+    console.log('Beat Flash: WebGL2 renderer ready');
+}
+
+function drawBeatFlashGL(vFreq,vTime,w,h){
+    if(!bfGlReady) return false;
+    const gl=bfGl;
+    if(bfGlCanvas.width!==w||bfGlCanvas.height!==h){
+        bfGlCanvas.width=w; bfGlCanvas.height=h;
+        gl.viewport(0,0,w,h);
+    }
+    const fLen=Math.min(vFreq.length,1024), tLen=Math.min(vTime.length,1024);
+    bfFreqBuf.fill(0); bfTimeBuf.fill(128);
+    for(let i=0;i<fLen;i++) bfFreqBuf[i]=vFreq[i];
+    for(let i=0;i<tLen;i++) bfTimeBuf[i]=vTime[i];
+    gl.bindTexture(gl.TEXTURE_2D,bfFreqTex);
+    gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,1024,1,gl.RED,gl.UNSIGNED_BYTE,bfFreqBuf);
+    gl.bindTexture(gl.TEXTURE_2D,bfTimeTex);
+    gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,1024,1,gl.RED,gl.UNSIGNED_BYTE,bfTimeBuf);
+    const fg=hexToRgb(state.color), bg=hexToRgb(state.bgColor);
+    gl.useProgram(bfProgram);
+    gl.uniform1f(bfUniforms.uTime,      drawPhase);
+    gl.uniform1f(bfUniforms.uBass,      fxParams.bass);
+    gl.uniform1f(bfUniforms.uVolume,    fxParams.volume);
+    gl.uniform1f(bfUniforms.uGlow,      state.glow);
+    gl.uniform1f(bfUniforms.uBeatPulse, bfBeatPulse);
+    gl.uniform1f(bfUniforms.uWidth,     w);
+    gl.uniform1f(bfUniforms.uHeight,    h);
+    gl.uniform3f(bfUniforms.uFgColor,   fg.r/255,fg.g/255,fg.b/255);
+    gl.uniform3f(bfUniforms.uBgColor,   bg.r/255,bg.g/255,bg.b/255);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,bfFreqTex);
+    gl.uniform1i(bfUniforms.uFreqTex,0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,bfTimeTex);
+    gl.uniform1i(bfUniforms.uTimeTex,1);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+}
+
 function resize() {
     mainCanvas.width = window.innerWidth;
     mainCanvas.height = window.innerHeight;
@@ -1044,6 +1195,7 @@ function enterApp(){
     welcome.classList.add('fade-out');
     welcome.addEventListener('transitionend',()=>{welcome.style.display='none';cancelAnimationFrame(welcomeAnimId);},{once:true});
     initWebGPU();
+    initBeatFlashGL();
     if(!animationId) draw();
 }
 document.getElementById('welcome-enter').addEventListener('click',e=>{e.stopPropagation();enterApp();});
@@ -1375,188 +1527,154 @@ function draw(){
             let instantE=0;
             for(let i=1;i<bassEnd;i++){const v=vFreq[i]/255;instantE+=v*v;}
             instantE=Math.sqrt(instantE/(bassEnd-1));
-
             bfEnergyHist[bfEHistIdx]=instantE;
             bfEHistIdx=(bfEHistIdx+1)%bfEnergyHist.length;
-
             let avgE=0;
             for(let i=0;i<bfEnergyHist.length;i++) avgE+=bfEnergyHist[i];
             avgE/=bfEnergyHist.length;
-
             const now=performance.now();
             const isBeat=instantE>avgE*1.28&&instantE>0.05&&now-bfLastBeatTime>180;
-
-            if(isBeat){
-                bfLastBeatTime=now;
-                bfBeatPulse=1.0;
-                bfBeatCount++;
-            }else{
-                bfBeatPulse*=0.80;
-            }
+            if(isBeat){ bfLastBeatTime=now; bfBeatPulse=1.0; bfBeatCount++; }
+            else { bfBeatPulse*=0.80; }
         }
 
-        const fgHex = state.color;
-        const bgHex = state.bgColor;
-        const fgRgb = hexToRgb(fgHex);
-
-        // Hard solid fill
-        mainCtx.fillStyle=bgHex;
-        mainCtx.fillRect(0,0,w,h);
-
-        const cx=w/2,cy=h/2;
+        const fgHex=state.color, fgRgb=hexToRgb(fgHex);
+        const cx=w/2, cy=h/2;
         const maxR=Math.min(w,h)*0.44;
         const bassE2=getBassEnergy(vFreq);
         const avgV2=getAvgVolume(vFreq);
 
-        mainCtx.lineCap='round';mainCtx.lineJoin='round';
-
-        // ── 8 concentric polar waveform rings ──
-        for(let ring=0;ring<BF_RINGS;ring++){
-            const t=ring/(BF_RINGS-1);
-            const baseR=maxR*(0.08+t*0.92);
-            const dir=ring%2===0?1:-1;
-            const speed=(0.018+ring*0.007)*dir;
-            const phase=drawPhase*speed;
-
-            const bandFrac=t;
-            const bandStart=Math.floor(bandFrac*bufLen*0.62);
-            const bandRange=Math.max(1,Math.floor(bufLen*0.10));
-            const bandEnd=Math.min(bufLen-1,bandStart+bandRange);
-
-            const lw=Math.max(0.25,(1.6-t*1.0)*(0.8+bassE2*0.8));
-            const glowAmt=state.glow*(7+bassE2*22+bfBeatPulse*28)*(0.55+(1-t)*0.45);
-
-            mainCtx.lineWidth=lw;
-            mainCtx.shadowBlur=glowAmt;
-            mainCtx.shadowColor=fgHex;
-            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${0.55+(1-t)*0.45})`;
-
-            mainCtx.beginPath();
-            for(let i=0;i<=BF_PTS;i++){
-                const angle=(i/BF_PTS)*Math.PI*2+phase;
-                const binI=bandStart+Math.min(Math.floor((i/BF_PTS)*bandRange),bandRange-1);
-                const freq=vFreq[Math.max(0,Math.min(bufLen-1,binI))]/255;
-                const timeI=Math.floor((i/BF_PTS)*bufLen);
-                const ts=(vTime[Math.min(timeI,bufLen-1)]-128)/128;
-
-                const rMod=baseR*(1.0+freq*0.42*fxParams.bass+ts*0.09*fxParams.volume);
-
-                const px=cx+Math.cos(angle)*rMod;
-                const py=cy+Math.sin(angle)*rMod;
-                i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
-
-                // ── Particle spawn on expansion ──
-                if(i%3===0 && state.bfParticleIntensity > 0 && bfParticlePool.length < BF_MAX_PARTICLES){
-                    const expansion=Math.max(0,rMod/baseR-1.0);
-                    if(expansion>0.04){
-                        const spawnP=expansion*0.22*state.bfParticleIntensity*(1+bfBeatPulse*2.0);
-                        if(Math.random()<spawnP){
-                            const outAngle=Math.atan2(py-cy,px-cx);
-                            const spread=(Math.random()-0.5)*0.55;
-                            const spd=0.8+expansion*4.5*state.bfParticleIntensity+Math.random()*1.0;
-                            const life=(10+Math.random()*18)|0;
-                            const streakLen=1.5+spd*0.9*state.bfParticleIntensity;
-                            const type=Math.random()<0.6?0:Math.random()<0.6?1:2;
-                            bfParticlePool.push({
-                                x:px, y:py,
-                                vx:Math.cos(outAngle+spread)*spd,
-                                vy:Math.sin(outAngle+spread)*spd,
-                                angle:outAngle+spread,
-                                life:0, maxLife:life,
-                                streakLen, type,
-                                alpha0:0.55+expansion*0.45,
-                            });
-                        }
+        // ── Rings + spokes: WebGL shader (zero shadowBlur cost) ──
+        const glOk = drawBeatFlashGL(vFreq, vTime, w, h);
+        if (glOk) {
+            // Blit GL canvas onto the 2D canvas
+            mainCtx.drawImage(bfGlCanvas, 0, 0);
+        } else {
+            // CPU 2D fallback (no shadowBlur — layered strokes for fake glow)
+            mainCtx.fillStyle=state.bgColor; mainCtx.fillRect(0,0,w,h);
+            mainCtx.lineCap='round'; mainCtx.lineJoin='round';
+            for(let ring=0;ring<BF_RINGS;ring++){
+                const t=ring/(BF_RINGS-1);
+                const baseR=maxR*(0.08+t*0.92);
+                const dir=ring%2===0?1:-1;
+                const phase=drawPhase*(0.018+ring*0.007)*dir;
+                const bandStart=Math.floor(t*bufLen*0.62);
+                const bandRange=Math.max(1,Math.floor(bufLen*0.10));
+                const alpha=0.55+(1-t)*0.45;
+                // Two passes: wide dim halo, then thin bright core — fake glow cheaply
+                for(let pass=0;pass<2;pass++){
+                    mainCtx.lineWidth=pass===0?(1.6-t*1.0)*2.2:Math.max(0.3,(1.6-t*1.0)*0.5);
+                    mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${pass===0?alpha*0.18:alpha})`;
+                    mainCtx.beginPath();
+                    for(let i=0;i<=BF_PTS;i++){
+                        const angle=(i/BF_PTS)*Math.PI*2+phase;
+                        const binI=bandStart+Math.min(Math.floor((i/BF_PTS)*bandRange),bandRange-1);
+                        const freq=vFreq[Math.max(0,Math.min(bufLen-1,binI))]/255;
+                        const ts=(vTime[Math.min(Math.floor((i/BF_PTS)*bufLen),bufLen-1)]-128)/128;
+                        const rMod=baseR*(1+freq*0.42*fxParams.bass+ts*0.09*fxParams.volume);
+                        const px2=cx+Math.cos(angle)*rMod, py2=cy+Math.sin(angle)*rMod;
+                        i===0?mainCtx.moveTo(px2,py2):mainCtx.lineTo(px2,py2);
                     }
+                    mainCtx.closePath(); mainCtx.stroke();
                 }
             }
-            mainCtx.closePath();
-            mainCtx.stroke();
         }
 
-        // ── Update & render beat flash particles ──
-        mainCtx.shadowBlur=state.glow*3;
-        mainCtx.shadowColor=fgHex;
+        // ── Particle spawn (sample from current ring positions via CPU) ──
+        if(state.bfParticleIntensity>0 && bfParticlePool.length<BF_MAX_PARTICLES){
+            for(let ring=0;ring<BF_RINGS;ring+=2){ // every other ring to keep it light
+                const t=ring/(BF_RINGS-1);
+                const baseR=maxR*(0.08+t*0.92);
+                const dir=ring%2===0?1:-1;
+                const phase=drawPhase*(0.018+ring*0.007)*dir;
+                const bandStart=Math.floor(t*bufLen*0.62);
+                const bandRange=Math.max(1,Math.floor(bufLen*0.10));
+                // Sample ~32 points around this ring for spawn candidates
+                const sampleStep=Math.ceil(BF_PTS/32);
+                for(let i=0;i<BF_PTS;i+=sampleStep){
+                    if(bfParticlePool.length>=BF_MAX_PARTICLES) break;
+                    const angle=(i/BF_PTS)*Math.PI*2+phase;
+                    const binI=bandStart+Math.min(Math.floor((i/BF_PTS)*bandRange),bandRange-1);
+                    const freq=vFreq[Math.max(0,Math.min(bufLen-1,binI))]/255;
+                    const ts=(vTime[Math.min(Math.floor((i/BF_PTS)*bufLen),bufLen-1)]-128)/128;
+                    const rMod=baseR*(1+freq*0.42*fxParams.bass+ts*0.09*fxParams.volume);
+                    const expansion=Math.max(0,rMod/baseR-1.0);
+                    if(expansion<0.04) continue;
+                    const spawnP=expansion*0.22*state.bfParticleIntensity*(1+bfBeatPulse*2.0);
+                    if(Math.random()>=spawnP) continue;
+                    const px2=cx+Math.cos(angle)*rMod, py2=cy+Math.sin(angle)*rMod;
+                    const spread=(Math.random()-0.5)*0.55;
+                    const outAngle=Math.atan2(py2-cy,px2-cx);
+                    const spd=0.8+expansion*4.5*state.bfParticleIntensity+Math.random()*1.0;
+                    const life=(10+Math.random()*18)|0;
+                    const ptype=Math.random()<0.6?0:Math.random()<0.6?1:2;
+                    bfParticlePool.push({
+                        x:px2, y:py2,
+                        vx:Math.cos(outAngle+spread)*spd, vy:Math.sin(outAngle+spread)*spd,
+                        life:0, maxLife:life,
+                        streakLen:1.5+spd*0.9*state.bfParticleIntensity,
+                        type:ptype, alpha0:0.55+expansion*0.45,
+                    });
+                }
+            }
+        }
+
+        // ── Update & draw particles on 2D canvas (no shadowBlur) ──
+        mainCtx.shadowBlur=0;
         for(let i=bfParticlePool.length-1;i>=0;i--){
             const p=bfParticlePool[i];
-            p.x+=p.vx; p.y+=p.vy;
-            p.vx*=0.88; p.vy*=0.88; // friction
-            p.life++;
+            p.x+=p.vx; p.y+=p.vy; p.vx*=0.88; p.vy*=0.88; p.life++;
             const lifeT=p.life/p.maxLife;
             const a=p.alpha0*(1-lifeT*lifeT);
             if(p.life>=p.maxLife||a<0.01){bfParticlePool.splice(i,1);continue;}
-
-            // Current travel angle from velocity (rotates as friction slows it)
             const curAngle=Math.atan2(p.vy,p.vx);
-            const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
-            // Streak shrinks as it slows
-            const len=Math.max(0.6,p.streakLen*(spd/4.0)*(1-lifeT*0.4));
-            const w2=Math.max(0.15,0.55*(1-lifeT*0.6));
-
+            const spd2=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+            const len=Math.max(0.6,p.streakLen*(spd2/4.0)*(1-lifeT*0.4));
+            const lw2=Math.max(0.15,0.55*(1-lifeT*0.6));
             mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${a})`;
-            mainCtx.lineWidth=w2;
-            mainCtx.lineCap='round';
-
+            mainCtx.lineWidth=lw2; mainCtx.lineCap='round';
             if(p.type===0){
-                // Streak: short line along travel direction
                 mainCtx.beginPath();
-                mainCtx.moveTo(p.x-Math.cos(curAngle)*len*0.5, p.y-Math.sin(curAngle)*len*0.5);
-                mainCtx.lineTo(p.x+Math.cos(curAngle)*len*0.5, p.y+Math.sin(curAngle)*len*0.5);
+                mainCtx.moveTo(p.x-Math.cos(curAngle)*len*0.5,p.y-Math.sin(curAngle)*len*0.5);
+                mainCtx.lineTo(p.x+Math.cos(curAngle)*len*0.5,p.y+Math.sin(curAngle)*len*0.5);
                 mainCtx.stroke();
             }else if(p.type===1){
-                // Cross tick: two tiny crossed lines
-                const t=len*0.35,perp=curAngle+Math.PI*0.5;
+                const tl=len*0.35,perp=curAngle+Math.PI*0.5;
                 mainCtx.beginPath();
-                mainCtx.moveTo(p.x-Math.cos(curAngle)*t, p.y-Math.sin(curAngle)*t);
-                mainCtx.lineTo(p.x+Math.cos(curAngle)*t, p.y+Math.sin(curAngle)*t);
-                mainCtx.moveTo(p.x-Math.cos(perp)*t*0.55, p.y-Math.sin(perp)*t*0.55);
-                mainCtx.lineTo(p.x+Math.cos(perp)*t*0.55, p.y+Math.sin(perp)*t*0.55);
+                mainCtx.moveTo(p.x-Math.cos(curAngle)*tl,p.y-Math.sin(curAngle)*tl);
+                mainCtx.lineTo(p.x+Math.cos(curAngle)*tl,p.y+Math.sin(curAngle)*tl);
+                mainCtx.moveTo(p.x-Math.cos(perp)*tl*0.55,p.y-Math.sin(perp)*tl*0.55);
+                mainCtx.lineTo(p.x+Math.cos(perp)*tl*0.55,p.y+Math.sin(perp)*tl*0.55);
                 mainCtx.stroke();
             }else{
-                // Pixel: 1×1 filled square — extremely fine
                 mainCtx.fillStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${a})`;
-                mainCtx.fillRect(p.x-0.5, p.y-0.5, 1, 1);
+                mainCtx.fillRect(p.x-0.5,p.y-0.5,1,1);
             }
         }
 
-        // ── Radial burst spokes on beat ──
-        if(bfBeatPulse>0.18){
-            const spokeCount=32,innerR=maxR*0.50,outerR=maxR*(0.52+bfBeatPulse*0.12);
-            mainCtx.lineWidth=Math.max(0.3,0.9*bfBeatPulse);
-            mainCtx.shadowBlur=state.glow*18*bfBeatPulse;
-            mainCtx.shadowColor=fgHex;
-            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${bfBeatPulse*0.75})`;
-            mainCtx.beginPath();
-            for(let i=0;i<spokeCount;i++){
-                const angle=(i/spokeCount)*Math.PI*2+drawPhase*0.04;
-                mainCtx.moveTo(cx+Math.cos(angle)*innerR,cy+Math.sin(angle)*innerR);
-                mainCtx.lineTo(cx+Math.cos(angle)*outerR,cy+Math.sin(angle)*outerR);
-            }
-            mainCtx.stroke();
-        }
-
-        // ── Centre XY-scope (Lissajous mini) ──
+        // ── Centre XY-scope (layered strokes, no shadowBlur) ──
         {
-            const lissR=maxR*0.10,lissScl=lissR*1.85;
+            const lissR=maxR*0.10, lissScl=lissR*1.85;
             const lissOff=Math.max(1,Math.floor(bufLen*0.013));
             const lissLen=Math.min(vRaw.length,1024);
-            mainCtx.lineWidth=Math.max(0.4,1.1*(0.7+bassE2));
-            mainCtx.shadowBlur=state.glow*(14+bfBeatPulse*24);
-            mainCtx.shadowColor=fgHex;
-            mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},0.92)`;
-            mainCtx.beginPath();
-            for(let i=0;i<lissLen;i++){
-                const nx=(vRaw[i]-128)/128,ny=(vRaw[(i+lissOff)%lissLen]-128)/128;
-                const px=cx+nx*lissScl,py=cy+ny*lissScl;
-                i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
+            const scopeAlpha=0.92;
+            // Two passes: wide halo + thin core
+            for(let pass=0;pass<2;pass++){
+                mainCtx.lineWidth=pass===0?2.8*(0.7+bassE2):Math.max(0.4,0.9*(0.7+bassE2));
+                mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${pass===0?scopeAlpha*0.12:scopeAlpha})`;
+                mainCtx.beginPath();
+                for(let i=0;i<lissLen;i++){
+                    const nx=(vRaw[i]-128)/128, ny=(vRaw[(i+lissOff)%lissLen]-128)/128;
+                    i===0?mainCtx.moveTo(cx+nx*lissScl,cy+ny*lissScl):mainCtx.lineTo(cx+nx*lissScl,cy+ny*lissScl);
+                }
+                mainCtx.stroke();
             }
-            mainCtx.stroke();
         }
 
         // ── Hairline grid ──
         if(avgV2>0.02){
             const gridAlpha=Math.min(0.06,avgV2*0.14)*(1+bfBeatPulse*0.4);
-            mainCtx.lineWidth=0.4;mainCtx.shadowBlur=0;
+            mainCtx.lineWidth=0.4; mainCtx.shadowBlur=0;
             mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${gridAlpha})`;
             const gridStep=Math.round(Math.min(w,h)/12);
             mainCtx.beginPath();
