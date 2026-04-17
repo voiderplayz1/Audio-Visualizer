@@ -244,6 +244,7 @@ input[type="file"] { display: none; }
 .liss-only.hidden-ctrl { opacity: 0.2; pointer-events: none; }
 .torus-only { transition: opacity 0.2s; }
 .torus-only.hidden-ctrl { opacity: 0.2; pointer-events: none; }
+.hidden-ctrl { opacity: 0.2 !important; pointer-events: none !important; }
 .tip { font-size: 0.825rem; letter-spacing: 0.3px; color: var(--text-dim); line-height: 1.65; font-style: italic; }
 #source-badge { display: none; font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-top: 3px; border: 1px solid rgba(100,200,255,0.25); color: rgba(160,220,255,0.8); background: rgba(100,200,255,0.05); font-family: var(--font); }
 #source-badge.visible { display: inline-block; }
@@ -366,6 +367,7 @@ input[type="file"] { display: none; }
                 <option value="ncs">Particle Sphere</option>
                 <option value="rainlines">Rain Lines</option>
                 <option value="torus">Spectrum Torus</option>
+                <option value="beatflash">Beat Flash</option>
             </select>
         </div>
         <div class="color-row">
@@ -376,7 +378,7 @@ input[type="file"] { display: none; }
             <span class="ctrl-label">Background color</span>
             <input type="color" id="bg-color-picker" value="#050505">
         </div>
-        <div class="ctrl-row">
+        <div class="ctrl-row" id="thickness-group">
             <label class="ctrl-label"><span>Thickness</span><span class="ctrl-val" id="val-thickness">1.00</span></label>
             <input type="range" id="fx-thickness" min="0.1" max="5.0" step="0.01" value="1.0">
         </div>
@@ -497,6 +499,7 @@ const warnCancel       = document.getElementById('warn-cancel');
 const torusColorSpeedGroup = document.getElementById('torus-color-speed-group');
 const btnTorusColorToggle  = document.getElementById('btn-torus-color-toggle');
 const btnRotationToggle    = document.getElementById('btn-rotation-toggle');
+const thicknessGroup       = document.getElementById('thickness-group');
 
 let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
@@ -563,6 +566,18 @@ let torusDragging = false;
 let torusDragLastX = 0;
 let torusDragLastY = 0;
 let triangleHue = 0;
+
+// ── Beat Flash state ──
+// Pre-allocated energy history (~52 frames ≈ ~0.87s at 60fps)
+const bfEnergyHist   = new Float32Array(52);
+let   bfEHistIdx     = 0;
+let   bfBeatCount    = 0;
+let   bfLastBeatTime = 0;
+let   bfInverted     = false;
+let   bfBeatPulse    = 0;   // 0..1, decays each frame — drives glow burst
+// Pre-allocated scratch buffers for Beat Flash draw (avoid per-frame GC)
+const BF_RINGS       = 8;
+const BF_PTS         = 256; // points per ring — enough detail, easy on GPU
 
 // WebGPU state 
 let gpuDevice = null, gpuContext = null, gpuFormat = null;
@@ -688,7 +703,6 @@ fn getFreq(i: i32) -> f32 {
             let binI = i32(bStart * f32(binCount)) + i32((f32(seg) / f32(segments)) * (bEnd - bStart) * f32(binCount));
             let fv = getFreq(clamp(binI, 0, 1023));
 
-            // Spikes upward (vertical Y), not radially outward
             let r = ringR;
             let rx = r * cosT;
             let ry_raw = -fv * 80.0 * u.thickness * ss;
@@ -774,7 +788,6 @@ fn getFreq(i: i32) -> f32 {
             primitive: { topology: 'triangle-list' }
         });
 
-        // Uniform buffer: 16 f32 = 64 bytes
         gpuUniformBuf = gpuDevice.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         gpuFreqBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
         gpuTimeBuf    = gpuDevice.createBuffer({ size: BUF_SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
@@ -933,6 +946,8 @@ function activateTorusMode() {
     torusSpacingGroup.classList.remove('hidden-ctrl');
     torusColorSpeedGroup.classList.remove('hidden-ctrl');
     btnTorusColorToggle.classList.remove('hidden-ctrl');
+    thicknessGroup.classList.remove('hidden-ctrl');
+    btnRotationToggle.classList.remove('hidden-ctrl');
     torusHistory.length = 0;
     torusHint.classList.add('visible');
     setTimeout(()=>torusHint.classList.remove('visible'), 3500);
@@ -941,7 +956,6 @@ function activateTorusMode() {
 
 warnProceed.addEventListener('click', () => {
     hideTorusWarning();
-    // Save "don't show" preference
     if (document.getElementById('warn-dont-show').checked) {
         try { localStorage.setItem('torus-skip-warning', '1'); } catch(e) {}
     }
@@ -1145,11 +1159,31 @@ btnToggleEq.onclick = () => {
     btnToggleEq.innerHTML=open?'Audio FX &nbsp;▴':'Audio FX &nbsp;▾';
 };
 
+// ── Helper: set which visual controls are visible ──
+function setVisualControls(mode) {
+    const isTorus     = mode === 'torus';
+    const isLiss      = mode === 'lissajous';
+    const isBurst     = mode === '2';
+    const isBeatFlash = mode === 'beatflash';
+
+    // sep group (line count)
+    sepGroup.classList.toggle('ctrl-disabled', !isBurst);
+    // liss density
+    lissDensityGroup.classList.toggle('hidden-ctrl', !isLiss);
+    // torus-only controls
+    torusSpacingGroup.classList.toggle('hidden-ctrl', !isTorus);
+    torusColorSpeedGroup.classList.toggle('hidden-ctrl', !isTorus);
+    btnTorusColorToggle.classList.toggle('hidden-ctrl', !isTorus);
+    // thickness — hidden in Beat Flash
+    thicknessGroup.classList.toggle('hidden-ctrl', isBeatFlash);
+    // rotation toggle — hidden in Beat Flash
+    btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash);
+}
+
 document.getElementById('mode-selector').onchange = e => {
     const newMode = e.target.value;
 
     if (newMode === 'torus') {
-        // localStorage for "don't show again"
         let skip = false;
         try { skip = localStorage.getItem('torus-skip-warning') === '1'; } catch(ex) {}
         if (skip) {
@@ -1161,13 +1195,19 @@ document.getElementById('mode-selector').onchange = e => {
     }
 
     state.mode = newMode;
-    sepGroup.classList.toggle('ctrl-disabled', newMode !== '2');
-    lissDensityGroup.classList.toggle('hidden-ctrl', newMode !== 'lissajous');
-    torusSpacingGroup.classList.add('hidden-ctrl');
-    torusColorSpeedGroup.classList.add('hidden-ctrl');
-    btnTorusColorToggle.classList.add('hidden-ctrl');
+    setVisualControls(newMode);
+
     if (newMode !== 'torus') torusHistory.length = 0;
-    gpuBadge.classList.remove('visible');
+    if (newMode !== 'torus' && newMode !== 'ncs') gpuBadge.classList.remove('visible');
+
+    // Reset beat flash inversion when leaving/entering
+    if (newMode === 'beatflash') {
+        bfInverted   = false;
+        bfBeatCount  = 0;
+        bfBeatPulse  = 0;
+        bfEnergyHist.fill(0);
+        bfEHistIdx = 0;
+    }
 };
 
 document.getElementById('color-picker').oninput = e => {
@@ -1203,7 +1243,6 @@ bindSlider('torus-color-speed', v => {
     state.torusColorSpeed = v;
 });
 
-// toggle Torus Color Change 
 btnTorusColorToggle.addEventListener('click', () => {
     state.torusColorEnabled = !state.torusColorEnabled;
     btnTorusColorToggle.textContent = 'Toggle: Torus Color Change ' + (state.torusColorEnabled ? '✓' : '✗');
@@ -1211,7 +1250,6 @@ btnTorusColorToggle.addEventListener('click', () => {
         (state.torusColorEnabled ? 'btn-toggle-on' : 'btn-toggle-off');
 });
 
-// toggle Rotation
 btnRotationToggle.addEventListener('click', () => {
     state.rotationEnabled = !state.rotationEnabled;
     btnRotationToggle.textContent = 'Toggle: Rotation ' + (state.rotationEnabled ? '✓' : '✗');
@@ -1420,7 +1458,6 @@ function drawTorusGPU(vFreq, vTime, w, h) {
     uniforms[9]  = w;
     uniforms[10] = h;
     uniforms[11] = fxParams.crush;
-    // New: colorSpeed (0 = use glow color, >0 = rainbow at this speed)
     uniforms[12] = state.torusColorEnabled ? state.torusColorSpeed : 0;
     uniforms[13] = col.r / 255;
     uniforms[14] = col.g / 255;
@@ -1509,7 +1546,6 @@ function draw(){
     updateFps();
     if(!analyser) return;
 
-    // Only advance phase if rotation is enabled
     if (state.rotationEnabled) drawPhase += 0.012 * fxParams.speed;
 
     const bufLen=analyser.frequencyBinCount;
@@ -1545,7 +1581,9 @@ function draw(){
 
     // CPU 2D canvas render
     const bg = hexToRgb(state.bgColor);
-    const trailAlpha = 0.08 + (1 - Math.min((fxParams.reverb-0.1)/4.9, 1)) * 0.32;
+    const trailAlpha = state.mode === 'beatflash'
+        ? 1.0  // Beat Flash uses solid fill for hard inversion
+        : 0.08 + (1 - Math.min((fxParams.reverb-0.1)/4.9, 1)) * 0.32;
     mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
     mainCtx.fillRect(0,0,w,h);
 
@@ -1586,7 +1624,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // Chaotic Waveform 
+    // Chaotic Waveform
     } else if(state.mode==='0'){
         const slice=w/bufLen; let x=0;
         for(let i=0;i<bufLen;i++){
@@ -1598,7 +1636,7 @@ function draw(){
         }
         mainCtx.stroke();
 
-    // Frequency Circles 
+    // Frequency Circles
     } else if(state.mode==='1'){
         const baseR=(w/bufLen)*3*state.thickness; let x=0;
         for(let i=0;i<bufLen;i+=2){
@@ -1713,7 +1751,7 @@ function draw(){
         mainCtx.arc(cx, cy, R * 0.55, 0, Math.PI * 2);
         mainCtx.fill();
 
-    // Rain Lines 
+    // Rain Lines
     } else if(state.mode==='rainlines'){
         const col      = hexToRgb(state.color);
         const avgVol   = getAvgVolume(vFreq);
@@ -1811,7 +1849,6 @@ function draw(){
 
         const cosTX = Math.cos(torusCamRotX);
         const sinTX = Math.sin(torusCamRotX);
-        // rotOffset only advances if rotation is on (drawPhase frozen otherwise)
         const rotOffset = drawPhase * 0.09 * fxParams.speed + torusCamRotY;
 
         const BANDS = [
@@ -1837,7 +1874,6 @@ function draw(){
                 const hue = ((bi * 70) + hi * (300 / TORUS_HIST_MAX) + drawPhase * 20 * state.torusColorSpeed) % 360;
                 const lw  = Math.max(0.3, (1.7 * state.thickness) * (1 - histT * 0.5));
 
-                // Color: rainbow or glow color
                 if (state.torusColorEnabled) {
                     mainCtx.strokeStyle = `hsla(${hue}, 100%, 63%, ${alpha})`;
                     mainCtx.shadowColor = `hsl(${hue}, 100%, 63%)`;
@@ -1845,7 +1881,6 @@ function draw(){
                     mainCtx.strokeStyle = `rgba(${col2.r},${col2.g},${col2.b},${alpha})`;
                     mainCtx.shadowColor = state.color;
                 }
-                // Glow is now user-controllable
                 mainCtx.shadowBlur  = state.glow * 8 * (1 - histT * 0.7);
                 mainCtx.lineWidth   = lw;
                 mainCtx.lineCap     = 'round';
@@ -1865,8 +1900,7 @@ function draw(){
 
                     const ageScale = 1 - histT * 0.38;
 
-                    // Spikes go UPWARD (vertical Y-axis) instead of radially
-                    const r = ringR; // ring radius stays fixed — no radial expansion
+                    const r = ringR;
                     const rx     = r * cosTheta;
                     const ry_raw = -freq * 80 * state.thickness * band.spikeScale * ageScale;
                     const rz     = r * sinTheta;
@@ -1887,7 +1921,6 @@ function draw(){
             }
         }
 
-        // Rainbow triangle
         if (state.rotationEnabled) triangleHue = (triangleHue + 8 * state.torusColorSpeed) % 360;
         const triSize = baseRingR * 0.20;
         const triSpin = drawPhase * 0.6;
@@ -1911,6 +1944,188 @@ function draw(){
             mainCtx.beginPath();
             mainCtx.moveTo(a.x, a.y);
             mainCtx.lineTo(b.x, b.y);
+            mainCtx.stroke();
+        }
+
+        mainCtx.shadowBlur = 0;
+
+    // ══ BEAT FLASH ══
+    } else if (state.mode === 'beatflash') {
+
+        // ── Beat detection (RMS energy on bass band vs. running average) ──
+        {
+            const bassEnd = Math.max(2, Math.floor(bufLen * 0.09));
+            let instantE  = 0;
+            for (let i = 1; i < bassEnd; i++) {
+                const v = vFreq[i] / 255;
+                instantE += v * v;
+            }
+            instantE = Math.sqrt(instantE / (bassEnd - 1));
+
+            bfEnergyHist[bfEHistIdx] = instantE;
+            bfEHistIdx = (bfEHistIdx + 1) % bfEnergyHist.length;
+
+            let avgE = 0;
+            for (let i = 0; i < bfEnergyHist.length; i++) avgE += bfEnergyHist[i];
+            avgE /= bfEnergyHist.length;
+
+            const now      = performance.now();
+            // Beat fires when instant energy is notably above the rolling average
+            // and enough time has passed since last beat (prevents double-triggers)
+            const isBeat   = instantE > avgE * 1.38 && instantE > 0.07 && now - bfLastBeatTime > 195;
+
+            if (isBeat) {
+                bfLastBeatTime = now;
+                bfBeatPulse    = 1.0;
+                bfBeatCount++;
+                // Toggle color inversion every 4th beat
+                if (bfBeatCount % 4 === 0) {
+                    bfInverted = !bfInverted;
+                }
+            } else {
+                // Smooth exponential decay — fast enough to feel punchy
+                bfBeatPulse *= 0.80;
+            }
+        }
+
+        // ── Derive fg / bg from glow color and background color ──
+        // When inverted: swap them so bg becomes the drawing color and vice versa
+        const fgHex  = bfInverted ? state.bgColor : state.color;
+        const bgHex  = bfInverted ? state.color   : state.bgColor;
+        const fgRgb  = hexToRgb(fgHex);
+        const bgRgb2 = hexToRgb(bgHex);
+
+        // Hard solid background fill (no trail — enables crisp inversion snap)
+        mainCtx.fillStyle = bgHex;
+        mainCtx.fillRect(0, 0, w, h);
+
+        const cx    = w / 2;
+        const cy    = h / 2;
+        const maxR  = Math.min(w, h) * 0.44;
+        const bassE2 = getBassEnergy(vFreq);
+        const avgV2  = getAvgVolume(vFreq);
+
+        mainCtx.lineCap  = 'round';
+        mainCtx.lineJoin = 'round';
+
+        // ── 8 concentric polar waveform rings ──
+        // Each ring covers a different frequency band and rotates at its own speed.
+        // Audio modulates the radius outward, creating complex organic interference
+        // patterns that look exactly like TD vectorscope / oscilloscope feedback.
+        for (let ring = 0; ring < BF_RINGS; ring++) {
+            const t      = ring / (BF_RINGS - 1);              // 0 (innermost) → 1 (outermost)
+            const baseR  = maxR * (0.08 + t * 0.92);
+            // Alternating rotation directions for interference-pattern aesthetics
+            const dir    = ring % 2 === 0 ? 1 : -1;
+            const speed  = (0.018 + ring * 0.007) * dir;
+            const phase  = drawPhase * speed;
+
+            // Frequency band: inner rings → low freqs, outer rings → high freqs
+            const bandFrac  = t;
+            const bandStart = Math.floor(bandFrac * bufLen * 0.62);
+            const bandRange = Math.max(1, Math.floor(bufLen * 0.10));
+            const bandEnd   = Math.min(bufLen - 1, bandStart + bandRange);
+
+            // Line width and glow taper from inner (thick/bright) to outer (thin/dim)
+            const lw      = Math.max(0.25, (1.6 - t * 1.0) * (0.8 + bassE2 * 0.8));
+            // Beat pulse amplifies glow; inner rings glow more than outer ones
+            const glowAmt = state.glow * (7 + bassE2 * 22 + bfBeatPulse * 28) * (0.55 + (1 - t) * 0.45);
+
+            mainCtx.lineWidth  = lw;
+            mainCtx.shadowBlur = glowAmt;
+            mainCtx.shadowColor = fgHex;
+            mainCtx.strokeStyle = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${0.55 + (1 - t) * 0.45})`;
+
+            mainCtx.beginPath();
+            for (let i = 0; i <= BF_PTS; i++) {
+                const angle = (i / BF_PTS) * Math.PI * 2 + phase;
+
+                // Mix frequency energy into radius
+                const binI  = bandStart + Math.min(Math.floor((i / BF_PTS) * bandRange), bandRange - 1);
+                const freq  = vFreq[Math.max(0, Math.min(bufLen - 1, binI))] / 255;
+
+                // Mix time-domain oscillation into radius (creates the wobbly texture)
+                const timeI = Math.floor((i / BF_PTS) * bufLen);
+                const ts    = (vTime[Math.min(timeI, bufLen - 1)] - 128) / 128;
+
+                // Composed radius: base ring + frequency expansion + time-domain flutter
+                const rMod = baseR * (
+                    1.0
+                    + freq * 0.42 * fxParams.bass
+                    + ts   * 0.09 * fxParams.volume
+                );
+
+                const px = cx + Math.cos(angle) * rMod;
+                const py = cy + Math.sin(angle) * rMod;
+                i === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+            }
+            mainCtx.closePath();
+            mainCtx.stroke();
+        }
+
+        // ── Radial burst spokes on every detected beat ──
+        // Short lines pointing outward from a mid-radius circle — highly TD-like.
+        if (bfBeatPulse > 0.18) {
+            const spokeCount = 32;
+            const innerR     = maxR * 0.50;
+            const outerR     = maxR * (0.52 + bfBeatPulse * 0.12);
+            mainCtx.lineWidth  = Math.max(0.3, 0.9 * bfBeatPulse);
+            mainCtx.shadowBlur = state.glow * 18 * bfBeatPulse;
+            mainCtx.shadowColor = fgHex;
+            mainCtx.strokeStyle = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${bfBeatPulse * 0.75})`;
+            mainCtx.beginPath();
+            for (let i = 0; i < spokeCount; i++) {
+                const angle = (i / spokeCount) * Math.PI * 2 + drawPhase * 0.04;
+                mainCtx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
+                mainCtx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+            }
+            mainCtx.stroke();
+        }
+
+        // ── Centre XY-scope (Lissajous mini) ──
+        // The tiny XY scope in the centre mirrors the original Lissajous mode
+        // but scaled down — it creates the "eye" that's characteristic of TD visuals.
+        {
+            const lissR   = maxR * 0.10;
+            const lissScl = lissR * 1.85;
+            // Use a small offset so it doesn't just draw a straight line
+            const lissOff = Math.max(1, Math.floor(bufLen * 0.013));
+            const lissLen = Math.min(vRaw.length, 1024);
+
+            mainCtx.lineWidth   = Math.max(0.4, 1.1 * (0.7 + bassE2));
+            mainCtx.shadowBlur  = state.glow * (14 + bfBeatPulse * 24);
+            mainCtx.shadowColor  = fgHex;
+            mainCtx.strokeStyle  = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},0.92)`;
+
+            mainCtx.beginPath();
+            for (let i = 0; i < lissLen; i++) {
+                const nx  = (vRaw[i] - 128) / 128;
+                const ny  = (vRaw[(i + lissOff) % lissLen] - 128) / 128;
+                const px  = cx + nx * lissScl;
+                const py  = cy + ny * lissScl;
+                i === 0 ? mainCtx.moveTo(px, py) : mainCtx.lineTo(px, py);
+            }
+            mainCtx.stroke();
+        }
+
+        // ── Subtle hairline grid (adds depth, very low cost) ──
+        // Only drawn when there is audio energy; fades with the beat pulse.
+        if (avgV2 > 0.02) {
+            const gridAlpha = Math.min(0.06, avgV2 * 0.14) * (1 + bfBeatPulse * 0.4);
+            mainCtx.lineWidth   = 0.4;
+            mainCtx.shadowBlur  = 0;
+            mainCtx.strokeStyle = `rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${gridAlpha})`;
+
+            const gridStep = Math.round(Math.min(w, h) / 12);
+            mainCtx.beginPath();
+            // Vertical lines
+            for (let gx = cx % gridStep; gx < w; gx += gridStep) {
+                mainCtx.moveTo(gx, 0); mainCtx.lineTo(gx, h);
+            }
+            // Horizontal lines
+            for (let gy = cy % gridStep; gy < h; gy += gridStep) {
+                mainCtx.moveTo(0, gy); mainCtx.lineTo(w, gy);
+            }
             mainCtx.stroke();
         }
 
