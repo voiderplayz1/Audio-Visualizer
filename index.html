@@ -275,12 +275,11 @@ input[type="file"] { display:none; }
             <input type="color" id="bg-color-picker" value="#050505">
         </div>
 
-        <div class="color-row" id="ink-coloring-group">
+        <div class="color-row hidden-ctrl" id="ink-coloring-group">
             <span class="ctrl-label">Coloring</span>
             <input type="color" id="ink-coloring-picker" value="#ffffff">
         </div>
-
-        <div class="ctrl-row" id="fluid-speed-group">
+        <div class="ctrl-row hidden-ctrl" id="fluid-speed-group">
             <label class="ctrl-label"><span>Fluid speed</span><span class="ctrl-val" id="val-fluid-speed">1.00</span></label>
             <input type="range" id="fx-fluid-speed" min="0.1" max="5.0" step="0.01" value="1.0">
         </div>
@@ -1011,9 +1010,10 @@ function setVisualControls(mode) {
     document.getElementById('ink-coloring-group').classList.toggle('hidden-ctrl', !isInk);
     document.getElementById('fluid-speed-group').classList.toggle('hidden-ctrl', !isInk);
     
-    // Hidden IN Beat Flash & Ink Fluid
+    // Hidden IN Beat Flash and Ink Fluid
     document.getElementById('glow-group').classList.toggle('hidden-ctrl', isBeatFlash || isInk);
     thicknessGroup.classList.toggle('hidden-ctrl', isBeatFlash || isInk);
+    
     btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash);
 }
 
