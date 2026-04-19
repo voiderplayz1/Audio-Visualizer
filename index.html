@@ -274,14 +274,9 @@ input[type="file"] { display:none; }
             <span class="ctrl-label">Background color</span>
             <input type="color" id="bg-color-picker" value="#050505">
         </div>
-
-        <div class="color-row hidden-ctrl" id="ink-coloring-group">
+        <div class="color-row" id="ink-coloring-group">
             <span class="ctrl-label">Coloring</span>
             <input type="color" id="ink-coloring-picker" value="#ffffff">
-        </div>
-        <div class="ctrl-row hidden-ctrl" id="fluid-speed-group">
-            <label class="ctrl-label"><span>Fluid speed</span><span class="ctrl-val" id="val-fluid-speed">1.00</span></label>
-            <input type="range" id="fx-fluid-speed" min="0.1" max="5.0" step="0.01" value="1.0">
         </div>
 
         <div class="ctrl-row" id="thickness-group">
@@ -437,6 +432,7 @@ const state = {
     mode: 'lissajous',
     color: '#ffffff',
     bgColor: '#050505',
+    inkColoring: '#ffffff',
     thickness: 1,
     glow: 1,
     lineCount: 15,
@@ -447,8 +443,6 @@ const state = {
     torusColorSpeed: 1,
     rotationEnabled: true,
     bfParticleIntensity: 1.0,
-    inkColoring: '#ffffff',
-    fluidSpeed: 1.0,
 };
 
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
@@ -672,17 +666,17 @@ function hexToRgb(hex) {
     return { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
 }
 
-// ══ WebGL Beat Flash renderer ══
-let bfGlCanvas=null, bfGl=null, bfProgram=null;
-let bfFreqTex=null, bfTimeTex=null;
-let bfUniforms={}, bfGlReady=false;
-const bfFreqBuf=new Uint8Array(1024), bfTimeBuf=new Uint8Array(1024);
-
 // ── Ink Fluid WebGL ──
 let inkGlCanvas = null, inkGl = null, inkProgram = null;
 let inkFreqTex = null, inkVAO = null;
 let inkUniforms = {}, inkGlReady = false;
 const inkFreqData = new Uint8Array(1024);
+
+// ══ WebGL Beat Flash renderer ══
+let bfGlCanvas=null, bfGl=null, bfProgram=null;
+let bfFreqTex=null, bfTimeTex=null;
+let bfUniforms={}, bfGlReady=false;
+const bfFreqBuf=new Uint8Array(1024), bfTimeBuf=new Uint8Array(1024);
 
 function initBeatFlashGL() {
     if (bfGlReady) return;
@@ -802,75 +796,81 @@ function initInkGL() {
     inkGl = gl;
 
     const VSRC = `#version 300 es
-    void main(){
-        vec2 p[6];
-        p[0]=vec2(-1,-1);p[1]=vec2(1,-1);p[2]=vec2(-1,1);
-        p[3]=vec2(-1,1); p[4]=vec2(1,-1); p[5]=vec2(1,1);
-        gl_Position=vec4(p[gl_VertexID],0,1);
-    }`;
+void main(){
+    vec2 p[6];
+    p[0]=vec2(-1,-1);p[1]=vec2(1,-1);p[2]=vec2(-1,1);
+    p[3]=vec2(-1,1); p[4]=vec2(1,-1); p[5]=vec2(1,1);
+    gl_Position=vec4(p[gl_VertexID],0,1);
+}`;
 
     const FSRC = `#version 300 es
-    precision highp float;
-    uniform float uTime, uBass, uVolume, uWidth, uHeight, uFluidSpeed;
-    uniform vec3  uInkColor, uBgColor;
-    uniform sampler2D uFreqTex;
-    out vec4 fragColor;
-
-    vec2 hash2(vec2 p){
-        p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));
-        return fract(sin(p)*43758.5453)*2.0-1.0;
+precision highp float;
+uniform float uTime,uBass,uVolume,uWidth,uHeight;
+uniform vec3  uInkColor,uBgColor;
+uniform sampler2D uFreqTex;
+out vec4 fragColor;
+vec2 hash2(vec2 p){
+    p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));
+    return fract(sin(p)*43758.5453)*2.0-1.0;
+}
+float gnoise(vec2 p){
+    vec2 i=floor(p),f=fract(p),u=f*f*(3.0-2.0*f);
+    return mix(mix(dot(hash2(i),f),
+                   dot(hash2(i+vec2(1,0)),f-vec2(1,0)),u.x),
+               mix(dot(hash2(i+vec2(0,1)),f-vec2(0,1)),
+                   dot(hash2(i+vec2(1,1)),f-vec2(1,1)),u.x),u.y);
+}
+float fbm(vec2 p,int oct){
+    float v=0.0,a=0.5;
+    for(int i=0;i<8;i++){
+        if(i>=oct)break;
+        v+=a*gnoise(p);
+        p=p*2.07+vec2(3.7,1.3)*float(i+1);
+        a*=0.48;
     }
-    float gnoise(vec2 p){
-        vec2 i=floor(p),f=fract(p),u=f*f*(3.0-2.0*f);
-        return mix(mix(dot(hash2(i),f), dot(hash2(i+vec2(1,0)),f-vec2(1,0)),u.x),
-                   mix(dot(hash2(i+vec2(0,1)),f-vec2(0,1)), dot(hash2(i+vec2(1,1)),f-vec2(1,1)),u.x),u.y);
-    }
-    float fbm(vec2 p, int oct){
-        float v=0.0, a=0.5;
-        for(int i=0; i<8; i++){
-            if(i>=oct) break;
-            v+=a*gnoise(p);
-            p=p*2.07+vec2(3.7,1.3)*float(i+1);
-            a*=0.5;
-        }
-        return v;
-    }
-
-    void main(){
-        vec2 uv=gl_FragCoord.xy/vec2(uWidth,uHeight);
-        uv=(uv*2.0-1.0)*vec2(uWidth/uHeight,1.0);
-
-        float fBass = texture(uFreqTex, vec2(0.05, 0.5)).r;
-        float fHigh = texture(uFreqTex, vec2(0.80, 0.5)).r;
-
-        float t = uTime * uFluidSpeed * 0.15;
-
-        // Level 1: Macro audio warp
-        float bWarp = 1.0 + fBass*2.5*uBass + uVolume*0.3;
-        vec2 q = vec2(fbm(uv*1.5 + vec2(t*0.2, t*0.3), 5),
-                      fbm(uv*1.5 + vec2(5.2-t*0.1, 1.3+t*0.2), 5));
-
-        // Level 2: Micro audio warp
-        vec2 r = vec2(fbm(uv*2.0 + bWarp*q + vec2(1.7, 9.2) + t*0.15, 6),
-                      fbm(uv*2.0 + bWarp*q + vec2(8.3, 2.8) - t*0.12, 6));
-
-        // High frequency detail driven by treble (creates the breaking-apart edges)
-        float detail = fbm(uv*12.0 + r*5.0 + t*0.5, 4);
-
-        // Core fluid structure
-        float f = fbm(uv*2.5 + r*1.5 + detail*(0.3 + fHigh*0.8), 6);
-        
-        // Add raw noise speckles at the edge for the spraypaint granularity
-        float sprayNoise = hash2(uv * 300.0 + t).x;
-        f += sprayNoise * 0.15 * fHigh * uVolume; 
-
-        // Razor-sharp threshold for solid color blocks
-        float thresh = 0.50 + fBass * 0.08 * uBass;
-        float edge = smoothstep(thresh - 0.015, thresh + 0.015, f);
-
-        vec3 col = mix(uBgColor, uInkColor, edge);
-        fragColor = vec4(col, 1.0);
-    }`;
+    return v;
+}
+void main(){
+    vec2 uv=gl_FragCoord.xy/vec2(uWidth,uHeight);
+    uv=(uv*2.0-1.0)*vec2(uWidth/uHeight,1.0);
+    float fBass=texture(uFreqTex,vec2(0.025,0.5)).r;
+    float fMid =texture(uFreqTex,vec2(0.22, 0.5)).r;
+    float fHigh=texture(uFreqTex,vec2(0.72, 0.5)).r;
+    float t=uTime*0.10;
+    // level 1 warp
+    float bWarp=1.3+fBass*2.5*uBass+uVolume*0.2;
+    vec2 q=vec2(
+        fbm(uv*1.1+vec2(t*0.31,t*0.13),5),
+        fbm(uv*1.1+vec2(5.2+t*0.22,1.7+t*0.09),5)
+    );
+    // level 2 warp
+    float mWarp=0.8+fMid*1.4;
+    vec2 r=vec2(
+        fbm(uv*1.3+bWarp*q+vec2(1.7,9.2)+vec2(t*0.17,0.0),5),
+        fbm(uv*1.3+bWarp*q+vec2(8.3,2.8)+vec2(0.0,t*0.14),5)
+    );
+    // main marble value
+    float f=fbm(uv*1.5+mWarp*r,6);
+    // fine breaking-apart detail driven by highs
+    float fine=fbm(uv*5.5+r*3.0+vec2(t*0.68,t*0.27),4);
+    f=mix(f, fine*0.7, 0.22+fHigh*0.40);
+    f=clamp(f*0.5+0.5,0.0,1.0);
+    // ink path threshold
+    float thresh=0.50+fBass*0.035*uBass;
+    float sharp=22.0+fBass*18.0*uBass;
+    float inkEdge=smoothstep(thresh-0.5/sharp, thresh+0.5/sharp, f);
+    // granular diffuse in bright zone
+    float grain=fbm(uv*11.0+q*5.0+vec2(t*1.2,t*0.5),3)*0.5+0.5;
+    float bright=inkEdge*(0.60+grain*0.40);
+    bright=pow(clamp(bright,0.0,1.0),0.80);
+    // feathered edge bleeding into dark
+    float feather=exp(-abs(f-thresh)*sharp*0.28)*0.55;
+    bright=clamp(bright+feather,0.0,1.0);
+    vec3 col=mix(uBgColor,uInkColor,bright);
+    // luminance variation in lit zones so it never looks flat
+    col=mix(col, uInkColor*(0.72+grain*0.28), inkEdge*0.35);
+    fragColor=vec4(col,1.0);
+}`;
 
     function compile(type, src) {
         const s = gl.createShader(type);
@@ -880,18 +880,15 @@ function initInkGL() {
         }
         return s;
     }
-
     const vs = compile(gl.VERTEX_SHADER, VSRC);
     const fs = compile(gl.FRAGMENT_SHADER, FSRC);
     if (!vs || !fs) return;
     inkProgram = gl.createProgram();
     gl.attachShader(inkProgram, vs); gl.attachShader(inkProgram, fs); gl.linkProgram(inkProgram);
-    
     if (!gl.getProgramParameter(inkProgram, gl.LINK_STATUS)) {
         console.warn('Ink link error:', gl.getProgramInfoLog(inkProgram)); return;
     }
-
-    ['uTime','uBass','uVolume','uWidth','uHeight','uInkColor','uBgColor','uFluidSpeed','uFreqTex']
+    ['uTime','uBass','uVolume','uWidth','uHeight','uInkColor','uBgColor','uFreqTex']
         .forEach(n => inkUniforms[n] = gl.getUniformLocation(inkProgram, n));
 
     inkFreqTex = gl.createTexture();
@@ -901,7 +898,6 @@ function initInkGL() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    
     inkVAO = gl.createVertexArray();
     gl.bindVertexArray(inkVAO);
     inkGlReady = true;
@@ -918,23 +914,18 @@ function drawInkGL(vFreq, w, h) {
     const fLen = Math.min(vFreq.length, 1024);
     inkFreqData.fill(0);
     for (let i = 0; i < fLen; i++) inkFreqData[i] = vFreq[i];
-    
     gl.bindTexture(gl.TEXTURE_2D, inkFreqTex);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1024, 1, gl.RED, gl.UNSIGNED_BYTE, inkFreqData);
-    
     const ink = hexToRgb(state.inkColoring);
     const bg  = hexToRgb(state.bgColor);
-    
     gl.useProgram(inkProgram);
-    gl.uniform1f(inkUniforms.uTime,       drawPhase);
-    gl.uniform1f(inkUniforms.uBass,       fxParams.bass);
-    gl.uniform1f(inkUniforms.uVolume,     fxParams.volume);
-    gl.uniform1f(inkUniforms.uFluidSpeed, state.fluidSpeed);
-    gl.uniform1f(inkUniforms.uWidth,      w);
-    gl.uniform1f(inkUniforms.uHeight,     h);
-    gl.uniform3f(inkUniforms.uInkColor,   ink.r/255, ink.g/255, ink.b/255);
-    gl.uniform3f(inkUniforms.uBgColor,    bg.r/255,  bg.g/255,  bg.b/255);
-    
+    gl.uniform1f(inkUniforms.uTime,   drawPhase);
+    gl.uniform1f(inkUniforms.uBass,   fxParams.bass);
+    gl.uniform1f(inkUniforms.uVolume, fxParams.volume);
+    gl.uniform1f(inkUniforms.uWidth,  w);
+    gl.uniform1f(inkUniforms.uHeight, h);
+    gl.uniform3f(inkUniforms.uInkColor, ink.r/255, ink.g/255, ink.b/255);
+    gl.uniform3f(inkUniforms.uBgColor,  bg.r/255,  bg.g/255,  bg.b/255);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, inkFreqTex);
     gl.uniform1i(inkUniforms.uFreqTex, 0);
@@ -1005,16 +996,12 @@ function setVisualControls(mode) {
     btnTorusColorToggle.classList.toggle('hidden-ctrl', !isTorus);
     // Beat Flash only
     bfParticleGroup.classList.toggle('hidden-ctrl', !isBeatFlash);
-    
-    // Ink Fluid only
+    // Hidden IN Beat Flash
+    btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash);
+
     document.getElementById('ink-coloring-group').classList.toggle('hidden-ctrl', !isInk);
-    document.getElementById('fluid-speed-group').classList.toggle('hidden-ctrl', !isInk);
-    
-    // Hidden IN Beat Flash and Ink Fluid
     document.getElementById('glow-group').classList.toggle('hidden-ctrl', isBeatFlash || isInk);
     thicknessGroup.classList.toggle('hidden-ctrl', isBeatFlash || isInk);
-    
-    btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash);
 }
 
 // Torus warning
@@ -1243,7 +1230,6 @@ bindSlider('separation',v=>{state.lineCount=Math.round(v);document.getElementByI
 bindSlider('torus-spacing',v=>state.torusSpacing=v);
 bindSlider('torus-color-speed',v=>state.torusColorSpeed=v);
 bindSlider('bf-particles',v=>state.bfParticleIntensity=v);
-bindSlider('fluid-speed', v => state.fluidSpeed = v);
 
 btnTorusColorToggle.addEventListener('click',()=>{
     state.torusColorEnabled=!state.torusColorEnabled;
@@ -1862,8 +1848,8 @@ function draw(){
         if (glOk) {
             mainCtx.drawImage(inkGlCanvas, 0, 0);
         } else {
-            mainCtx.fillStyle = state.bgColor; 
-            mainCtx.fillRect(0, 0, w, h);
+            const bg2 = hexToRgb(state.bgColor);
+            mainCtx.fillStyle = state.bgColor; mainCtx.fillRect(0, 0, w, h);
             mainCtx.fillStyle = state.inkColoring;
             mainCtx.font = 'italic 1rem EB Garamond, serif';
             mainCtx.textAlign = 'center';
