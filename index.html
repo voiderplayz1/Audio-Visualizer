@@ -446,6 +446,7 @@ const state = {
     torusColorSpeed: 1,
     rotationEnabled: true,
     bfParticleIntensity: 1.0,
+    fluidCrush: 1.0,
 };
 
 const fxParams = { volume:1, bass:1, reverb:0.1, crush:1, speed:1 };
@@ -1210,7 +1211,7 @@ bindSlider('separation',v=>{state.lineCount=Math.round(v);document.getElementByI
 bindSlider('torus-spacing',v=>state.torusSpacing=v);
 bindSlider('torus-color-speed',v=>state.torusColorSpeed=v);
 bindSlider('bf-particles',v=>state.bfParticleIntensity=v);
-bindSlider('fluid-crush', v => {});
+bindSlider('fluid-crush', v => state.fluidCrush = v);
 
 btnTorusColorToggle.addEventListener('click',()=>{
     state.torusColorEnabled=!state.torusColorEnabled;
@@ -1443,7 +1444,7 @@ function draw(){
             
             const bgCol = hexToRgbA(document.getElementById('bg-color-picker').value);
             const sprayCol = hexToRgbA(document.getElementById('coloring-picker').value);
-            glFluid.uniform1f(fluidUniforms.crushAmount, parseFloat(document.getElementById('fx-fluid-crush').value));
+            glFluid.uniform1f(fluidUniforms.crushAmount, state.fluidCrush);
             
             glFluid.uniform3f(fluidUniforms.bgColor, bgCol[0], bgCol[1], bgCol[2]);
             glFluid.uniform3f(fluidUniforms.coloring, sprayCol[0], sprayCol[1], sprayCol[2]);
