@@ -280,7 +280,7 @@ input[type="file"] { display:none; }
         </div>
         <div class="ctrl-row hidden-ctrl" id="fluid-crush-group">
             <label class="ctrl-label"><span>Fluid static</span><span class="ctrl-val" id="val-fluid-crush">1.00</span></label>
-            <input type="range" id="fx-fluid-crush" min="0.0" max="5.0" step="0.05" value="1.0">
+            <input type="range" id="fx-fluid-crush" min="0.0" max="5.0" step="0.05" value="0.20">
         </div>
 
         <div class="ctrl-row" id="thickness-group">
@@ -289,7 +289,7 @@ input[type="file"] { display:none; }
         </div>
         <div class="ctrl-row">
             <label class="ctrl-label"><span>Glow</span><span class="ctrl-val" id="val-glow">1.00</span></label>
-            <input type="range" id="fx-glow" min="0.0" max="5.0" step="0.01" value="1.0">
+            <input type="range" id="fx-glow" min="0.0" max="5.0" step="0.01" value="0.75">
         </div>
 
         <div class="ctrl-row" id="liss-density-group">
@@ -299,7 +299,7 @@ input[type="file"] { display:none; }
 
         <div class="ctrl-row" id="sep-group">
             <label class="ctrl-label"><span>Line count</span><span class="ctrl-val" id="val-separation">15</span></label>
-            <input type="range" id="fx-separation" min="10" max="2500" step="1" value="15">
+            <input type="range" id="fx-separation" min="10" max="2500" step="1" value="400">
         </div>
 
         <div class="ctrl-row" id="torus-spacing-group">
@@ -437,8 +437,8 @@ const state = {
     color: '#ffffff',
     bgColor: '#050505',
     thickness: 1,
-    glow: 0.50,
-    lineCount: 150,
+    glow: 0.75,
+    lineCount: 400,
     lissOffset: 45,
     lissSpread: 0.28,
     torusSpacing: 0.5,
