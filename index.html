@@ -278,6 +278,10 @@ input[type="file"] { display:none; }
             <span class="ctrl-label">Coloring (Path Surround)</span>
             <input type="color" id="coloring-picker" value="#ffffff">
         </div>
+        <div class="ctrl-row" id="fluid-crush-group" style="display:none;">
+            <label class="ctrl-label"><span>Fluid static</span><span class="ctrl-val" id="val-fluid-crush">1.00</span></label>
+            <input type="range" id="fx-fluid-crush" min="0.0" max="5.0" step="0.05" value="1.0">
+        </div>
 
         <div class="ctrl-row" id="thickness-group">
             <label class="ctrl-label"><span>Thickness</span><span class="ctrl-val" id="val-thickness">1.00</span></label>
@@ -500,6 +504,7 @@ const fluidFragmentShaderSource = `
     uniform float u_audioLow;
     uniform float u_audioMid;
     uniform vec3 u_bgColor;
+    uniform float u_crushAmount;
     uniform vec3 u_coloring;
 
     float hash(vec2 p) { 
@@ -536,7 +541,7 @@ const fluidFragmentShaderSource = `
 
         // Create the "spraypaint" pixelation / granular breakdown effect driven by mid tones
         vec2 pixelizedUV = floor(uv * 150.0) / 150.0;
-        float breakApart = (hash(pixelizedUV + t) - 0.5) * (u_audioMid * 0.8);
+        float breakApart = (hash(pixelizedUV + t) - 0.5) * (u_audioMid * 0.8) * u_crushAmount;
 
         // Final distortion map
         float f = fbm(uv + 3.0*r + t * 0.2) + breakApart;
@@ -583,6 +588,7 @@ if(glFluid) {
         audioMid: glFluid.getUniformLocation(fluidProgram, "u_audioMid"),
         bgColor: glFluid.getUniformLocation(fluidProgram, "u_bgColor"),
         coloring: glFluid.getUniformLocation(fluidProgram, "u_coloring"),
+        crushAmount: glFluid.getUniformLocation(fluidProgram, "u_crushAmount"),
     };
 }
 
@@ -963,7 +969,9 @@ function setVisualControls(mode) {
     const glowGroup = document.getElementById('fx-glow').closest('.ctrl-row');
     const glowColorGroup = document.getElementById('color-picker').closest('.color-row');
     const coloringGroup = document.getElementById('coloring-group');
+    const fluidCrushGroup = document.getElementById('fluid-crush-group');
     
+    if (fluidCrushGroup) fluidCrushGroup.classList.toggle('hidden-ctrl', !isFluid);
     if (glowGroup) glowGroup.classList.toggle('hidden-ctrl', isFluid);
     if (glowColorGroup) glowColorGroup.classList.toggle('hidden-ctrl', isFluid);
     if (coloringGroup) coloringGroup.classList.toggle('hidden-ctrl', !isFluid);
@@ -1202,6 +1210,7 @@ bindSlider('separation',v=>{state.lineCount=Math.round(v);document.getElementByI
 bindSlider('torus-spacing',v=>state.torusSpacing=v);
 bindSlider('torus-color-speed',v=>state.torusColorSpeed=v);
 bindSlider('bf-particles',v=>state.bfParticleIntensity=v);
+bindSlider('fluid-crush', v => {});
 
 btnTorusColorToggle.addEventListener('click',()=>{
     state.torusColorEnabled=!state.torusColorEnabled;
@@ -1434,6 +1443,7 @@ function draw(){
             
             const bgCol = hexToRgbA(document.getElementById('bg-color-picker').value);
             const sprayCol = hexToRgbA(document.getElementById('coloring-picker').value);
+            glFluid.uniform1f(fluidUniforms.crushAmount, parseFloat(document.getElementById('fx-fluid-crush').value));
             
             glFluid.uniform3f(fluidUniforms.bgColor, bgCol[0], bgCol[1], bgCol[2]);
             glFluid.uniform3f(fluidUniforms.coloring, sprayCol[0], sprayCol[1], sprayCol[2]);
