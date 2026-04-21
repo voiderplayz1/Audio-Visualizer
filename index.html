@@ -1050,7 +1050,8 @@ btnRecord.addEventListener('click',()=>isRecording?stopRecording():startRecordin
 function startRecording(){
     if(!audioCtx){alert('Load or capture audio first.');return;}
     if(audioCtx.state==='suspended') audioCtx.resume();
-    const cs=mainCanvas.captureStream(60);
+    const activeCanvas = state.mode === 'fluid' ? fluidCanvas : mainCanvas;
+    const cs=activeCanvas.captureStream(60);
     const ad=audioCtx.createMediaStreamDestination(); analyser.connect(ad);
     const at=ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
     const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
