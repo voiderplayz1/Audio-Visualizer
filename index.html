@@ -60,7 +60,6 @@ body {
     box-shadow: 0 0 0 1px rgba(140,200,255,0.4), 0 32px 80px rgba(20,80,160,0.35), inset 0 2px 0 rgba(255,255,255,1);
     animation: warn-rise 0.4s cubic-bezier(0.22,1,0.36,1) both;
 }
-/* gloss band across warning box */
 #torus-warning-box::before {
     content:''; position:absolute; top:0; left:0; right:0; height:50%; border-radius:26px 26px 0 0;
     background: linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.0) 100%);
@@ -147,7 +146,6 @@ canvas { display:block; }
     box-shadow: 0 8px 40px rgba(40,100,200,0.22), 0 2px 0 rgba(255,255,255,0.9) inset, 0 -1px 0 rgba(130,190,255,0.35) inset, 0 0 0 1px rgba(130,190,255,0.2);
     transition: transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
 }
-/* Top gloss band */
 .panel::before {
     content:''; position:absolute; top:0; left:0; right:0; height:44%;
     background: linear-gradient(180deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.0) 100%);
@@ -177,14 +175,12 @@ canvas { display:block; }
 .panel-section:last-child { border-bottom:none; padding-bottom:15px; }
 .section-label { font-size:0.6rem; font-weight:800; letter-spacing:5px; text-transform:uppercase; color:#3a80b0; margin-bottom:1px; }
 
-/* ── Buttons — real Aero pill ── */
 .btn {
     width:100%; padding:9px 14px;
     border-radius:99px;
     font-family:var(--font); font-size:0.78rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;
     cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
     position:relative; overflow:hidden;
-    /* default: sky-blue Aero pill */
     background: linear-gradient(180deg, #a0d8f8 0%, #50a8e8 45%, #2880d0 100%);
     border: 1.5px solid rgba(255,255,255,0.95);
     color: #fff;
@@ -192,7 +188,6 @@ canvas { display:block; }
     text-shadow: 0 1px 2px rgba(0,60,150,0.4);
     transition: all 0.18s;
 }
-/* gloss half-band */
 .btn::after {
     content:''; position:absolute; top:0; left:0; right:0; height:52%;
     background:linear-gradient(180deg, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 100%);
@@ -205,7 +200,6 @@ canvas { display:block; }
 }
 .btn:active { transform:translateY(0); box-shadow:0 2px 8px rgba(30,100,210,0.25), inset 0 2px 4px rgba(0,60,150,0.2); }
 
-/* Upload: dashed outline style */
 .btn-dashed {
     background: linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(200,235,255,0.6) 100%);
     border: 2px dashed rgba(60,140,220,0.55);
@@ -217,7 +211,6 @@ canvas { display:block; }
 
 .btn-square { border-radius:12px; }
 
-/* Record — red Aero */
 .btn-record {
     background: linear-gradient(180deg, #ff9888 0%, #e84828 45%, #c02808 100%);
     border-color: rgba(255,255,255,0.9);
@@ -227,7 +220,6 @@ canvas { display:block; }
 .btn-record.recording { background:linear-gradient(180deg,#ff7060 0%,#d83818 45%,#a01800 100%); animation:pulse-rec 1.4s ease-in-out infinite; }
 @keyframes pulse-rec { 0%,100%{box-shadow:0 4px 14px rgba(200,50,30,0.35),inset 0 2px 0 rgba(255,255,255,0.6), 0 0 0 0 rgba(220,60,30,0);}50%{box-shadow:0 4px 14px rgba(200,50,30,0.35),inset 0 2px 0 rgba(255,255,255,0.6), 0 0 0 6px rgba(220,60,30,0.18);} }
 
-/* Capture — cyan Aero */
 .btn-capture {
     background: linear-gradient(180deg, #80e8ff 0%, #18b8e8 45%, #0090c8 100%);
     border-color: rgba(255,255,255,0.92);
@@ -241,7 +233,6 @@ canvas { display:block; }
 }
 @keyframes pulse-cap { 0%,100%{box-shadow:0 4px 14px rgba(200,50,30,0.35),inset 0 2px 0 rgba(255,255,255,0.6),0 0 0 0 rgba(220,60,30,0);}50%{box-shadow:0 4px 14px rgba(200,50,30,0.35),inset 0 2px 0 rgba(255,255,255,0.6),0 0 0 5px rgba(220,60,30,0.16);} }
 
-/* Mic — green Aero */
 .btn-mic {
     background: linear-gradient(180deg, #90e890 0%, #30c040 45%, #10a020 100%);
     border-color: rgba(255,255,255,0.92);
@@ -252,7 +243,6 @@ canvas { display:block; }
 @keyframes pulse-mic { 0%,100%{box-shadow:0 4px 14px rgba(30,160,50,0.3),inset 0 2px 0 rgba(255,255,255,0.6),0 0 0 0 rgba(40,200,60,0);}50%{box-shadow:0 4px 14px rgba(30,160,50,0.3),inset 0 2px 0 rgba(255,255,255,0.6),0 0 0 5px rgba(40,200,60,0.18);} }
 .btn-mic.active .dot { animation:blink 1.2s step-start infinite; }
 
-/* Reset — small warm grey */
 .btn-reset {
     background: linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(220,230,240,0.7) 100%);
     border: 1.5px solid rgba(160,180,210,0.7);
@@ -262,7 +252,6 @@ canvas { display:block; }
 .btn-reset:hover { background:linear-gradient(180deg,rgba(255,255,255,0.92) 0%,rgba(230,240,250,0.85) 100%); color:#1a3050; }
 .btn-reset::after { display:none; }
 
-/* Toggle on/off */
 .btn-toggle-on {
     background: linear-gradient(180deg, #90d890 0%, #28b038 45%, #108820 100%);
     border-color:rgba(255,255,255,0.9);
@@ -282,12 +271,10 @@ canvas { display:block; }
 .btn-record.recording .dot, .btn-capture.active .dot { animation:blink 1s step-start infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.1} }
 
-/* ── Controls ── */
 .ctrl-row { display:flex; flex-direction:column; gap:5px; }
 .ctrl-label { font-size:0.72rem; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:#2a5878; display:flex; justify-content:space-between; }
 .ctrl-val { color:#1060a0; font-variant-numeric:tabular-nums; font-weight:800; letter-spacing:0; }
 
-/* Range slider — Aero bead on glass track */
 input[type="range"] {
     width:100%; height:5px; appearance:none; -webkit-appearance:none;
     background: linear-gradient(180deg, rgba(100,170,240,0.35) 0%, rgba(160,210,255,0.5) 100%);
@@ -308,7 +295,6 @@ input[type="range"]::-moz-range-thumb {
     box-shadow:0 2px 8px rgba(30,100,220,0.4);
 }
 
-/* Select */
 select {
     width:100%;
     background: linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(205,235,255,0.72) 100%);
@@ -324,12 +310,10 @@ select {
 select:hover { border-color:rgba(80,160,230,0.9); box-shadow:0 4px 14px rgba(60,120,200,0.22), inset 0 1px 0 rgba(255,255,255,1); }
 select option { background:#daeeff; color:#1a4060; }
 
-/* Color input */
 input[type="color"] { width:100%; height:32px; background:rgba(255,255,255,0.75); border:1.5px solid rgba(130,185,240,0.65); border-radius:10px; cursor:pointer; padding:3px 6px; transition:border-color 0.18s; box-shadow:inset 0 1px 0 rgba(255,255,255,0.9); }
 input[type="color"]:hover { border-color:rgba(60,150,220,0.9); }
 input[type="file"] { display:none; }
 
-/* EQ panel */
 #eq-panel { max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1); }
 #eq-panel.open { max-height:1000px; }
 .eq-inner { display:flex; flex-direction:column; gap:10px; padding-top:11px; border-top:1px solid rgba(120,190,255,0.28); margin-top:2px; }
@@ -403,7 +387,6 @@ input[type="file"] { display:none; }
     transform: translateY(0) scale(1);
     pointer-events: auto;
 }
-/* gloss overlay on art card */
 #kawarp-art-card::after {
     content:''; position:absolute; top:0; left:0; right:0; height:45%;
     background: linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0) 100%);
@@ -427,6 +410,11 @@ input[type="file"] { display:none; }
 <canvas id="main-canvas"></canvas>
 <canvas id="fluid-gl-canvas" style="display:none; position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none;"></canvas>
 <canvas id="bf-gl-canvas" style="display:none;position:absolute;pointer-events:none"></canvas>
+
+<div id="kawarp-art-card">
+    <img id="kawarp-art-img" src="" alt="" crossorigin="anonymous" />
+    <div id="kawarp-art-label"></div>
+</div>
 
 <div id="torus-warning">
     <div id="torus-blur-bg"></div>
@@ -735,7 +723,7 @@ let bfBeatCount   = 0;
 let bfLastBeatTime= 0;
 let bfInverted    = false;
 let bfBeatPulse   = 0;
-let bfInvertFlash = 0;   // 0→1, decays — drives the snap-white overlay on inversion
+let bfInvertFlash = 0;
 const BF_RINGS    = 8;
 const BF_PTS      = 256;
 
@@ -750,7 +738,7 @@ let kawarpPalette = [
     {r:0.02, g:0.08, b:0.15},
 ];
 let kawarpTargetPalette = null;
-let kawarpTransitionT = 1.0; // 0=start, 1=done
+let kawarpTransitionT = 1.0; 
 let kawarpArtUrl = null;
 let kawarpFetchAbort = null;
 
@@ -798,28 +786,22 @@ const fluidFragmentShaderSource = `
         uv = uv * 2.0 - 1.0;
         uv.x *= u_resolution.x / u_resolution.y;
 
-        // Drive movement heavily with bass
         float t = u_time * 0.4 + u_audioLow * 1.5;
 
-        // Deep fluid domain warping
         vec2 q = vec2(fbm(uv + vec2(0.0, t)), fbm(uv + vec2(5.2, 1.3)));
         vec2 r = vec2(fbm(uv + 4.0*q + vec2(1.7, 9.2) + t*0.5), fbm(uv + 4.0*q + vec2(8.3, 2.8) - t*0.3));
 
-        // Create the "spraypaint" pixelation / granular breakdown effect driven by mid tones
         vec2 pixelizedUV = floor(uv * 150.0) / 150.0;
         float breakApart = (hash(pixelizedUV + t) - 0.5) * (u_audioMid * 0.8) * u_crushAmount;
 
-        // Final distortion map
         float f = fbm(uv + 3.0*r + t * 0.2) + breakApart;
 
-        // Hard thresholding to create the Black -> Coloring -> Background transition
-        float t1 = 0.35; // Black edge
-        float t2 = 0.48; // Coloring edge
+        float t1 = 0.35;
+        float t2 = 0.48;
 
         float core = smoothstep(t1 - 0.02, t1 + 0.02, f);
         float fringe = smoothstep(t2 - 0.05, t2 + 0.05, f);
 
-        // Black inside, 'Coloring' as the border path, 'Background' everywhere else
         vec3 col = mix(vec3(0.0), u_coloring, core);
         col = mix(col, u_bgColor, fringe);
 
@@ -858,7 +840,7 @@ if(glFluid) {
     };
 }
 
-// ── Kawarp WebGL setup ──
+// ── Kawarp WebGL setup (Ambient Mesh Gradient) ──
 const kawarpCanvas = document.createElement('canvas');
 kawarpCanvas.id = 'kawarp-gl-canvas';
 kawarpCanvas.style.cssText = 'display:none;position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;';
@@ -882,57 +864,52 @@ const kawarpFragSrc = `
     uniform float u_intensity;
     uniform float u_reactivity;
 
-    float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-    }
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
     float noise(vec2 p) {
-        vec2 i = floor(p); vec2 f = fract(p);
+        vec2 i = floor(p), f = fract(p);
         vec2 u = f*f*(3.0-2.0*f);
-        return mix(mix(hash(i),          hash(i+vec2(1,0)), u.x),
-                   mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)), u.x), u.y);
-    }
-    float fbm(vec2 p) {
-        float v=0.0, a=0.5;
-        for(int i=0;i<6;i++){ v+=a*noise(p); p=p*2.0+vec2(5.2,1.3); a*=0.5; }
-        return v;
+        return mix(mix(hash(i), hash(i+vec2(1.0,0.0)), u.x),
+                   mix(hash(i+vec2(0.0,1.0)), hash(i+vec2(1.0,1.0)), u.x), u.y);
     }
 
     void main() {
         vec2 uv = gl_FragCoord.xy / u_resolution;
-        uv = uv * 2.0 - 1.0;
-        uv.x *= u_resolution.x / u_resolution.y;
-
-        float t = u_time * 0.28 + u_bass * 1.8 * u_reactivity;
-
-        // Three-layer domain warp — heavier warp on bass hits
-        vec2 q = vec2(fbm(uv + vec2(0.0, t)),
-                      fbm(uv + vec2(5.2, 1.3)));
-        float bassWarp = 1.0 + u_bass * 2.2 * u_reactivity;
-        vec2 r = vec2(fbm(uv + bassWarp*q + vec2(1.7, 9.2) + t*0.42),
-                      fbm(uv + bassWarp*q + vec2(8.3, 2.8) - t*0.31));
-        vec2 s = vec2(fbm(uv + 2.2*r + t*0.18),
-                      fbm(uv + 2.2*r - t*0.14));
-
-        float f = fbm(uv + 2.8*s);
-
-        // Mid-freq drives saturation / contrast
-        f = f * (0.85 + u_mid * 0.6 * u_reactivity + u_volume * 0.3);
-
-        // Map f -> 3-color gradient across palette
-        float zone = clamp(f * 2.8, 0.0, 2.0);
-        vec3 col;
-        if(zone < 1.0) {
-            col = mix(u_col0, u_col1, smoothstep(0.0, 1.0, zone));
-        } else {
-            col = mix(u_col1, u_col2, smoothstep(0.0, 1.0, zone - 1.0));
-        }
-
-        // Apply color intensity (brightness multiplier)
-        col = col * u_intensity;
-
-        // Subtle dark vignette
-        float vign = 1.0 - dot(uv*0.5, uv*0.5)*0.55;
-        col *= max(0.0, vign);
+        
+        // Slow ambient time matching Spicetify / Apple Music backgrounds
+        float t = u_time * 0.15; 
+        float react = u_bass * u_reactivity * 0.3; 
+        
+        // Large scale smooth warping
+        vec2 warpParams = uv * 1.5 + vec2(t * 0.4, t * 0.3);
+        float w1 = noise(warpParams + react);
+        float w2 = noise(warpParams + vec2(5.2, 1.3) - t * 0.5);
+        
+        // Use warped coords to interpolate colors smoothly
+        vec2 finalUV = uv + vec2(w1, w2) * 0.5;
+        
+        // Create 3 soft color zones tracking across the screen
+        float dist0 = distance(finalUV, vec2(0.2 + 0.3*sin(t*0.7), 0.3 + 0.3*cos(t*0.9)));
+        float dist1 = distance(finalUV, vec2(0.8 - 0.2*cos(t*1.2), 0.7 - 0.2*sin(t*0.8)));
+        float dist2 = distance(finalUV, vec2(0.5 + 0.4*sin(t*0.5), 0.5 + 0.4*cos(t*1.1)));
+        
+        // Smooth weights (Very wide spread for smooth mesh gradient)
+        float spread = 1.4; 
+        float v0 = smoothstep(spread, 0.0, dist0);
+        float v1 = smoothstep(spread, 0.0, dist1);
+        float v2 = smoothstep(spread, 0.0, dist2);
+        
+        float sum = v0 + v1 + v2 + 0.001; 
+        vec3 col = (u_col0 * v0 + u_col1 * v1 + u_col2 * v2) / sum;
+        
+        // Background mix to ensure screen is filled smoothly at the edges
+        vec3 baseGradient = mix(u_col0, u_col2, uv.y);
+        col = mix(baseGradient, col, 0.85); 
+        
+        // Global intensity & subtle pulse
+        col *= u_intensity * (1.0 + u_bass * 0.08 * u_reactivity);
+        
+        // Prevent color banding with dithering noise
+        col += (hash(uv + t) - 0.5) * 0.02;
 
         gl_FragColor = vec4(col, 1.0);
     }
@@ -1169,7 +1146,6 @@ function extractPalette(imgUrl, numColors = 5) {
             offCtx.drawImage(img, 0, 0, size, size);
             const { data } = offCtx.getImageData(0, 0, size, size);
 
-            // Collect non-near-black, non-near-white pixels, convert to HSL for diversity check
             const pixels = [];
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i], g = data[i+1], b = data[i+2];
@@ -1178,7 +1154,6 @@ function extractPalette(imgUrl, numColors = 5) {
             }
             if (pixels.length === 0) { resolve(null); return; }
 
-            // k-means with numColors clusters (more iterations for better spread)
             let centers = [];
             const step = Math.floor(pixels.length / numColors);
             for (let k = 0; k < numColors; k++) {
@@ -1200,11 +1175,9 @@ function extractPalette(imgUrl, numColors = 5) {
                 }
             }
 
-            // Filter: remove colors too similar to each other (min perceptual distance threshold)
             function colorDist(a, b) {
                 return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
             }
-            // Sort by cluster size (most dominant first) — use pixel counts from last iter
             const finalSums = Array.from({length: numColors}, () => [0,0,0,0]);
             for (const [r,g,b] of pixels) {
                 let best = 0, bestD = Infinity;
@@ -1217,7 +1190,6 @@ function extractPalette(imgUrl, numColors = 5) {
             const indexed = centers.map((c,i) => ({c, n: finalSums[i][3]}));
             indexed.sort((a,b) => b.n - a.n);
 
-            // Pick top 5 with min distance 38 between any two
             const picked = [];
             const MIN_DIST = 38;
             for (const {c} of indexed) {
@@ -1226,10 +1198,8 @@ function extractPalette(imgUrl, numColors = 5) {
                     if (picked.length >= 5) break;
                 }
             }
-            // Pad if fewer than 3
             while (picked.length < 3) picked.push(centers[picked.length % centers.length]);
 
-            // Now pick 3 most visually spread from the 5 diverse colors for the shader
             let bestTriplet = [0,1,2], bestSpread = -1;
             for (let a = 0; a < picked.length; a++) {
                 for (let b = a+1; b < picked.length; b++) {
@@ -1241,7 +1211,6 @@ function extractPalette(imgUrl, numColors = 5) {
             }
 
             const trio = bestTriplet.map(i => picked[i]);
-            // Sort darkest to lightest
             trio.sort((a,b) => (a[0]+a[1]+a[2]) - (b[0]+b[1]+b[2]));
 
             const result = trio.map(([r,g,b]) => {
@@ -1256,53 +1225,30 @@ function extractPalette(imgUrl, numColors = 5) {
     });
 }
 
-// ── Kawarp: fetch best image via Anthropic API search query, then iTunes art ──
+// ── Kawarp: Fetch image exclusively via iTunes API using aggressively cleaned filename ──
 async function kawarpFetchArt(filename) {
     const clean = filename
         .replace(/\.[^.]+$/, '')
         .replace(/[_\-]+/g, ' ')
-        .replace(/\b(feat|ft|prod|official|audio|lyrics|hd|4k|720p|1080p)\b/gi, '')
+        .replace(/\b(feat|ft|prod|official|audio|lyrics|hd|4k|720p|1080p|video|music)\b/gi, '')
+        .replace(/\(.*?\)/g, '')
+        .replace(/\[.*?\]/g, '')
         .replace(/\s{2,}/g, ' ')
         .trim();
 
-    // Use Anthropic API to extract the most image-search-relevant term from the filename
-    let searchTerm = clean;
     try {
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 60,
-                messages: [{
-                    role: 'user',
-                    content: `Given the audio filename: "${clean}"
-Extract the most relevant image search query (2-6 words) to find a related piece of artwork, album cover, game screenshot, or scene. Respond with ONLY the search query, nothing else.`
-                }]
-            })
-        });
-        if (resp.ok) {
-            const j = await resp.json();
-            const txt = (j.content?.[0]?.text || '').trim().replace(/^["']|["']$/g,'');
-            if (txt && txt.length > 1 && txt.length < 80) searchTerm = txt;
-        }
-    } catch(e) { /* keep original filename */ }
-
-    // Try iTunes with the AI-refined search term
-    const query = encodeURIComponent(searchTerm);
-    try {
-        const res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=5&entity=song`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(clean)}&media=music&limit=3&entity=song`);
         const json = await res.json();
         if (json.results && json.results.length > 0) {
-            const artUrl = json.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-            return artUrl;
+            return json.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
         }
-    } catch(e) {}
+    } catch(e) { console.warn('iTunes fetch error:', e); }
 
-    // Fallback: try original clean name
-    if (searchTerm !== clean) {
+    // Fallback: search the filename as-is without stripping parens/brackets
+    const altClean = filename.replace(/\.[^.]+$/, '').replace(/[_\-]+/g, ' ').trim();
+    if (altClean !== clean) {
         try {
-            const res2 = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(clean)}&media=music&limit=3&entity=song`);
+            const res2 = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(altClean)}&media=music&limit=3&entity=song`);
             const json2 = await res2.json();
             if (json2.results && json2.results.length > 0) {
                 return json2.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
@@ -1312,17 +1258,26 @@ Extract the most relevant image search query (2-6 words) to find a related piece
     return null;
 }
 
-// ── Kawarp: trigger art fetch + palette extraction on file upload ──
+// ── Kawarp: trigger art fetch, setup DOM display, and extract palette ──
 async function kawarpUpdateFromFile(filename) {
-    if (kawarpFetchAbort) { kawarpFetchAbort = true; }
-    kawarpFetchAbort = false;
+    if (kawarpFetchAbort) { kawarpFetchAbort.cancelled = true; }
     const abortToken = { cancelled: false };
-    const prevAbort = kawarpFetchAbort;
     kawarpFetchAbort = abortToken;
+
+    // Reset UI while searching
+    const artCard = document.getElementById('kawarp-art-card');
+    const artImg = document.getElementById('kawarp-art-img');
+    const artLabel = document.getElementById('kawarp-art-label');
+    artCard.classList.remove('visible');
 
     const artUrl = await kawarpFetchArt(filename);
     if (abortToken.cancelled) return;
     if (!artUrl) return;
+
+    // Load UI details and animate in
+    artImg.src = artUrl;
+    artLabel.innerText = filename.replace(/\.[^.]+$/, '');
+    artCard.classList.add('visible');
 
     kawarpArtUrl = artUrl;
     const palette = await extractPalette(artUrl);
@@ -1330,7 +1285,7 @@ async function kawarpUpdateFromFile(filename) {
     if (!palette || palette.length < 3) return;
 
     kawarpTargetPalette = palette;
-    kawarpTransitionT = 0.0; // kick off blend
+    kawarpTransitionT = 0.0; // kick off slow blend
 }
 
 // ══ WebGL Beat Flash renderer ══
@@ -1502,21 +1457,16 @@ function setVisualControls(mode) {
     const isFluid     = mode === 'fluid';
     const isKawarp    = mode === 'kawarp';
 
-    // Lissajous only
     lissDensityGroup.classList.toggle('hidden-ctrl', !isLiss);
-    // Circular Burst only
     sepGroup.classList.toggle('hidden-ctrl', !isBurst);
-    // Torus only
     torusSpacingGroup.classList.toggle('hidden-ctrl', !isTorus);
     torusColorSpeedGroup.classList.toggle('hidden-ctrl', !isTorus);
     btnTorusColorToggle.classList.toggle('hidden-ctrl', !isTorus);
-    // Beat Flash only
     bfParticleGroup.classList.toggle('hidden-ctrl', !isBeatFlash);
-    // Kawarp only
+    
     document.getElementById('kawarp-intensity-group').classList.toggle('hidden-ctrl', !isKawarp);
     document.getElementById('kawarp-reactivity-group').classList.toggle('hidden-ctrl', !isKawarp);
 
-    // Fluid specifics
     const glowGroup = document.getElementById('fx-glow').closest('.ctrl-row');
     const glowColorGroup = document.getElementById('color-picker').closest('.color-row');
     const coloringGroup = document.getElementById('coloring-group');
@@ -1527,17 +1477,18 @@ function setVisualControls(mode) {
     if (glowColorGroup) glowColorGroup.classList.toggle('hidden-ctrl', isFluid || isKawarp);
     if (coloringGroup) coloringGroup.classList.toggle('hidden-ctrl', !isFluid);
 
-    // Shared Hidden Elements
     thicknessGroup.classList.toggle('hidden-ctrl', isBeatFlash || isFluid || isKawarp);
     btnRotationToggle.classList.toggle('hidden-ctrl', isBeatFlash || isFluid || isKawarp);
 
-    // Switch Canvases
     document.getElementById('main-canvas').style.display    = (isFluid || isKawarp) ? 'none' : 'block';
     document.getElementById('fluid-gl-canvas').style.display = isFluid ? 'block' : 'none';
     document.getElementById('kawarp-gl-canvas').style.display = isKawarp ? 'block' : 'none';
+    
+    // Explicitly hide kawarp art display when leaving mode
+    if(!isKawarp) { document.getElementById('kawarp-art-card').classList.remove('visible'); }
+    else if(kawarpArtUrl) { document.getElementById('kawarp-art-card').classList.add('visible'); }
 }
 
-// Torus warning
 function showTorusWarning() { torusWarning.classList.add('active'); }
 function hideTorusWarning() { torusWarning.classList.remove('active'); }
 
@@ -1601,7 +1552,6 @@ btnRecord.addEventListener('click',()=>isRecording?stopRecording():startRecordin
 function startRecording(){
     if(!audioCtx){alert('Load or capture audio first.');return;}
     if(audioCtx.state==='suspended') audioCtx.resume();
-    // Always capture mainCanvas — fluid mode composites onto it during recording
     const cs=mainCanvas.captureStream(60);
     const ad=audioCtx.createMediaStreamDestination(); analyser.connect(ad);
     const at=ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
@@ -2008,8 +1958,6 @@ function draw(){
             glFluid.drawArrays(glFluid.TRIANGLES, 0, 6);
         }
 
-        // When recording, composite fluid canvas onto mainCanvas so the
-        // capture stream keeps receiving frames (it always captures mainCanvas).
         if (isRecording) {
             if (mainCanvas.width !== fluidCanvas.width || mainCanvas.height !== fluidCanvas.height) {
                 mainCanvas.width = fluidCanvas.width;
@@ -2304,7 +2252,6 @@ function draw(){
     // ══ BEAT FLASH ══
     }else if(state.mode==='beatflash'){
 
-        // ── Beat detection ──
         {
             const bassEnd=Math.max(2,Math.floor(bufLen*0.09));
             let instantE=0;
@@ -2327,13 +2274,10 @@ function draw(){
         const bassE2=getBassEnergy(vFreq);
         const avgV2=getAvgVolume(vFreq);
 
-        // ── Rings + spokes: WebGL shader (zero shadowBlur cost) ──
         const glOk = drawBeatFlashGL(vFreq, vTime, w, h);
         if (glOk) {
-            // Blit GL canvas onto the 2D canvas
             mainCtx.drawImage(bfGlCanvas, 0, 0);
         } else {
-            // CPU 2D fallback (no shadowBlur — layered strokes for fake glow)
             mainCtx.fillStyle=state.bgColor; mainCtx.fillRect(0,0,w,h);
             mainCtx.lineCap='round'; mainCtx.lineJoin='round';
             for(let ring=0;ring<BF_RINGS;ring++){
@@ -2344,7 +2288,6 @@ function draw(){
                 const bandStart=Math.floor(t*bufLen*0.62);
                 const bandRange=Math.max(1,Math.floor(bufLen*0.10));
                 const alpha=0.55+(1-t)*0.45;
-                // Two passes: wide dim halo, then thin bright core — fake glow cheaply
                 for(let pass=0;pass<2;pass++){
                     mainCtx.lineWidth=pass===0?(1.6-t*1.0)*2.2:Math.max(0.3,(1.6-t*1.0)*0.5);
                     mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${pass===0?alpha*0.18:alpha})`;
@@ -2363,16 +2306,14 @@ function draw(){
             }
         }
 
-        // ── Particle spawn (sample from current ring positions via CPU) ──
         if(state.bfParticleIntensity>0 && bfParticlePool.length<BF_MAX_PARTICLES){
-            for(let ring=0;ring<BF_RINGS;ring+=2){ // every other ring to keep it light
+            for(let ring=0;ring<BF_RINGS;ring+=2){ 
                 const t=ring/(BF_RINGS-1);
                 const baseR=maxR*(0.08+t*0.92);
                 const dir=ring%2===0?1:-1;
                 const phase=drawPhase*(0.018+ring*0.007)*dir;
                 const bandStart=Math.floor(t*bufLen*0.62);
                 const bandRange=Math.max(1,Math.floor(bufLen*0.10));
-                // Sample ~32 points around this ring for spawn candidates
                 const sampleStep=Math.ceil(BF_PTS/32);
                 for(let i=0;i<BF_PTS;i+=sampleStep){
                     if(bfParticlePool.length>=BF_MAX_PARTICLES) break;
@@ -2402,7 +2343,6 @@ function draw(){
             }
         }
 
-        // ── Update & draw particles on 2D canvas (no shadowBlur) ──
         mainCtx.shadowBlur=0;
         for(let i=bfParticlePool.length-1;i>=0;i--){
             const p=bfParticlePool[i];
@@ -2435,13 +2375,11 @@ function draw(){
             }
         }
 
-        // ── Centre XY-scope (layered strokes, no shadowBlur) ──
         {
             const lissR=maxR*0.10, lissScl=lissR*1.85;
             const lissOff=Math.max(1,Math.floor(bufLen*0.013));
             const lissLen=Math.min(vRaw.length,1024);
             const scopeAlpha=0.92;
-            // Two passes: wide halo + thin core
             for(let pass=0;pass<2;pass++){
                 mainCtx.lineWidth=pass===0?2.8*(0.7+bassE2):Math.max(0.4,0.9*(0.7+bassE2));
                 mainCtx.strokeStyle=`rgba(${fgRgb.r},${fgRgb.g},${fgRgb.b},${pass===0?scopeAlpha*0.12:scopeAlpha})`;
@@ -2454,7 +2392,6 @@ function draw(){
             }
         }
 
-        // ── Hairline grid ──
         if(avgV2>0.02){
             const gridAlpha=Math.min(0.06,avgV2*0.14)*(1+bfBeatPulse*0.4);
             mainCtx.lineWidth=0.4; mainCtx.shadowBlur=0;
