@@ -294,7 +294,7 @@ input[type="file"] { display:none; }
 
         <div class="ctrl-row" id="liss-density-group">
             <label class="ctrl-label"><span>Liss density + spread</span><span class="ctrl-val" id="val-liss-density">15</span></label>
-            <input type="range" id="fx-liss-density" min="1" max="512" step="1" value="15">
+            <input type="range" id="fx-liss-density" min="1" max="1000" step="1" value="15">
         </div>
 
         <div class="ctrl-row" id="sep-group">
@@ -1046,32 +1046,108 @@ function initFileSource() {
     if(!fileSource){fileSource=audioCtx.createMediaElementSource(audioPlayer);connectToGraph(fileSource);}
 }
 
+// ── Bounding-box recording ──────────────────────────────────────────────────
+// Tracks the largest dirty region seen during the session so the recorded
+// canvas is as small (and efficient) as possible while never clipping content.
+let recBBox = { x:0, y:0, w:0, h:0 }; // grows, never shrinks
+let recOffscreen = null;               // the fixed-size offscreen canvas we stream from
+let recOffCtx = null;
+let recAnimId = null;                  // rAF loop that composites into the offscreen
+
+function growBBox(cx, cy, r) {
+    // expand the tracked bounding box to include a circle at (cx,cy) with radius r
+    const x1 = Math.floor(cx - r), y1 = Math.floor(cy - r);
+    const x2 = Math.ceil(cx  + r), y2 = Math.ceil(cy  + r);
+    if (recBBox.w === 0) {
+        recBBox = { x:x1, y:y1, w:x2-x1, h:y2-y1 };
+    } else {
+        const nx = Math.min(recBBox.x, x1);
+        const ny = Math.min(recBBox.y, y1);
+        recBBox = {
+            x: nx,
+            y: ny,
+            w: Math.max(recBBox.x + recBBox.w, x2) - nx,
+            h: Math.max(recBBox.y + recBBox.h, y2) - ny,
+        };
+    }
+}
+
+function sampleBBox() {
+    // Sample where content actually lives on mainCanvas each frame during pre-scan
+    const w = mainCanvas.width, h = mainCanvas.height;
+    const cx = w * 0.5, cy = h * 0.5;
+    // Use the largest axis as a proxy for the visual radius (conservative)
+    const maxR = Math.min(w, h) * 0.5;
+    growBBox(cx, cy, maxR);
+}
+
 btnRecord.addEventListener('click',()=>isRecording?stopRecording():startRecording());
+
 function startRecording(){
     if(!audioCtx){alert('Load or capture audio first.');return;}
     if(audioCtx.state==='suspended') audioCtx.resume();
-    // Always capture mainCanvas — fluid mode composites onto it during recording
-    const cs=mainCanvas.captureStream(60);
-    const ad=audioCtx.createMediaStreamDestination(); analyser.connect(ad);
-    const at=ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
-    const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
+
+    // ── 1. Determine crop region ──────────────────────────────────────────
+    // Snap to the largest bounding box seen so far.
+    // If nothing was tracked yet, fall back to full canvas.
+    const W = mainCanvas.width, H = mainCanvas.height;
+    let cropX, cropY, cropW, cropH;
+    if (recBBox.w > 0) {
+        cropX = Math.max(0, recBBox.x);
+        cropY = Math.max(0, recBBox.y);
+        cropW = Math.min(W - cropX, recBBox.w);
+        cropH = Math.min(H - cropY, recBBox.h);
+        // Enforce even dimensions (required by most video codecs)
+        cropW = cropW % 2 === 0 ? cropW : cropW - 1;
+        cropH = cropH % 2 === 0 ? cropH : cropH - 1;
+    } else {
+        cropX = 0; cropY = 0;
+        cropW = W % 2 === 0 ? W : W - 1;
+        cropH = H % 2 === 0 ? H : H - 1;
+    }
+
+    // ── 2. Create a fixed-size offscreen canvas that we'll stream ─────────
+    recOffscreen = document.createElement('canvas');
+    recOffscreen.width  = cropW;
+    recOffscreen.height = cropH;
+    recOffCtx = recOffscreen.getContext('2d');
+
+    // ── 3. rAF loop: blit the crop region into the offscreen each frame ───
+    function compositeCrop() {
+        if (!isRecording) return;
+        recOffCtx.clearRect(0, 0, cropW, cropH);
+        recOffCtx.drawImage(mainCanvas,
+            cropX, cropY, cropW, cropH,   // source rect
+            0,     0,     cropW, cropH);  // destination
+        recAnimId = requestAnimationFrame(compositeCrop);
+    }
+    recAnimId = requestAnimationFrame(compositeCrop);
+
+    // ── 4. Stream the offscreen canvas ────────────────────────────────────
+    const cs = recOffscreen.captureStream(60);
+    const ad = audioCtx.createMediaStreamDestination(); analyser.connect(ad);
+    const at = ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
+    const mime = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
         .find(t=>MediaRecorder.isTypeSupported(t))||'video/webm';
-    mediaRecorder=new MediaRecorder(cs,{mimeType:mime,videoBitsPerSecond:8_000_000});
-    recordChunks=[];
-    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordChunks.push(e.data);};
-    mediaRecorder.onstop=()=>{
+    mediaRecorder = new MediaRecorder(cs, {mimeType:mime, videoBitsPerSecond:8_000_000});
+    recordChunks = [];
+    mediaRecorder.ondataavailable = e=>{ if(e.data.size>0) recordChunks.push(e.data); };
+    mediaRecorder.onstop = ()=>{
+        cancelAnimationFrame(recAnimId); recAnimId = null;
         analyser.disconnect(ad);
-        const blob=new Blob(recordChunks,{type:mime}),url=URL.createObjectURL(blob);
+        const blob = new Blob(recordChunks,{type:mime}), url = URL.createObjectURL(blob);
         Object.assign(document.createElement('a'),{href:url,download:`studio-${Date.now()}.webm`}).click();
         URL.revokeObjectURL(url);
     };
-    mediaRecorder.start(); isRecording=true;
+    mediaRecorder.start(); isRecording = true;
     btnRecord.classList.add('recording');
     btnRecord.innerHTML='<span class="dot"></span>Stop & save';
 }
+
 function stopRecording(){
     if(mediaRecorder?.state!=='inactive') mediaRecorder.stop();
-    isRecording=false; btnRecord.classList.remove('recording');
+    cancelAnimationFrame(recAnimId); recAnimId = null;
+    isRecording = false; btnRecord.classList.remove('recording');
     btnRecord.innerHTML='<span class="dot"></span>Record video';
 }
 
@@ -1205,7 +1281,7 @@ document.getElementById('bg-color-picker').oninput=e=>{state.bgColor=e.target.va
 bindSlider('thickness',v=>state.thickness=v);
 bindSlider('glow',v=>state.glow=v);
 bindSlider('liss-density',v=>{
-    const vi=Math.round(v); state.lissOffset=vi; state.lissSpread=0.25+(vi/512)*1.75;
+    const vi=Math.round(v); state.lissOffset=vi; state.lissSpread=0.25+(vi/1000)*1.75;
     document.getElementById('val-liss-density').innerText=vi;
 });
 bindSlider('separation',v=>{state.lineCount=Math.round(v);document.getElementById('val-separation').innerText=Math.round(v);});
@@ -1426,6 +1502,9 @@ function draw(){
     const vRaw =quantizeData(rawTime, fxParams.crush);
     const w=mainCanvas.width,h=mainCanvas.height;
 
+    // Track maximum content region each frame so recording crops to it
+    sampleBBox();
+
     if (state.mode === 'fluid') {
         if (fluidCanvas.width !== window.innerWidth || fluidCanvas.height !== window.innerHeight) {
             fluidCanvas.width = window.innerWidth;
@@ -1501,12 +1580,21 @@ function draw(){
         const lissLen=Math.min(vRaw.length,1024),offset=Math.min(state.lissOffset,lissLen-1);
         const scl=volScaleWave*0.5*state.lissSpread;
         const cosR=Math.cos(speedOsc*0.05),sinR=Math.sin(speedOsc*0.05);
-        for(let i=0;i<lissLen;i++){
-            const nx=(vRaw[i]-128)/128,ny=(vRaw[(i+offset)%lissLen]-128)/128;
+        // Catmull-Rom cubic interpolation: eliminates 8-bit stair-stepping at high spread/volume
+        // while preserving the true shape of sine, saw, square, etc.
+        function lissGet(idx){ const i=((idx%lissLen)+lissLen)%lissLen; return (vRaw[i]-128)/128; }
+        function lissGetY(idx){ const i=((idx%lissLen)+lissLen)%lissLen; return (vRaw[((i+offset)%lissLen)]-128)/128; }
+        function catmull(p0,p1,p2,p3,t){ return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t*t+(-p0+3*p1-3*p2+p3)*t*t*t); }
+        const upsample=Math.max(1,Math.min(8,Math.ceil(scl*4)));
+        const totalSteps=lissLen*upsample;
+        for(let s=0;s<totalSteps;s++){
+            const fi=s/upsample,i0=Math.floor(fi),t=fi-i0;
+            const nx=catmull(lissGet(i0-1),lissGet(i0),lissGet(i0+1),lissGet(i0+2),t);
+            const ny=catmull(lissGetY(i0-1),lissGetY(i0),lissGetY(i0+1),lissGetY(i0+2),t);
             const rx=nx*scl,ry=bassY(ny)*scl;
             const px=w/2+jitter(rx*cosR-ry*sinR)*w/2;
             const py=h/2+jitter(rx*sinR+ry*cosR)*h/2;
-            i===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
+            s===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
         }
         mainCtx.stroke();
 
