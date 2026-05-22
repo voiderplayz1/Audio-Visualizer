@@ -1347,7 +1347,7 @@ setTimeout(drawWelcome, 50);
 function enterApp(){
     if(welcome.classList.contains('fade-out')) return;
     welcome.classList.add('fade-out');
-    setTimeout(()=>{welcome.style.display='none'; cancelAnimationFrame(welcomeAnimId);}, 850);
+    setTimeout(()=>{ welcome.style.display='none'; cancelAnimationFrame(welcomeAnimId); }, 820);
     initWebGPU();
     initBeatFlashGL();
     if(!animationId) draw();
