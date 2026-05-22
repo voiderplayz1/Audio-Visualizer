@@ -416,7 +416,9 @@ let audioCtx, analyser, preAnalyser, fileSource;
 let captureStream = null, captureSource = null;
 let micStream = null, micSource = null;
 let bassNode, crushNode, convolverNode, dryGain, wetGain, volumeNode, monitorGain;
+let mediaRecorder = null, recordChunks = [], isRecording = false
 let mediaRecorder = null, recordChunks = [], isRecording = false;
+let peakW = 0, peakH = 0;
 let inputMode = 'file', animationId, isScrubbing = false;
 
 // FPS
@@ -940,9 +942,8 @@ function drawBeatFlashGL(vFreq,vTime,w,h){
 function resize() {
     mainCanvas.width = window.innerWidth;
     mainCanvas.height = window.innerHeight;
-    if (gpuReady && gpuContext) {
-        try { gpuContext.configure({device:gpuDevice,format:gpuFormat,alphaMode:'premultiplied'}); } catch(e){}
-    }
+    peakW = Math.max(peakW, mainCanvas.width);
+    peakH = Math.max(peakH, mainCanvas.height);
     initRainParticles(mainCanvas.width, mainCanvas.height);
 }
 window.addEventListener('resize', resize); resize();
@@ -1050,18 +1051,30 @@ btnRecord.addEventListener('click',()=>isRecording?stopRecording():startRecordin
 function startRecording(){
     if(!audioCtx){alert('Load or capture audio first.');return;}
     if(audioCtx.state==='suspended') audioCtx.resume();
-    // Always capture mainCanvas — fluid mode composites onto it during recording
-    const cs=mainCanvas.captureStream(60);
-    const ad=audioCtx.createMediaStreamDestination(); analyser.connect(ad);
-    const at=ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
-    const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
+    const rW = peakW || mainCanvas.width;
+    const rH = peakH || mainCanvas.height;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = rW;
+    offscreen.height = rH;
+    const offCtx = offscreen.getContext('2d');
+    const _origDraw = window._recordFrame;
+    window._recordFrame = () => {
+        offCtx.clearRect(0, 0, rW, rH);
+        offCtx.drawImage(mainCanvas, 0, 0, mainCanvas.width, mainCanvas.height, 0, 0, rW, rH);
+    };
+
+    const cs = offscreen.captureStream(60);
+    const ad = audioCtx.createMediaStreamDestination(); analyser.connect(ad);
+    const at = ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
+    const mime = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
         .find(t=>MediaRecorder.isTypeSupported(t))||'video/webm';
-    mediaRecorder=new MediaRecorder(cs,{mimeType:mime,videoBitsPerSecond:8_000_000});
-    recordChunks=[];
-    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordChunks.push(e.data);};
-    mediaRecorder.onstop=()=>{
+    mediaRecorder = new MediaRecorder(cs,{mimeType:mime, videoBitsPerSecond:8_000_000});
+    recordChunks = [];
+    mediaRecorder.ondataavailable = e=>{if(e.data.size>0) recordChunks.push(e.data);};
+    mediaRecorder.onstop = ()=>{
         analyser.disconnect(ad);
-        const blob=new Blob(recordChunks,{type:mime}),url=URL.createObjectURL(blob);
+        window._recordFrame = null;
+        const blob=new Blob(recordChunks,{type:mime}), url=URL.createObjectURL(blob);
         Object.assign(document.createElement('a'),{href:url,download:`studio-${Date.now()}.webm`}).click();
         URL.revokeObjectURL(url);
     };
@@ -1350,7 +1363,7 @@ let drawPhase=0;
 function quantizeData(data,crushAmt){
     if(crushAmt<=1.05) return data;
     const steps=Math.max(2,Math.round(256/(crushAmt*crushAmt*4)));
-    const out=new Uint8Array(data.length);
+    const out = new data.constructor(data.length);
     for(let i=0;i<data.length;i++) out[i]=Math.round(data[i]/(256/steps))*(256/steps);
     return out;
 }
@@ -1417,9 +1430,14 @@ function draw(){
     const bufLen=analyser.frequencyBinCount;
     const dataFreq=new Uint8Array(bufLen),dataTime=new Uint8Array(bufLen);
     analyser.getByteFrequencyData(dataFreq); analyser.getByteTimeDomainData(dataTime);
-    const preBufLen=preAnalyser?preAnalyser.frequencyBinCount:bufLen;
-    const rawTime=new Uint8Array(preBufLen);
-    if(preAnalyser) preAnalyser.getByteTimeDomainData(rawTime);
+const preBufLen=preAnalyser?preAnalyser.frequencyBinCount:bufLen;
+const rawTime=new Float32Array(preBufLen);
+if(preAnalyser) {
+    preAnalyser.getFloatTimeDomainData(rawTime);
+    for(let i=0;i<preBufLen;i++) rawTime[i] = (rawTime[i] * 128) + 128;
+} else {
+    rawTime.fill(128);
+}
 
     const vTime=quantizeData(dataTime,fxParams.crush);
     const vFreq=quantizeData(dataFreq,fxParams.crush);
@@ -1867,6 +1885,7 @@ function draw(){
     }
 
     mainCtx.shadowBlur=0;
+    if(window._recordFrame) window._recordFrame();
 }
 </script>
 </body>
