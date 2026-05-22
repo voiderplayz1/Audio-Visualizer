@@ -88,7 +88,8 @@ body {
 .welcome-enter:hover { background:rgba(255,255,255,0.13); border-color:rgba(255,255,255,0.5); box-shadow:0 0 60px rgba(255,255,255,0.07),inset 0 0 20px rgba(255,255,255,0.04); }
 .welcome-hint { font-size:0.825rem; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); font-style:italic; animation:rise 1.3s 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 canvas { display:block; }
-#main-canvas { position:fixed; inset:0; width:100vw; height:100vh; z-index:0; }
+#main-canvas { position:fixed; inset:0; width:100vw; height:100vh; z-index:1; }
+#glow-canvas  { position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none; }
 #hamburger { position:fixed; top:22px; left:22px; z-index:999; width:34px; height:34px; background:rgba(5,5,5,0.75); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:4px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:border-color 0.2s,background 0.2s; }
 #hamburger:hover { border-color:var(--border-mid); }
 #hamburger span { display:block; width:14px; height:1px; background:var(--text-muted); transition:background 0.2s; }
@@ -183,6 +184,7 @@ input[type="file"] { display:none; }
 <body>
 
 <canvas id="main-canvas"></canvas>
+<canvas id="glow-canvas" style="display:none; position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none;"></canvas>
 <canvas id="fluid-gl-canvas" style="display:none; position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none;"></canvas>
 <canvas id="bf-gl-canvas" style="display:none;position:absolute;pointer-events:none"></canvas>
 
@@ -382,6 +384,8 @@ input[type="file"] { display:none; }
 const audioPlayer      = document.getElementById('audio-player');
 const mainCanvas       = document.getElementById('main-canvas');
 const mainCtx          = mainCanvas.getContext('2d');
+const glowCanvas       = document.getElementById('glow-canvas');
+const glowCtx          = glowCanvas.getContext('2d');
 const playBtn          = document.getElementById('play-pause');
 const restartBtn       = document.getElementById('restart-btn');
 const eqPanel          = document.getElementById('eq-panel');
@@ -940,6 +944,8 @@ function drawBeatFlashGL(vFreq,vTime,w,h){
 function resize() {
     mainCanvas.width = window.innerWidth;
     mainCanvas.height = window.innerHeight;
+    glowCanvas.width = window.innerWidth;
+    glowCanvas.height = window.innerHeight;
     if (gpuReady && gpuContext) {
         try { gpuContext.configure({device:gpuDevice,format:gpuFormat,alphaMode:'premultiplied'}); } catch(e){}
     }
@@ -983,6 +989,7 @@ function setVisualControls(mode) {
 
     // Switch Canvases
     document.getElementById('main-canvas').style.display = isFluid ? 'none' : 'block';
+    glowCanvas.style.display = isFluid ? 'none' : 'block';
     document.getElementById('fluid-gl-canvas').style.display = isFluid ? 'block' : 'none';
 }
 
@@ -1046,40 +1053,10 @@ function initFileSource() {
     if(!fileSource){fileSource=audioCtx.createMediaElementSource(audioPlayer);connectToGraph(fileSource);}
 }
 
-// ── Bounding-box recording ──────────────────────────────────────────────────
-// Tracks the largest dirty region seen during the session so the recorded
-// canvas is as small (and efficient) as possible while never clipping content.
-let recBBox = { x:0, y:0, w:0, h:0 }; // grows, never shrinks
-let recOffscreen = null;               // the fixed-size offscreen canvas we stream from
-let recOffCtx = null;
-let recAnimId = null;                  // rAF loop that composites into the offscreen
-
-function growBBox(cx, cy, r) {
-    // expand the tracked bounding box to include a circle at (cx,cy) with radius r
-    const x1 = Math.floor(cx - r), y1 = Math.floor(cy - r);
-    const x2 = Math.ceil(cx  + r), y2 = Math.ceil(cy  + r);
-    if (recBBox.w === 0) {
-        recBBox = { x:x1, y:y1, w:x2-x1, h:y2-y1 };
-    } else {
-        const nx = Math.min(recBBox.x, x1);
-        const ny = Math.min(recBBox.y, y1);
-        recBBox = {
-            x: nx,
-            y: ny,
-            w: Math.max(recBBox.x + recBBox.w, x2) - nx,
-            h: Math.max(recBBox.y + recBBox.h, y2) - ny,
-        };
-    }
-}
-
-function sampleBBox() {
-    // Sample where content actually lives on mainCanvas each frame during pre-scan
-    const w = mainCanvas.width, h = mainCanvas.height;
-    const cx = w * 0.5, cy = h * 0.5;
-    // Use the largest axis as a proxy for the visual radius (conservative)
-    const maxR = Math.min(w, h) * 0.5;
-    growBBox(cx, cy, maxR);
-}
+// ── Full-screen 720p recording ──────────────────────────────────────────────
+// Always records at 1280×720 regardless of browser window size.
+const REC_W = 1280, REC_H = 720;
+let recOffscreen = null, recOffCtx = null, recAnimId = null;
 
 btnRecord.addEventListener('click',()=>isRecording?stopRecording():startRecording());
 
@@ -1087,43 +1064,24 @@ function startRecording(){
     if(!audioCtx){alert('Load or capture audio first.');return;}
     if(audioCtx.state==='suspended') audioCtx.resume();
 
-    // ── 1. Determine crop region ──────────────────────────────────────────
-    // Snap to the largest bounding box seen so far.
-    // If nothing was tracked yet, fall back to full canvas.
-    const W = mainCanvas.width, H = mainCanvas.height;
-    let cropX, cropY, cropW, cropH;
-    if (recBBox.w > 0) {
-        cropX = Math.max(0, recBBox.x);
-        cropY = Math.max(0, recBBox.y);
-        cropW = Math.min(W - cropX, recBBox.w);
-        cropH = Math.min(H - cropY, recBBox.h);
-        // Enforce even dimensions (required by most video codecs)
-        cropW = cropW % 2 === 0 ? cropW : cropW - 1;
-        cropH = cropH % 2 === 0 ? cropH : cropH - 1;
-    } else {
-        cropX = 0; cropY = 0;
-        cropW = W % 2 === 0 ? W : W - 1;
-        cropH = H % 2 === 0 ? H : H - 1;
-    }
-
-    // ── 2. Create a fixed-size offscreen canvas that we'll stream ─────────
+    // Fixed 720p offscreen canvas — always full-screen scale-down
     recOffscreen = document.createElement('canvas');
-    recOffscreen.width  = cropW;
-    recOffscreen.height = cropH;
+    recOffscreen.width  = REC_W;
+    recOffscreen.height = REC_H;
     recOffCtx = recOffscreen.getContext('2d');
 
-    // ── 3. rAF loop: blit the crop region into the offscreen each frame ───
-    function compositeCrop() {
+    // Each frame: scale the live canvas (whatever size) into the 720p output
+    function compositeFrame() {
         if (!isRecording) return;
-        recOffCtx.clearRect(0, 0, cropW, cropH);
-        recOffCtx.drawImage(mainCanvas,
-            cropX, cropY, cropW, cropH,   // source rect
-            0,     0,     cropW, cropH);  // destination
-        recAnimId = requestAnimationFrame(compositeCrop);
+        // Determine source canvas: fluid mode uses its own GL canvas
+        const src = (state.mode === 'fluid') ? fluidCanvas : mainCanvas;
+        recOffCtx.fillStyle = '#000000';
+        recOffCtx.fillRect(0, 0, REC_W, REC_H);
+        recOffCtx.drawImage(src, 0, 0, src.width, src.height, 0, 0, REC_W, REC_H);
+        recAnimId = requestAnimationFrame(compositeFrame);
     }
-    recAnimId = requestAnimationFrame(compositeCrop);
+    recAnimId = requestAnimationFrame(compositeFrame);
 
-    // ── 4. Stream the offscreen canvas ────────────────────────────────────
     const cs = recOffscreen.captureStream(60);
     const ad = audioCtx.createMediaStreamDestination(); analyser.connect(ad);
     const at = ad.stream.getAudioTracks()[0]; if(at) cs.addTrack(at);
@@ -1502,9 +1460,6 @@ function draw(){
     const vRaw =quantizeData(rawTime, fxParams.crush);
     const w=mainCanvas.width,h=mainCanvas.height;
 
-    // Track maximum content region each frame so recording crops to it
-    sampleBBox();
-
     if (state.mode === 'fluid') {
         if (fluidCanvas.width !== window.innerWidth || fluidCanvas.height !== window.innerHeight) {
             fluidCanvas.width = window.innerWidth;
@@ -1546,17 +1501,32 @@ function draw(){
     }
 
     if(state.mode==='torus'){
-        if(gpuReady){const ok=drawTorusGPU(vFreq,vTime,w,h);if(ok){gpuBadge.classList.add('visible');return;}}
+        if(gpuReady){
+            glowCtx.clearRect(0,0,w,h);
+            const ok=drawTorusGPU(vFreq,vTime,w,h);if(ok){gpuBadge.classList.add('visible');return;}
+        }
         gpuBadge.classList.remove('visible');
     }
     if(state.mode==='ncs'){
-        if(gpuReady){const ok=drawSphereGPU(vFreq,w,h);if(ok){gpuBadge.classList.add('visible');return;}}
+        if(gpuReady){
+            glowCtx.clearRect(0,0,w,h);
+            const ok=drawSphereGPU(vFreq,w,h);if(ok){gpuBadge.classList.add('visible');return;}
+        }
         gpuBadge.classList.remove('visible');
     }
 
     const bg=hexToRgb(state.bgColor);
-    const trailAlpha=state.mode==='beatflash'?1.0:0.08+(1-Math.min((fxParams.reverb-0.1)/4.9,1))*0.32;
-    mainCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${trailAlpha})`;
+
+    // ── Glow layer decay (glowCanvas) ──────────────────────────────────────
+    // glowCanvas holds only shadowBlur glow, with its own slow fade.
+    // This means glow NEVER bleeds into the base canvas background.
+    const glowDecayAlpha = state.mode==='beatflash' ? 1.0 : 0.12+(1-Math.min((fxParams.reverb-0.1)/4.9,1))*0.28;
+    glowCtx.fillStyle=`rgba(${bg.r},${bg.g},${bg.b},${glowDecayAlpha})`;
+    glowCtx.fillRect(0,0,w,h);
+
+    // ── Main canvas: full opaque clear every frame ─────────────────────────
+    // No more ghost trails from semi-transparent bg fills on main canvas.
+    mainCtx.fillStyle=`rgb(${bg.r},${bg.g},${bg.b})`;
     mainCtx.fillRect(0,0,w,h);
 
     const reverbGlow=1+(fxParams.reverb-0.1)*0.4;
@@ -1565,13 +1535,24 @@ function draw(){
     const volScaleWave=fxParams.volume;
     const bassWarp=1+(fxParams.bass-1)*0.6;
 
-    mainCtx.shadowBlur=(10+reverbGlow*8)*state.glow;
-    mainCtx.shadowColor=state.color;
-    mainCtx.strokeStyle=state.color;
-    mainCtx.fillStyle=state.color;
-    mainCtx.lineWidth=3*state.thickness;
-    mainCtx.lineCap='round';mainCtx.lineJoin='round';
-    mainCtx.beginPath();
+    // Helper: draw glow pass on glowCtx, crisp pass on mainCtx
+    // ctx = which canvas context to set up for a drawing pass
+    function setupGlowCtx() {
+        glowCtx.shadowBlur=(10+reverbGlow*8)*state.glow;
+        glowCtx.shadowColor=state.color;
+        glowCtx.strokeStyle=state.color;
+        glowCtx.fillStyle=state.color;
+        glowCtx.lineWidth=4*state.thickness;
+        glowCtx.lineCap='round'; glowCtx.lineJoin='round';
+    }
+    function setupMainCtx() {
+        mainCtx.shadowBlur=0;
+        mainCtx.strokeStyle=state.color;
+        mainCtx.fillStyle=state.color;
+        mainCtx.lineWidth=3*state.thickness;
+        mainCtx.lineCap='round'; mainCtx.lineJoin='round';
+    }
+    setupGlowCtx(); setupMainCtx();
 
     function jitter(v){if(crushJitter===0)return v;return v+(Math.random()-0.5)*crushJitter*12;}
     function bassY(n){return n<0?n*bassWarp*(1+Math.abs(n)*0.5):n*bassWarp;}
@@ -1580,68 +1561,100 @@ function draw(){
         const lissLen=Math.min(vRaw.length,1024),offset=Math.min(state.lissOffset,lissLen-1);
         const scl=volScaleWave*0.5*state.lissSpread;
         const cosR=Math.cos(speedOsc*0.05),sinR=Math.sin(speedOsc*0.05);
-        // Catmull-Rom cubic interpolation: eliminates 8-bit stair-stepping at high spread/volume
-        // while preserving the true shape of sine, saw, square, etc.
         function lissGet(idx){ const i=((idx%lissLen)+lissLen)%lissLen; return (vRaw[i]-128)/128; }
         function lissGetY(idx){ const i=((idx%lissLen)+lissLen)%lissLen; return (vRaw[((i+offset)%lissLen)]-128)/128; }
         function catmull(p0,p1,p2,p3,t){ return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t*t+(-p0+3*p1-3*p2+p3)*t*t*t); }
         const upsample=Math.max(1,Math.min(8,Math.ceil(scl*4)));
         const totalSteps=lissLen*upsample;
-        for(let s=0;s<totalSteps;s++){
-            const fi=s/upsample,i0=Math.floor(fi),t=fi-i0;
-            const nx=catmull(lissGet(i0-1),lissGet(i0),lissGet(i0+1),lissGet(i0+2),t);
-            const ny=catmull(lissGetY(i0-1),lissGetY(i0),lissGetY(i0+1),lissGetY(i0+2),t);
-            const rx=nx*scl,ry=bassY(ny)*scl;
-            const px=w/2+jitter(rx*cosR-ry*sinR)*w/2;
-            const py=h/2+jitter(rx*sinR+ry*cosR)*h/2;
-            s===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
+        // Build path once, stroke onto both canvases
+        function buildLissPath(ctx){
+            ctx.beginPath();
+            for(let s=0;s<totalSteps;s++){
+                const fi=s/upsample,i0=Math.floor(fi),t=fi-i0;
+                const nx=catmull(lissGet(i0-1),lissGet(i0),lissGet(i0+1),lissGet(i0+2),t);
+                const ny=catmull(lissGetY(i0-1),lissGetY(i0),lissGetY(i0+1),lissGetY(i0+2),t);
+                const rx=nx*scl,ry=bassY(ny)*scl;
+                const px=w/2+jitter(rx*cosR-ry*sinR)*w/2;
+                const py=h/2+jitter(rx*sinR+ry*cosR)*h/2;
+                s===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+            }
+            ctx.stroke();
         }
-        mainCtx.stroke();
+        setupGlowCtx(); buildLissPath(glowCtx);
+        setupMainCtx(); buildLissPath(mainCtx);
 
     }else if(state.mode==='0'){
-        const slice=w/bufLen;let x=0;
-        for(let i=0;i<bufLen;i++){
-            const nx=(vTime[i]/255)-0.5,drift=Math.sin(speedOsc*0.7+i*0.04)*0.04;
-            const finalY=h/2+jitter(bassY(nx+drift)*h*volScaleWave);
-            i===0?mainCtx.moveTo(jitter(x),finalY):mainCtx.lineTo(jitter(x),finalY);
-            x+=slice;
+        const slice=w/bufLen;
+        function buildWave(ctx){
+            let x=0; ctx.beginPath();
+            for(let i=0;i<bufLen;i++){
+                const nx=(vTime[i]/255)-0.5,drift=Math.sin(speedOsc*0.7+i*0.04)*0.04;
+                const finalY=h/2+jitter(bassY(nx+drift)*h*volScaleWave);
+                i===0?ctx.moveTo(jitter(x),finalY):ctx.lineTo(jitter(x),finalY);
+                x+=slice;
+            }
+            ctx.stroke();
         }
-        mainCtx.stroke();
+        setupGlowCtx(); buildWave(glowCtx);
+        setupMainCtx(); buildWave(mainCtx);
 
     }else if(state.mode==='1'){
-        const baseR=(w/bufLen)*3*state.thickness;let x=0;
+        const baseR=(w/bufLen)*3*state.thickness;
+        // Glow pass on glowCtx
+        setupGlowCtx();
+        {let x=0;
+        for(let i=0;i<bufLen;i+=2){
+            const v=vFreq[i]/255,r=baseR+v*40*state.thickness;
+            const yDrift=Math.sin(speedOsc*0.4+i*0.02)*20*fxParams.speed;
+            const y=h-v*h*0.7-50+yDrift;
+            glowCtx.beginPath();glowCtx.arc(jitter(x),jitter(y),Math.max(0.5,r/2),0,Math.PI*2);glowCtx.fill();
+            x+=baseR*2+5;if(x>w)break;
+        }}
+        // Crisp pass on mainCtx
+        setupMainCtx();
+        {let x=0;
         for(let i=0;i<bufLen;i+=2){
             const v=vFreq[i]/255,r=baseR+v*40*state.thickness;
             const yDrift=Math.sin(speedOsc*0.4+i*0.02)*20*fxParams.speed;
             const y=h-v*h*0.7-50+yDrift;
             mainCtx.beginPath();mainCtx.arc(jitter(x),jitter(y),Math.max(0.5,r/2),0,Math.PI*2);mainCtx.fill();
             x+=baseR*2+5;if(x>w)break;
-        }
+        }}
 
     }else if(state.mode==='2'){
         const radius=Math.min(w,h)*0.25,step=Math.max(1,Math.round(bufLen/state.lineCount));
         const cx=w/2,cy=h/2;
-        for(let i=0;i<bufLen;i+=step){
-            const barH=vFreq[i]*0.8*state.thickness,rads=Math.PI*2*(i/bufLen)+speedOsc*0.08;
-            const cosA=Math.cos(rads),sinA=Math.sin(rads);
-            const x1=cx+cosA*radius,y1=cy+sinA*radius;
-            const x2=cx+cosA*(radius+barH),y2=cy+sinA*(radius+barH);
-            mainCtx.moveTo(jitter(x1),jitter(y1));mainCtx.lineTo(jitter(x2),jitter(y2));
+        function buildBurst(ctx){
+            ctx.beginPath();
+            for(let i=0;i<bufLen;i+=step){
+                const barH=vFreq[i]*0.8*state.thickness,rads=Math.PI*2*(i/bufLen)+speedOsc*0.08;
+                const cosA=Math.cos(rads),sinA=Math.sin(rads);
+                const x1=cx+cosA*radius,y1=cy+sinA*radius;
+                const x2=cx+cosA*(radius+barH),y2=cy+sinA*(radius+barH);
+                ctx.moveTo(jitter(x1),jitter(y1));ctx.lineTo(jitter(x2),jitter(y2));
+            }
+            ctx.stroke();
         }
-        mainCtx.stroke();
+        setupGlowCtx(); buildBurst(glowCtx);
+        setupMainCtx(); buildBurst(mainCtx);
 
     }else if(state.mode==='3'){
-        const slice=w/bufLen;let x=0;
-        for(let i=0;i<bufLen;i++){
-            const nx=(vTime[i]-128)/128,nx2=(vTime[(i+1)%bufLen]-128)/128;
-            const phase=Math.sin(speedOsc*0.5+i*0.02)*0.05*fxParams.speed;
-            const off=bassY((nx+phase)*volScaleWave)*(h/2)*state.thickness;
-            const offN=bassY((nx2+phase)*volScaleWave)*(h/2)*state.thickness;
-            mainCtx.moveTo(jitter(x),jitter(h/2-off));mainCtx.lineTo(jitter(x+slice),jitter(h/2-offN));
-            mainCtx.moveTo(jitter(x),jitter(h/2+off));mainCtx.lineTo(jitter(x+slice),jitter(h/2+offN));
-            x+=slice;
+        const slice=w/bufLen;
+        function buildMirror(ctx){
+            let x=0; ctx.beginPath();
+            for(let i=0;i<bufLen;i++){
+                const nx=(vTime[i]-128)/128,nx2=(vTime[(i+1)%bufLen]-128)/128;
+                const phase=Math.sin(speedOsc*0.5+i*0.02)*0.05*fxParams.speed;
+                const off=bassY((nx+phase)*volScaleWave)*(h/2)*state.thickness;
+                const offN=bassY((nx2+phase)*volScaleWave)*(h/2)*state.thickness;
+                ctx.moveTo(jitter(x),jitter(h/2-off));ctx.lineTo(jitter(x+slice),jitter(h/2-offN));
+                ctx.moveTo(jitter(x),jitter(h/2+off));ctx.lineTo(jitter(x+slice),jitter(h/2+offN));
+                x+=slice;
+            }
+            ctx.stroke();
         }
-        mainCtx.stroke();
+        setupGlowCtx(); buildMirror(glowCtx);
+        setupMainCtx(); buildMirror(mainCtx);
 
     }else if(state.mode==='ncs'){
         const col=hexToRgb(state.color),cx=w/2,cy=h/2;
@@ -1663,13 +1676,20 @@ function draw(){
                 const depth=(sz+1.4)/2.8,alpha=Math.max(0,(0.05+depth*0.55)*(0.12+freq*0.88));
                 const dotR=Math.max(0.3,(0.65+freq*2.2)*state.thickness*persp*0.75);
                 if(alpha<0.015) continue;
-                mainCtx.shadowBlur=freq>0.5?freq*10*state.glow:0;
-                mainCtx.shadowColor=state.color;
+                // Glow pass
+                if(freq>0.5){
+                    glowCtx.shadowBlur=freq*10*state.glow;
+                    glowCtx.shadowColor=state.color;
+                    glowCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${alpha})`;
+                    glowCtx.beginPath();glowCtx.arc(px,py,dotR,0,Math.PI*2);glowCtx.fill();
+                    glowCtx.shadowBlur=0;
+                }
+                // Crisp pass
                 mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${alpha})`;
                 mainCtx.beginPath();mainCtx.arc(px,py,dotR,0,Math.PI*2);mainCtx.fill();
             }
         }
-        mainCtx.shadowBlur=0;
+        mainCtx.shadowBlur=0; glowCtx.shadowBlur=0;
         const innerGrad=mainCtx.createRadialGradient(cx,cy,0,cx,cy,R*0.55);
         innerGrad.addColorStop(0,`rgba(${col.r},${col.g},${col.b},${avgV*0.08})`);
         innerGrad.addColorStop(1,`rgba(${col.r},${col.g},${col.b},0)`);
@@ -1678,7 +1698,7 @@ function draw(){
     }else if(state.mode==='rainlines'){
         const col=hexToRgb(state.color),avgVol=getAvgVolume(vFreq),bassE=getBassEnergy(vFreq);
         const particleSpeed=0.5+avgVol*4.0*fxParams.volume;
-        mainCtx.shadowBlur=0;
+        mainCtx.shadowBlur=0; glowCtx.shadowBlur=0;
         for(let p of rainParticles){
             p.y+=p.baseSpeed*particleSpeed*fxParams.speed;
             if(p.y>h+4) p.y=-4;
@@ -1694,39 +1714,60 @@ function draw(){
             const half=Math.floor(barCount/2),binI=i<half?(half-1-i):(i-half);
             const raw=vFreq[binI]/255,barH=raw*h*0.42*state.thickness;
             const x=startX+i*(barW+gap),capH=Math.max(2,barW*0.4),glowMul=0.4+raw*2.8;
-            mainCtx.shadowBlur=16*state.glow*glowMul;mainCtx.shadowColor=state.color;
+            // Glow pass
+            glowCtx.shadowBlur=16*state.glow*glowMul; glowCtx.shadowColor=state.color;
+            glowCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.5+raw*0.5})`;
+            glowCtx.fillRect(jitter(x),h-edgePad-barH,barW,barH);
+            glowCtx.shadowBlur=28*state.glow;
+            glowCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.6+raw*0.4})`;
+            glowCtx.fillRect(jitter(x),h-edgePad-barH-capH,barW,capH);
+            glowCtx.shadowBlur=16*state.glow*glowMul;
+            glowCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.5+raw*0.5})`;
+            glowCtx.fillRect(jitter(x),edgePad,barW,barH);
+            glowCtx.shadowBlur=28*state.glow;
+            glowCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.6+raw*0.4})`;
+            glowCtx.fillRect(jitter(x),edgePad+barH,barW,capH);
+            glowCtx.shadowBlur=0;
+            // Crisp pass
             mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.5+raw*0.5})`;
             mainCtx.fillRect(jitter(x),h-edgePad-barH,barW,barH);
-            mainCtx.shadowBlur=28*state.glow;
             mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.6+raw*0.4})`;
             mainCtx.fillRect(jitter(x),h-edgePad-barH-capH,barW,capH);
-            mainCtx.shadowBlur=16*state.glow*glowMul;
             mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.5+raw*0.5})`;
             mainCtx.fillRect(jitter(x),edgePad,barW,barH);
-            mainCtx.shadowBlur=28*state.glow;
             mainCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${0.6+raw*0.4})`;
             mainCtx.fillRect(jitter(x),edgePad+barH,barW,capH);
-            mainCtx.shadowBlur=0;
         }
-        mainCtx.shadowBlur=10*state.glow;mainCtx.shadowColor=state.color;
-        mainCtx.strokeStyle=`rgba(${col.r},${col.g},${col.b},0.28)`;mainCtx.lineWidth=1;
+        // Glow baseline lines
+        glowCtx.shadowBlur=10*state.glow; glowCtx.shadowColor=state.color;
+        glowCtx.strokeStyle=`rgba(${col.r},${col.g},${col.b},0.28)`; glowCtx.lineWidth=1;
+        glowCtx.beginPath();
+        glowCtx.moveTo(startX,h-edgePad);glowCtx.lineTo(startX+totalW,h-edgePad);
+        glowCtx.moveTo(startX,edgePad);glowCtx.lineTo(startX+totalW,edgePad);
+        glowCtx.stroke();
+        mainCtx.strokeStyle=`rgba(${col.r},${col.g},${col.b},0.28)`; mainCtx.lineWidth=1;
         mainCtx.beginPath();
         mainCtx.moveTo(startX,h-edgePad);mainCtx.lineTo(startX+totalW,h-edgePad);
         mainCtx.moveTo(startX,edgePad);mainCtx.lineTo(startX+totalW,edgePad);
         mainCtx.stroke();
-        mainCtx.shadowBlur=(8+reverbGlow*7)*state.glow;mainCtx.shadowColor=state.color;
-        mainCtx.strokeStyle=state.color;mainCtx.lineWidth=2.5*state.thickness;mainCtx.lineCap='round';
-        const slice=w/bufLen;let x=0;mainCtx.beginPath();
+        // Rain waveform glow
+        const slice=w/bufLen;let x=0;
+        glowCtx.shadowBlur=(8+reverbGlow*7)*state.glow; glowCtx.shadowColor=state.color;
+        glowCtx.strokeStyle=state.color; glowCtx.lineWidth=2.5*state.thickness; glowCtx.lineCap='round';
+        mainCtx.strokeStyle=state.color; mainCtx.lineWidth=2.5*state.thickness; mainCtx.lineCap='round';
+        glowCtx.beginPath(); mainCtx.beginPath();
         for(let i=0;i<bufLen;i++){
             const nx=(vTime[i]-128)/128,nx2=(vTime[(i+1)%bufLen]-128)/128;
             const phase=Math.sin(speedOsc*0.5+i*0.02)*0.05*fxParams.speed;
             const off=bassY((nx+phase)*volScaleWave)*(h*0.18)*state.thickness;
             const offN=bassY((nx2+phase)*volScaleWave)*(h*0.18)*state.thickness;
+            glowCtx.moveTo(jitter(x),jitter(h/2-off));glowCtx.lineTo(jitter(x+slice),jitter(h/2-offN));
+            glowCtx.moveTo(jitter(x),jitter(h/2+off));glowCtx.lineTo(jitter(x+slice),jitter(h/2+offN));
             mainCtx.moveTo(jitter(x),jitter(h/2-off));mainCtx.lineTo(jitter(x+slice),jitter(h/2-offN));
             mainCtx.moveTo(jitter(x),jitter(h/2+off));mainCtx.lineTo(jitter(x+slice),jitter(h/2+offN));
             x+=slice;
         }
-        mainCtx.stroke();
+        glowCtx.stroke(); mainCtx.stroke();
 
     }else if(state.mode==='torus'){
         torusHistory.unshift(new Uint8Array(vFreq));
@@ -1748,12 +1789,17 @@ function draw(){
                 const band=BANDS[bi],ringR=baseRingR*band.radiusMul;
                 const hue=((bi*70)+hi*(300/TORUS_HIST_MAX)+drawPhase*20*state.torusColorSpeed)%360;
                 const lw=Math.max(0.3,(1.7*state.thickness)*(1-histT*0.5));
-                if(state.torusColorEnabled){mainCtx.strokeStyle=`hsla(${hue},100%,63%,${alpha})`;mainCtx.shadowColor=`hsl(${hue},100%,63%)`;}
-                else{mainCtx.strokeStyle=`rgba(${col2.r},${col2.g},${col2.b},${alpha})`;mainCtx.shadowColor=state.color;}
-                mainCtx.shadowBlur=state.glow*8*(1-histT*0.7);mainCtx.lineWidth=lw;mainCtx.lineCap='round';
+                const strokeColor = state.torusColorEnabled?`hsla(${hue},100%,63%,${alpha})`:`rgba(${col2.r},${col2.g},${col2.b},${alpha})`;
+                const glowColor   = state.torusColorEnabled?`hsl(${hue},100%,63%)`:state.color;
+                // Glow pass
+                glowCtx.strokeStyle=strokeColor; glowCtx.shadowColor=glowColor;
+                glowCtx.shadowBlur=state.glow*8*(1-histT*0.7); glowCtx.lineWidth=lw*1.5; glowCtx.lineCap='round';
+                // Crisp pass
+                mainCtx.strokeStyle=strokeColor; mainCtx.shadowBlur=0;
+                mainCtx.lineWidth=lw; mainCtx.lineCap='round';
                 const binStart=Math.floor(band.startFrac*bufLen),binEnd=Math.max(binStart+1,Math.floor(band.endFrac*bufLen));
                 const binRange=binEnd-binStart;
-                mainCtx.beginPath();
+                glowCtx.beginPath(); mainCtx.beginPath();
                 for(let seg=0;seg<=segments;seg++){
                     const theta=(seg/segments)*Math.PI*2+rotOffset;
                     const cosTheta=Math.cos(theta),sinTheta=Math.sin(theta);
@@ -1765,14 +1811,15 @@ function draw(){
                     const fov=4.5,safeR=Math.abs(ringR)<0.001?0.001:ringR;
                     const persp=fov/(fov+rz2/safeR);
                     const px=cx+rx*persp,py=cy+ry*persp;
-                    seg===0?mainCtx.moveTo(px,py):mainCtx.lineTo(px,py);
+                    seg===0?(glowCtx.moveTo(px,py),mainCtx.moveTo(px,py)):(glowCtx.lineTo(px,py),mainCtx.lineTo(px,py));
                 }
-                mainCtx.stroke();
+                glowCtx.stroke(); mainCtx.stroke();
             }
         }
         if(state.rotationEnabled) triangleHue=(triangleHue+8*state.torusColorSpeed)%360;
         const triSize=baseRingR*0.20,triSpin=drawPhase*0.6;
         mainCtx.lineWidth=2.5*state.thickness;mainCtx.lineCap='round';mainCtx.lineJoin='round';
+        glowCtx.lineWidth=3.5*state.thickness; glowCtx.lineCap='round';
         const triPts=[];
         for(let ti=0;ti<3;ti++){
             const ta=(ti/3)*Math.PI*2+triSpin-Math.PI/2;
@@ -1781,10 +1828,12 @@ function draw(){
         for(let ti=0;ti<3;ti++){
             const sideHue=(triangleHue+ti*120)%360,a=triPts[ti],b=triPts[(ti+1)%3];
             const triColor=state.torusColorEnabled?`hsl(${sideHue},100%,68%)`:state.color;
-            mainCtx.strokeStyle=triColor;mainCtx.shadowColor=triColor;mainCtx.shadowBlur=state.glow*12;
+            glowCtx.strokeStyle=triColor; glowCtx.shadowColor=triColor; glowCtx.shadowBlur=state.glow*14;
+            glowCtx.beginPath(); glowCtx.moveTo(a.x,a.y); glowCtx.lineTo(b.x,b.y); glowCtx.stroke();
+            mainCtx.strokeStyle=triColor; mainCtx.shadowBlur=0;
             mainCtx.beginPath();mainCtx.moveTo(a.x,a.y);mainCtx.lineTo(b.x,b.y);mainCtx.stroke();
         }
-        mainCtx.shadowBlur=0;
+        mainCtx.shadowBlur=0; glowCtx.shadowBlur=0;
 
     // ══ BEAT FLASH ══
     }else if(state.mode==='beatflash'){
@@ -1955,6 +2004,15 @@ function draw(){
     }
 
     mainCtx.shadowBlur=0;
+
+    // ── Composite glow layer onto main canvas ─────────────────────────────
+    // Draw the glow canvas (with its blurred content) over the crisp main canvas
+    // using 'lighter' blend so it adds luminance without darkening blacks.
+    mainCtx.globalCompositeOperation='lighter';
+    mainCtx.globalAlpha=0.72;
+    mainCtx.drawImage(glowCanvas,0,0);
+    mainCtx.globalAlpha=1.0;
+    mainCtx.globalCompositeOperation='source-over';
 }
 </script>
 </body>
