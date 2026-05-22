@@ -1342,11 +1342,12 @@ function drawWelcome(){
     }
     welcomeCtx.stroke();welcomeCtx.shadowBlur=0;wt+=0.011;
 }
-drawWelcome();
+setTimeout(drawWelcome, 50);
 
 function enterApp(){
+    if(welcome.classList.contains('fade-out')) return;
     welcome.classList.add('fade-out');
-    welcome.addEventListener('transitionend',()=>{welcome.style.display='none';cancelAnimationFrame(welcomeAnimId);},{once:true});
+    setTimeout(()=>{welcome.style.display='none'; cancelAnimationFrame(welcomeAnimId);}, 850);
     initWebGPU();
     initBeatFlashGL();
     if(!animationId) draw();
